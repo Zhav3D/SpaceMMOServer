@@ -79,6 +79,7 @@ export default function SolarSystemVisualization({
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // For panning
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPos, setLastPanPos] = useState({ x: 0, y: 0 });
+  const starsRef = useRef<Array<{ x: number, y: number, size: number, opacity: number }> | null>(null);
   
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !onSelectBody || celestialBodies.length === 0) return;
@@ -168,6 +169,26 @@ export default function SolarSystemVisualization({
     }
   }, [celestialBodies, scale, onSelectBody, zoomLevel, panOffset]);
   
+  // Create static stars once when component mounts
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const numStars = 500;
+    const stars = [];
+    
+    for (let i = 0; i < numStars; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 1.5,
+        opacity: Math.random() * 0.8 + 0.2
+      });
+    }
+    
+    starsRef.current = stars;
+  }, []);
+  
   const renderCanvas = useCallback(() => {
     if (!canvasRef.current || celestialBodies.length === 0) return;
     
@@ -179,19 +200,17 @@ export default function SolarSystemVisualization({
     ctx.fillStyle = "#111827";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Add some starfield effect
-    const numStars = 500;
-    ctx.fillStyle = "#ffffff";
-    for (let i = 0; i < numStars; i++) {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      const size = Math.random() * 1.5;
-      ctx.globalAlpha = Math.random() * 0.8 + 0.2;
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.fill();
+    // Draw the static stars
+    if (starsRef.current) {
+      ctx.fillStyle = "#ffffff";
+      starsRef.current.forEach(star => {
+        ctx.globalAlpha = star.opacity;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1.0;
     }
-    ctx.globalAlpha = 1.0;
     
     // Set up scale factors based on selected scale and zoom level
     let scaleFactor = 1;
