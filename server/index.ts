@@ -14,6 +14,7 @@ import { GameStateManager } from './state';
 import { NPCManager } from './npc';
 import { SanityCheckManager, SanityCheckType } from './sanity';
 import { CelestialManager } from './celestial';
+import { MissionManager } from './mission';
 import { setupVite, serveStatic, log } from './vite';
 import os from 'os';
 
@@ -30,6 +31,7 @@ export class GameServer {
   public npcManager: NPCManager;
   public sanityCheckManager: SanityCheckManager;
   public celestialManager: CelestialManager;
+  public missionManager: MissionManager;
   
   // Server settings
   private settings: ServerSettings = {
@@ -70,6 +72,7 @@ export class GameServer {
     this.gameStateManager = new GameStateManager(this.udpServer, this.aoiManager, this.npcManager);
     this.sanityCheckManager = new SanityCheckManager(this.udpServer);
     this.celestialManager = new CelestialManager(this.udpServer);
+    // Mission Manager will be created after other components are initialized
     
     // Set up event handlers
     this.setupEventHandlers();
@@ -330,6 +333,16 @@ export class GameServer {
       
       log('Initializing Game State...', 'info');
       await this.gameStateManager.initialize();
+      
+      // Initialize Mission Manager
+      log('Initializing Mission system...', 'info');
+      this.missionManager = new MissionManager(
+        this.udpServer,
+        this.gameStateManager,
+        this.npcManager,
+        this.celestialManager
+      );
+      await this.missionManager.initialize();
       
       // Start update loops
       this.startUpdateLoops();
@@ -605,6 +618,9 @@ export class GameServer {
     
     // NPC state updates
     setInterval(() => this.gameStateManager.sendNPCUpdates(), 500);
+    
+    // Mission updates
+    // The mission manager has its own internal update timers
     
     // Sanity check cleanup
     setInterval(() => this.sanityCheckManager.cleanupOldChecks(), 10000);
