@@ -2,8 +2,19 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { Vector3 } from "@shared/math";
-import { serverInstance } from "./index";
+import { serverInstance, GameServer } from "./index";
 import { log } from "./vite";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
+import { 
+  celestialBodies, 
+  npcShips, 
+  npcFleets, 
+  areasOfInterest, 
+  serverLogs, 
+  serverStats, 
+  missions 
+} from "@shared/schema";
 
 // API response interfaces
 interface ApiResponse<T> {
@@ -1228,8 +1239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // First do a direct SQL query to clean up any lingering data
       try {
-        // Use the db from server/db.ts to perform a direct database reset
-        await db.transaction(async (tx) => {
+        await db.transaction(async (tx: any) => {
           // Delete all data from tables in proper order
           await tx.delete(npcShips);
           await tx.delete(npcFleets);
