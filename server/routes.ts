@@ -601,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Set simulation speed API
+  // Set simulation speed API - fixed version
   app.put('/api/celestial/simulation', (req: Request, res: Response) => {
     if (!serverInstance || !serverInstance.celestialManager) {
       return res.status(500).json({
@@ -622,11 +622,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update simulation speed
-      serverInstance.celestialManager.setSimulationSpeed(parseFloat(speed));
+      const numericSpeed = parseFloat(speed);
+      serverInstance.celestialManager.setSimulationSpeed(numericSpeed);
       
       const response: ApiResponse<{ simulationSpeed: number }> = {
         success: true,
-        data: { simulationSpeed: parseFloat(speed) },
+        data: { simulationSpeed: numericSpeed },
       };
       
       res.json(response);
@@ -637,6 +638,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       res.status(500).json(response);
+    }
+  });
+  
+  // For testing/debugging
+  app.post('/api/celestial/simulation/test', (req: Request, res: Response) => {
+    try {
+      console.log("Test API hit with payload:", req.body);
+      
+      res.json({
+        success: true,
+        data: { received: req.body },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: `Test endpoint error: ${error}`,
+      });
     }
   });
   

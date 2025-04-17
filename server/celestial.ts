@@ -56,15 +56,21 @@ export class CelestialManager {
   }
   
   // Create a default solar system with major planets
+  // Use scaled-down parameters for more visible movement
   private async createDefaultSolarSystem(): Promise<void> {
     console.log('Creating default solar system...');
     
     try {
+      // We'll use a scaled system with much smaller distances and higher masses
+      // to make orbital periods much shorter (more visible movement)
+      const scaleFactor = 0.01; // Scale distances to 1% of actual
+      const massMultiplier = 10.0; // Increase mass to speed up orbits
+      
       // Sun (central body)
       const sun = await storage.createCelestialBody({
         name: 'Sun',
         type: 'star',
-        mass: this.simulationSettings.centralBodyMass,
+        mass: this.simulationSettings.centralBodyMass * massMultiplier,
         radius: 695700000, // Sun radius in meters
         semiMajorAxis: 0,
         eccentricity: 0,
@@ -84,7 +90,7 @@ export class CelestialManager {
         type: 'planet',
         mass: 3.3011e23,
         radius: 2439700,
-        semiMajorAxis: 57909050000,
+        semiMajorAxis: 57909050000 * scaleFactor,
         eccentricity: 0.20563,
         inclination: 7.005 * Math.PI / 180,
         longitudeOfAscendingNode: 48.331 * Math.PI / 180,
@@ -102,7 +108,7 @@ export class CelestialManager {
         type: 'planet',
         mass: 4.8675e24,
         radius: 6051800,
-        semiMajorAxis: 108208000000,
+        semiMajorAxis: 108208000000 * scaleFactor,
         eccentricity: 0.00677,
         inclination: 3.39458 * Math.PI / 180,
         longitudeOfAscendingNode: 76.68 * Math.PI / 180,
@@ -120,7 +126,7 @@ export class CelestialManager {
         type: 'planet',
         mass: 5.97237e24,
         radius: 6371000,
-        semiMajorAxis: 149598023000,
+        semiMajorAxis: 149598023000 * scaleFactor,
         eccentricity: 0.0167086,
         inclination: 0.00005 * Math.PI / 180,
         longitudeOfAscendingNode: -11.26064 * Math.PI / 180,
@@ -132,13 +138,31 @@ export class CelestialManager {
       
       this.bodies.set(earth.id, earth);
       
+      // Moon
+      const moon = await storage.createCelestialBody({
+        name: 'Moon',
+        type: 'moon',
+        mass: 7.342e22,
+        radius: 1737400,
+        semiMajorAxis: 384748000 * scaleFactor * 10, // Scale up a bit more for visibility
+        eccentricity: 0.0549,
+        inclination: 5.145 * Math.PI / 180,
+        longitudeOfAscendingNode: 125.08 * Math.PI / 180,
+        argumentOfPeriapsis: 318.15 * Math.PI / 180,
+        meanAnomaly: 115.3654 * Math.PI / 180,
+        parentBodyId: earth.id,
+        color: '#d0d0d0'
+      });
+      
+      this.bodies.set(moon.id, moon);
+      
       // Mars
       const mars = await storage.createCelestialBody({
         name: 'Mars',
         type: 'planet',
         mass: 6.4171e23,
         radius: 3389500,
-        semiMajorAxis: 227939200000,
+        semiMajorAxis: 227939200000 * scaleFactor,
         eccentricity: 0.0934,
         inclination: 1.85 * Math.PI / 180,
         longitudeOfAscendingNode: 49.558 * Math.PI / 180,
@@ -150,13 +174,31 @@ export class CelestialManager {
       
       this.bodies.set(mars.id, mars);
       
+      // Mars moon - Phobos
+      const phobos = await storage.createCelestialBody({
+        name: 'Phobos',
+        type: 'moon',
+        mass: 1.0659e16,
+        radius: 11266,
+        semiMajorAxis: 9376000 * scaleFactor * 15, // Scale up for visibility
+        eccentricity: 0.0151,
+        inclination: 1.093 * Math.PI / 180,
+        longitudeOfAscendingNode: 16.946 * Math.PI / 180,
+        argumentOfPeriapsis: 157.116 * Math.PI / 180,
+        meanAnomaly: 150.057 * Math.PI / 180,
+        parentBodyId: mars.id,
+        color: '#8B4513'
+      });
+      
+      this.bodies.set(phobos.id, phobos);
+      
       // Jupiter
       const jupiter = await storage.createCelestialBody({
         name: 'Jupiter',
         type: 'planet',
         mass: 1.8982e27,
         radius: 69911000,
-        semiMajorAxis: 778570200000,
+        semiMajorAxis: 778570200000 * scaleFactor,
         eccentricity: 0.0489,
         inclination: 1.303 * Math.PI / 180,
         longitudeOfAscendingNode: 100.464 * Math.PI / 180,
@@ -168,13 +210,31 @@ export class CelestialManager {
       
       this.bodies.set(jupiter.id, jupiter);
       
+      // Europa (Jupiter's moon)
+      const europa = await storage.createCelestialBody({
+        name: 'Europa',
+        type: 'moon',
+        mass: 4.8e22,
+        radius: 1560800,
+        semiMajorAxis: 670900000 * scaleFactor * 10, // Scale up for visibility
+        eccentricity: 0.009,
+        inclination: 0.47 * Math.PI / 180,
+        longitudeOfAscendingNode: 101.4 * Math.PI / 180,
+        argumentOfPeriapsis: 120.5 * Math.PI / 180,
+        meanAnomaly: 200.0 * Math.PI / 180,
+        parentBodyId: jupiter.id,
+        color: '#f5f5dc'
+      });
+      
+      this.bodies.set(europa.id, europa);
+      
       // Saturn
       const saturn = await storage.createCelestialBody({
         name: 'Saturn',
         type: 'planet',
         mass: 5.6834e26,
         radius: 58232000,
-        semiMajorAxis: 1433530000000,
+        semiMajorAxis: 1433530000000 * scaleFactor,
         eccentricity: 0.0565,
         inclination: 2.485 * Math.PI / 180,
         longitudeOfAscendingNode: 113.665 * Math.PI / 180,
@@ -186,41 +246,41 @@ export class CelestialManager {
       
       this.bodies.set(saturn.id, saturn);
       
-      // Uranus
-      const uranus = await storage.createCelestialBody({
-        name: 'Uranus',
-        type: 'planet',
-        mass: 8.6810e25,
-        radius: 25362000,
-        semiMajorAxis: 2872460000000,
-        eccentricity: 0.04717,
-        inclination: 0.773 * Math.PI / 180,
-        longitudeOfAscendingNode: 74.006 * Math.PI / 180,
-        argumentOfPeriapsis: 96.998857 * Math.PI / 180,
-        meanAnomaly: 142.2386 * Math.PI / 180,
-        parentBodyId: sun.id,
-        color: '#3498db'
+      // Titan (Saturn's moon)
+      const titan = await storage.createCelestialBody({
+        name: 'Titan',
+        type: 'moon',
+        mass: 1.3452e23,
+        radius: 2574730,
+        semiMajorAxis: 1221870000 * scaleFactor * 10, // Scale up for visibility
+        eccentricity: 0.0288,
+        inclination: 0.34854 * Math.PI / 180,
+        longitudeOfAscendingNode: 28.06 * Math.PI / 180,
+        argumentOfPeriapsis: 180.532 * Math.PI / 180,
+        meanAnomaly: 175.83 * Math.PI / 180,
+        parentBodyId: saturn.id,
+        color: '#E49B0F'
       });
       
-      this.bodies.set(uranus.id, uranus);
+      this.bodies.set(titan.id, titan);
       
-      // Neptune
-      const neptune = await storage.createCelestialBody({
-        name: 'Neptune',
-        type: 'planet',
-        mass: 1.02413e26,
-        radius: 24622000,
-        semiMajorAxis: 4495060000000,
-        eccentricity: 0.0086,
-        inclination: 1.767975 * Math.PI / 180,
-        longitudeOfAscendingNode: 131.784 * Math.PI / 180,
-        argumentOfPeriapsis: 273.187 * Math.PI / 180,
-        meanAnomaly: 256.228 * Math.PI / 180,
-        parentBodyId: sun.id,
-        color: '#2980b9'
+      // Add a space station near Earth
+      const iss = await storage.createCelestialBody({
+        name: 'Alpha Station',
+        type: 'station',
+        mass: 5e5, // 500 tons
+        radius: 100, // 100m
+        semiMajorAxis: 6771000 * scaleFactor * 15, // Low Earth orbit, scaled
+        eccentricity: 0.0002,
+        inclination: 0.904 * Math.PI / 180,
+        longitudeOfAscendingNode: 0.0 * Math.PI / 180,
+        argumentOfPeriapsis: 0.0 * Math.PI / 180,
+        meanAnomaly: 0.0 * Math.PI / 180,
+        parentBodyId: earth.id,
+        color: '#ffffff'
       });
       
-      this.bodies.set(neptune.id, neptune);
+      this.bodies.set(iss.id, iss);
       
       console.log('Default solar system created');
     } catch (error) {

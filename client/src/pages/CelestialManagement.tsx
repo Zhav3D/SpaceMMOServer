@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import SolarSystemVisualization from "@/components/SolarSystemVisualization";
+import SolarSystem3D from "@/components/SolarSystem3D";
 import CelestialBodyEditor from "@/components/CelestialBodyEditor";
 import AsteroidGenerator from "@/components/AsteroidGenerator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function CelestialManagement() {
   const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
+  const [selectedBodyId, setSelectedBodyId] = useState<number | null>(null);
   
   // Fetch celestial bodies with refreshing when edits happen
   const { data: celestialData, isLoading } = useQuery({
@@ -23,6 +26,10 @@ export default function CelestialManagement() {
   const handleBodyEdit = () => {
     // Trigger refresh on edit
     setLastUpdate(Date.now());
+  };
+  
+  const handleBodySelect = (body: any) => {
+    setSelectedBodyId(body.id);
   };
   
   return (
@@ -39,13 +46,67 @@ export default function CelestialManagement() {
           <TabsTrigger value="simulation">Simulation Settings</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="visualization" className="bg-black rounded-md mt-2">
-          <div className="w-full">
-            <SolarSystemVisualization 
-              celestialBodies={celestialBodies} 
-              isLoading={isLoading} 
-            />
+        <TabsContent value="visualization" className="mt-2">
+          <div className="flex justify-end mb-2">
+            <div className="bg-muted rounded-md p-1 inline-flex">
+              <button 
+                onClick={() => setViewMode('2d')}
+                className={`px-3 py-1 rounded ${viewMode === '2d' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted-foreground/10'}`}
+              >
+                2D Canvas
+              </button>
+              <button 
+                onClick={() => setViewMode('3d')}
+                className={`px-3 py-1 rounded ${viewMode === '3d' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted-foreground/10'}`}
+              >
+                3D (Three.js)
+              </button>
+            </div>
           </div>
+          
+          <div className="w-full bg-black rounded-md">
+            {viewMode === '2d' ? (
+              <SolarSystemVisualization 
+                celestialBodies={celestialBodies} 
+                isLoading={isLoading}
+                onSelectBody={handleBodySelect}
+              />
+            ) : (
+              <SolarSystem3D 
+                celestialBodies={celestialBodies} 
+                isLoading={isLoading}
+                onSelectBody={handleBodySelect}
+              />
+            )}
+          </div>
+          
+          {selectedBodyId && (
+            <div className="mt-2 p-4 border rounded-md bg-muted/20">
+              <h3 className="text-lg font-medium mb-2">Selected Body</h3>
+              {celestialBodies
+                .filter(body => body.id === selectedBodyId)
+                .map(body => (
+                  <div key={body.id} className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="font-medium">Name:</div>
+                    <div>{body.name}</div>
+                    <div className="font-medium">Type:</div>
+                    <div>{body.type}</div>
+                    <div className="font-medium">Mass:</div>
+                    <div>{body.mass.toExponential(2)} kg</div>
+                    <div className="font-medium">Radius:</div>
+                    <div>{(body.radius / 1000).toFixed(0)} km</div>
+                    {body.parentBodyId && (
+                      <>
+                        <div className="font-medium">Parent Body:</div>
+                        <div>
+                          {celestialBodies.find(b => b.id === body.parentBodyId)?.name || 'Unknown'}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="management" className="mt-2 space-y-6">
@@ -126,7 +187,40 @@ function SimulationSettings() {
   // Update simulation speed
   const updateSimulationSpeed = (newSpeed: number) => {
     setLocalSpeed(newSpeed);
-    updateSpeedMutation.mutate(newSpeed);
+    
+    // Send the update to the server
+    fetch('/api/celestial/simulation', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ simulationSpeed: newSpeed }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        toast({
+          title: "Speed Updated",
+          description: `Simulation now running at ${newSpeed}x speed`,
+        });
+        refetch();
+      } else {
+        throw new Error(data.error || "Failed to update speed");
+      }
+    })
+    .catch(err => {
+      console.error("Error updating simulation speed:", err);
+      toast({
+        title: "Error",
+        description: "Failed to update simulation speed. Please try again.",
+        variant: "destructive",
+      });
+    });
   };
   
   return (
