@@ -213,7 +213,9 @@ const ClientControls: React.FC<{
   selectedArea: string,
   areas: any[],
   speed: number,
-  client: any
+  client: any,
+  isRegistered?: boolean,
+  onRegister?: () => void
 }> = ({ 
   onMoveForward,
   onMoveBackward,
@@ -226,7 +228,9 @@ const ClientControls: React.FC<{
   selectedArea,
   areas,
   speed,
-  client
+  client,
+  isRegistered = false,
+  onRegister
 }) => {
   return (
     <div className="flex flex-col gap-6">
@@ -241,6 +245,32 @@ const ClientControls: React.FC<{
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Server Registration:</span>
+              {isRegistered ? (
+                <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                  Registered
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                  Not Registered
+                </Badge>
+              )}
+            </div>
+            
+            {!isRegistered && onRegister && (
+              <Button 
+                onClick={onRegister}
+                className="w-full" 
+                variant="outline"
+                disabled={!selectedArea || !earth}
+              >
+                Register with Server
+              </Button>
+            )}
+          </div>
+          
           <Select 
             value={selectedArea} 
             onValueChange={onSelectArea}
@@ -864,6 +894,8 @@ export default function ClientSimulator() {
             areas={areas}
             speed={speed}
             client={client}
+            isRegistered={isRegistered}
+            onRegister={registerWithServer}
           />
         </div>
       </div>
