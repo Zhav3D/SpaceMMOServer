@@ -174,8 +174,38 @@ export default function CelestialManagement() {
         </TabsContent>
         
         <TabsContent value="management" className="mt-2 space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            <CelestialBodyEditor onEdit={handleBodyEdit} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <CelestialBodyEditor onEdit={handleBodyEdit} />
+            </div>
+            <div>
+              <div className="bg-muted p-4 rounded-md mb-4">
+                <h3 className="text-lg font-medium mb-2">Solar System Preview</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  See how your changes affect the solar system in real-time.
+                </p>
+                <div className="w-full bg-black rounded-md border border-border h-[400px]">
+                  <SolarSystemVisualization 
+                    celestialBodies={celestialBodies} 
+                    entities={entities}
+                    isLoading={isLoading}
+                    onSelectBody={handleBodySelect}
+                    showEntities={showEntities}
+                  />
+                </div>
+                <div className="mt-3 flex justify-between items-center">
+                  <button 
+                    onClick={() => setShowEntities(!showEntities)}
+                    className={`px-3 py-1 text-sm rounded ${showEntities ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'}`}
+                  >
+                    {showEntities ? 'Entities: On' : 'Entities: Off'}
+                  </button>
+                  <span className="text-xs text-muted-foreground">
+                    {entities.length} entities loaded
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </TabsContent>
         
