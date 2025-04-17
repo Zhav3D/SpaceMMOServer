@@ -6,6 +6,7 @@ import PlanetaryStatus from "@/components/PlanetaryStatus";
 import AreaOfInterestMonitor from "@/components/AreaOfInterestMonitor";
 import NpcFleetStatus from "@/components/NpcFleetStatus";
 import ServerDiagnostics from "@/components/ServerDiagnostics";
+import SimulatedPlayersControl from "@/components/SimulatedPlayersControl";
 import { useToast } from "@/hooks/use-toast";
 import { useServerContext } from "@/contexts/ServerContext";
 
@@ -140,11 +141,15 @@ export default function Dashboard() {
         />
       </div>
       
-      <div className="grid grid-cols-1 gap-6">
-        <ServerDiagnostics 
-          logs={logs?.success ? logs.data : []} 
-          isLoading={loadingLogs}
-        />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2">
+          <ServerDiagnostics 
+            logs={logs?.success ? logs.data : []} 
+            isLoading={loadingLogs}
+          />
+        </div>
+        
+        <SimulatedPlayersControl />
       </div>
     </div>
   );

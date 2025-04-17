@@ -394,6 +394,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json(response);
     }
   });
+  
+  // API to create simulated players
+  app.post('/api/simulated-players', (req: Request, res: Response) => {
+    if (!serverInstance) {
+      return res.status(500).json({
+        success: false,
+        error: 'Server not initialized',
+      });
+    }
+    
+    try {
+      const { count, areaId } = req.body;
+      
+      if (!count || typeof count !== 'number' || count <= 0 || count > 1000) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid count. Must be a number between 1 and 1000.',
+        });
+      }
+      
+      // Create simulated players using the game state manager
+      const simulatedPlayers = serverInstance.gameStateManager.createSimulatedPlayers(
+        count,
+        areaId
+      );
+      
+      const response: ApiResponse<{
+        message: string;
+        count: number;
+        totalPlayers: number;
+      }> = {
+        success: true,
+        data: {
+          message: `Created ${count} simulated players`,
+          count: simulatedPlayers.length,
+          totalPlayers: serverInstance.gameStateManager.getPlayerCount()
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to create simulated players: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // API to remove all simulated players
+  app.delete('/api/simulated-players', (req: Request, res: Response) => {
+    if (!serverInstance) {
+      return res.status(500).json({
+        success: false,
+        error: 'Server not initialized',
+      });
+    }
+    
+    try {
+      // Remove all simulated players
+      serverInstance.gameStateManager.removeAllSimulatedPlayers();
+      
+      const response: ApiResponse<{
+        message: string;
+        remainingPlayers: number;
+      }> = {
+        success: true,
+        data: {
+          message: 'All simulated players removed',
+          remainingPlayers: serverInstance.gameStateManager.getRealPlayers().length
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to remove simulated players: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // API to get simulated player stats
+  app.get('/api/simulated-players', (req: Request, res: Response) => {
+    if (!serverInstance) {
+      return res.status(500).json({
+        success: false,
+        error: 'Server not initialized',
+      });
+    }
+    
+    try {
+      const response: ApiResponse<{
+        count: number;
+        totalPlayers: number;
+        realPlayers: number;
+      }> = {
+        success: true,
+        data: {
+          count: serverInstance.gameStateManager.getSimulatedPlayerCount(),
+          totalPlayers: serverInstance.gameStateManager.getPlayerCount(),
+          realPlayers: serverInstance.gameStateManager.getRealPlayers().length
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to fetch simulated player stats: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
 
   return httpServer;
 }
