@@ -326,6 +326,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get simulation speed as a separate endpoint for convenience
   app.get('/api/celestial/simulation/speed', (req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+    
     if (!serverInstance || !serverInstance.celestialManager) {
       return res.status(500).json({
         success: false,
@@ -341,8 +343,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: { simulationSpeed: settings.simulationSpeed },
       };
       
-      res.json(response);
+      return res.status(200).json(response);
     } catch (error) {
+      console.error('Error getting simulation speed:', error);
       const response: ApiResponse<null> = {
         success: false,
         error: `Failed to get simulation speed: ${error}`,
@@ -601,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Set simulation speed API - fixed version
+  // Set simulation speed API (updated)
   app.put('/api/celestial/simulation', (req: Request, res: Response) => {
     if (!serverInstance || !serverInstance.celestialManager) {
       return res.status(500).json({
@@ -638,6 +641,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       res.status(500).json(response);
+    }
+  });
+  
+  // Dedicated endpoint for simulation speed updates
+  app.put('/api/celestial/simulation/speed', (req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+    
+    if (!serverInstance || !serverInstance.celestialManager) {
+      return res.status(500).json({
+        success: false,
+        error: 'Celestial manager not initialized',
+      });
+    }
+    
+    try {
+      const speed = parseFloat(req.body.speed);
+      
+      if (isNaN(speed)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid speed parameter. Must be a number.',
+        });
+      }
+      
+      console.log(`Setting simulation speed to ${speed}`);
+      serverInstance.celestialManager.setSimulationSpeed(speed);
+      
+      const response: ApiResponse<{ simulationSpeed: number }> = {
+        success: true,
+        data: { simulationSpeed: speed },
+      };
+      
+      return res.status(200).json(response);
+    } catch (error) {
+      console.error('Error updating simulation speed:', error);
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to update simulation speed: ${error}`,
+      };
+      
+      return res.status(500).json(response);
     }
   });
   

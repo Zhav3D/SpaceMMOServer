@@ -188,13 +188,13 @@ function SimulationSettings() {
   const updateSimulationSpeed = (newSpeed: number) => {
     setLocalSpeed(newSpeed);
     
-    // Send the update to the server
-    fetch('/api/celestial/simulation', {
+    // Send the update to the server using the new dedicated endpoint
+    fetch('/api/celestial/simulation/speed', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ simulationSpeed: newSpeed }),
+      body: JSON.stringify({ speed: newSpeed }),
     })
     .then(response => {
       if (!response.ok) {
