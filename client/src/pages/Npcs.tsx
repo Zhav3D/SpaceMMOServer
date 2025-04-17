@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -127,6 +127,15 @@ export default function Npcs() {
       deleteFleetMutation.mutate(fleetToDelete);
     }
   };
+  
+  // This effect will refetch fleets data when deleteFleetMutation completes
+  useEffect(() => {
+    if (deleteFleetMutation.isSuccess) {
+      // Force refetch with fresh data
+      refetch();
+      console.log("Fleet deleted successfully, refreshing data");
+    }
+  }, [deleteFleetMutation.isSuccess, refetch]);
 
   const getBadgeColorForType = (type: string) => {
     switch (type) {

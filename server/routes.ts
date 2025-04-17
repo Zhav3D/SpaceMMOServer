@@ -951,5 +951,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get a specific mission
+  app.get('/api/missions/:missionId', (req: Request, res: Response) => {
+    if (!serverInstance || !serverInstance.missionManager) {
+      return res.status(503).json({
+        success: false,
+        error: 'Mission system not initialized'
+      });
+    }
+    
+    try {
+      const { missionId } = req.params;
+      
+      if (!missionId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing mission ID'
+        });
+      }
+      
+      const mission = serverInstance.missionManager.getMission(missionId);
+      
+      if (!mission) {
+        return res.status(404).json({
+          success: false,
+          error: `Mission with ID ${missionId} not found`
+        });
+      }
+      
+      const missionState = serverInstance.missionManager.missionToState(mission);
+      
+      const response: ApiResponse<any> = {
+        success: true,
+        data: missionState
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to fetch mission: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // Delete a mission
+  app.delete('/api/missions/:missionId', (req: Request, res: Response) => {
+    if (!serverInstance || !serverInstance.missionManager) {
+      return res.status(503).json({
+        success: false,
+        error: 'Mission system not initialized'
+      });
+    }
+    
+    try {
+      const { missionId } = req.params;
+      
+      if (!missionId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing mission ID'
+        });
+      }
+      
+      const success = serverInstance.missionManager.deleteMission(missionId);
+      
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          error: `Mission with ID ${missionId} not found or could not be deleted`
+        });
+      }
+      
+      const response: ApiResponse<any> = {
+        success: true,
+        data: {
+          message: `Mission with ID ${missionId} successfully deleted`,
+          missionId
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to delete mission: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // Assign a mission to a fleet
+  app.put('/api/missions/:missionId/assign', (req: Request, res: Response) => {
+    if (!serverInstance || !serverInstance.missionManager) {
+      return res.status(503).json({
+        success: false,
+        error: 'Mission system not initialized'
+      });
+    }
+    
+    try {
+      const { missionId } = req.params;
+      const { fleetId } = req.body;
+      
+      if (!missionId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing mission ID'
+        });
+      }
+      
+      if (!fleetId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing fleet ID in request body'
+        });
+      }
+      
+      const success = serverInstance.missionManager.assignMissionToFleet(missionId, fleetId);
+      
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          error: `Could not assign mission ${missionId} to fleet ${fleetId}. Mission or fleet may not exist.`
+        });
+      }
+      
+      const response: ApiResponse<any> = {
+        success: true,
+        data: {
+          message: `Mission ${missionId} successfully assigned to fleet ${fleetId}`,
+          missionId,
+          fleetId
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to assign mission: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
   return httpServer;
 }
