@@ -324,6 +324,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get simulation speed as a separate endpoint for convenience
+  app.get('/api/celestial/simulation/speed', (req: Request, res: Response) => {
+    if (!serverInstance || !serverInstance.celestialManager) {
+      return res.status(500).json({
+        success: false,
+        error: 'Celestial manager not initialized',
+      });
+    }
+    
+    try {
+      const settings = serverInstance.celestialManager.getSimulationSettings();
+      
+      const response: ApiResponse<{ simulationSpeed: number }> = {
+        success: true,
+        data: { simulationSpeed: settings.simulationSpeed },
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to get simulation speed: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
   // NPC fleets API
   app.get('/api/npc/fleets', async (req: Request, res: Response) => {
     try {
@@ -583,21 +611,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const { speed } = req.body;
+      // Allow either 'speed' or 'simulationSpeed' in request body for flexibility
+      const speed = req.body.speed !== undefined ? req.body.speed : req.body.simulationSpeed;
       
       if (speed === undefined) {
         return res.status(400).json({
           success: false,
-          error: 'Missing speed parameter',
+          error: 'Missing speed or simulationSpeed parameter',
         });
       }
       
       // Update simulation speed
       serverInstance.celestialManager.setSimulationSpeed(parseFloat(speed));
       
-      const response: ApiResponse<{ speed: number }> = {
+      const response: ApiResponse<{ simulationSpeed: number }> = {
         success: true,
-        data: { speed: parseFloat(speed) },
+        data: { simulationSpeed: parseFloat(speed) },
       };
       
       res.json(response);

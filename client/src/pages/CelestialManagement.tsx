@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import SolarSystemVisualization from "@/components/SolarSystemVisualization";
 import CelestialBodyEditor from "@/components/CelestialBodyEditor";
+import AsteroidGenerator from "@/components/AsteroidGenerator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button"; 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CelestialManagement() {
   const [lastUpdate, setLastUpdate] = useState(Date.now());
@@ -44,8 +48,15 @@ export default function CelestialManagement() {
           </div>
         </TabsContent>
         
-        <TabsContent value="management" className="mt-2">
-          <CelestialBodyEditor onEdit={handleBodyEdit} />
+        <TabsContent value="management" className="mt-2 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <CelestialBodyEditor onEdit={handleBodyEdit} />
+            </div>
+            <div>
+              <AsteroidGenerator onGenerate={handleBodyEdit} />
+            </div>
+          </div>
         </TabsContent>
         
         <TabsContent value="simulation" className="mt-2">
@@ -67,35 +78,62 @@ export default function CelestialManagement() {
 }
 
 function SimulationSettings() {
-  const [speed, setSpeed] = useState<number>(1);
+  const { toast } = useToast();
+  const [localSpeed, setLocalSpeed] = useState<number>(1);
   
-  const { data } = useQuery({
-    queryKey: ["/api/celestial/settings"],
-    refetchInterval: 5000
+  // Query for simulation speed - more reliable endpoint
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["/api/celestial/simulation/speed"],
+    refetchInterval: 3000
   });
   
-  const simulationSettings = data?.data || { simulationSpeed: 1 };
+  const simulationSpeed = data?.data?.simulationSpeed || 1;
   
-  // Update simulation speed
-  const updateSimulationSpeed = async (newSpeed: number) => {
-    try {
-      await fetch('/api/celestial/simulation', {
+  // Update simulation speed mutation
+  const updateSpeedMutation = useMutation({
+    mutationFn: async (newSpeed: number) => {
+      const response = await fetch('/api/celestial/simulation', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ simulationSpeed: newSpeed }),
       });
-    } catch (error) {
-      console.error('Failed to update simulation speed:', error);
+      
+      if (!response.ok) {
+        throw new Error("Failed to update simulation speed");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      refetch(); // Refresh the data after successful update
+      toast({
+        title: "Speed Updated",
+        description: `Simulation now running at ${localSpeed}x speed`,
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating simulation speed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update simulation speed",
+        variant: "destructive",
+      });
     }
+  });
+  
+  // Update simulation speed
+  const updateSimulationSpeed = (newSpeed: number) => {
+    setLocalSpeed(newSpeed);
+    updateSpeedMutation.mutate(newSpeed);
   };
   
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-medium">
-          Simulation Speed: {simulationSettings.simulationSpeed}x
+          Simulation Speed: {simulationSpeed}x
         </label>
         <div className="flex items-center space-x-2">
           <button 
