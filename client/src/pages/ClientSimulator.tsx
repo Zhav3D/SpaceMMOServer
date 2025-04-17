@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Slider } from '@/components/ui/slider';
 import { 
   ArrowUp, 
@@ -258,34 +259,40 @@ const ClientControls: React.FC<{
                 </Badge>
               )}
             </div>
-            
-            {!isRegistered && onRegister && (
+          </div>
+          
+          <div className="mb-4">
+            <Label className="block mb-2">1. Select an Area of Interest</Label>
+            <Select 
+              value={selectedArea} 
+              onValueChange={onSelectArea}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select area" />
+              </SelectTrigger>
+              <SelectContent>
+                {areas.map(area => (
+                  <SelectItem key={area.areaId} value={area.areaId}>
+                    {area.name} - {area.entityCount} entities
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {!isRegistered && onRegister && (
+            <div className="mb-4">
+              <Label className="block mb-2">2. Register with Server</Label>
               <Button 
                 onClick={onRegister}
                 className="w-full" 
-                variant="outline"
+                variant="default"
                 disabled={!selectedArea}
               >
                 Register with Server
               </Button>
-            )}
-          </div>
-          
-          <Select 
-            value={selectedArea} 
-            onValueChange={onSelectArea}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select area" />
-            </SelectTrigger>
-            <SelectContent>
-              {areas.map(area => (
-                <SelectItem key={area.areaId} value={area.areaId}>
-                  {area.name} - {area.entityCount} entities
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            </div>
+          )}
           
           {client && (
             <div className="mt-4 grid grid-cols-2 gap-4">
