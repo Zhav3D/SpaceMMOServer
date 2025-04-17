@@ -6,13 +6,38 @@ import {
   Player, InsertPlayer,
   AreaOfInterest as AreaOfInterestRecord, InsertAreaOfInterest,
   ServerLog, InsertServerLog,
-  ServerStat, InsertServerStat
+  ServerStat, InsertServerStat,
+  ServerSetting, InsertServerSetting,
+  SERVER_SETTINGS,
+  
+  // Table references for database queries
+  users,
+  celestialBodies,
+  npcShips,
+  npcFleets,
+  players,
+  areasOfInterest,
+  serverLogs,
+  serverStats,
+  serverSettings
 } from '@shared/schema';
 import { Vector3 } from '@shared/math';
 import { AreaOfInterestState } from '@shared/types';
+import { eq, desc, and, isNull } from 'drizzle-orm';
+import { db } from './db';
 
 // Extend the storage interface with all the required methods
 export interface IStorage {
+  // World persistence methods
+  saveWorldState(): Promise<boolean>;
+  loadWorldState(): Promise<boolean>;
+  resetWorldState(): Promise<boolean>;
+  
+  // Server settings methods
+  getSetting(name: string): Promise<ServerSetting | undefined>;
+  getSettingValue<T>(name: string, defaultValue: T): Promise<T>;
+  updateSetting(name: string, value: string, dataType: string, category: string, description?: string): Promise<ServerSetting>;
+  getAllSettings(): Promise<ServerSetting[]>;
   // Original methods (from default template)
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;

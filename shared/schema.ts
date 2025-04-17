@@ -32,6 +32,13 @@ export const celestialBodies = pgTable("celestial_bodies", {
   meanAnomaly: real("mean_anomaly").notNull(), // orbital parameter
   parentBodyId: integer("parent_body_id"), // null for the sun/star
   color: text("color").notNull(), // For visualization
+  // Frozen position data
+  currentPositionX: real("current_position_x"),
+  currentPositionY: real("current_position_y"),
+  currentPositionZ: real("current_position_z"),
+  frozenPositionX: real("frozen_position_x"),
+  frozenPositionY: real("frozen_position_y"),
+  frozenPositionZ: real("frozen_position_z"),
 });
 
 export const insertCelestialBodySchema = createInsertSchema(celestialBodies).omit({
@@ -200,3 +207,33 @@ export const insertServerStatSchema = createInsertSchema(serverStats).omit({
 
 export type InsertServerStat = z.infer<typeof insertServerStatSchema>;
 export type ServerStat = typeof serverStats.$inferSelect;
+
+// Server settings
+export const serverSettings = pgTable("server_settings", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // Setting name
+  value: text("value").notNull(), // Setting value as string (can be parsed as needed)
+  category: text("category").notNull(), // Category for grouping settings
+  description: text("description"), // Optional description
+  dataType: text("data_type").notNull(), // Type of data (string, number, boolean, json)
+  lastUpdated: real("last_updated").notNull(),
+});
+
+export const insertServerSettingSchema = createInsertSchema(serverSettings).omit({
+  id: true,
+});
+
+export type InsertServerSetting = z.infer<typeof insertServerSettingSchema>;
+export type ServerSetting = typeof serverSettings.$inferSelect;
+
+// Known setting names (for type safety)
+export const SERVER_SETTINGS = {
+  FROZEN_SOLAR_SYSTEM: "frozen_solar_system", // boolean
+  AUTO_SAVE_ENABLED: "auto_save_enabled", // boolean
+  AUTO_SAVE_INTERVAL: "auto_save_interval", // number (seconds)
+  MISSION_GENERATION_RATE: "mission_generation_rate", // number (missions per hour)
+  SIMULATION_SPEED: "simulation_speed", // number (1.0 = normal speed)
+  MAX_PLAYERS: "max_players", // number
+  MAX_NPCS_PER_AREA: "max_npcs_per_area", // number
+  TICK_RATE: "tick_rate", // number (ticks per second)
+};
