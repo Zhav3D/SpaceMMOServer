@@ -18,13 +18,15 @@ interface SolarSystem3DProps {
   entities?: Entity[];
   isLoading?: boolean;
   onSelectBody?: (body: any) => void;
+  showEntities?: boolean;
 }
 
 export default function SolarSystem3D({ 
   celestialBodies = [], 
   entities = [],
   isLoading = false,
-  onSelectBody
+  onSelectBody,
+  showEntities = false
 }: SolarSystem3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -406,7 +408,213 @@ export default function SolarSystem3D({
       orbitLinesRef.current.set(body.id, line);
     }
     
-  }, [celestialBodies, scale, selectedBodyId]);
+    
+    // Render entities (NPCs and players) if toggled on
+    if (showEntities && entities.length > 0) {
+      renderEntities();
+    }
+    
+    // Helper function to render entities
+    function renderEntities() {
+      // Get planet positions for reference
+      const earth = celestialBodies.find(b => b.name === 'Earth' || b.name === 'earth');
+      const mars = celestialBodies.find(b => b.name === 'Mars' || b.name === 'mars');
+      const jupiter = celestialBodies.find(b => b.name === 'Jupiter' || b.name === 'jupiter');
+      const saturn = celestialBodies.find(b => b.name === 'Saturn' || b.name === 'saturn');
+      
+      if (earth) {
+        const earthPos = new THREE.Vector3(
+          earth.currentPositionX * scale || 0,
+          earth.currentPositionY * scale || 0,
+          earth.currentPositionZ * scale || 0
+        );
+        
+        // Create player entities near Earth
+        for (let i = 0; i < 5; i++) {
+          const angle = (i / 5) * Math.PI * 2;
+          const radius = Math.log10(earth.radius) * 5;
+          const x = earthPos.x + Math.cos(angle) * radius;
+          const y = earthPos.y;
+          const z = earthPos.z + Math.sin(angle) * radius;
+          
+          const playerGeometry = new THREE.SphereGeometry(2, 16, 16);
+          const playerMaterial = new THREE.MeshStandardMaterial({
+            color: 0x4CAF50,
+            emissive: 0x4CAF50,
+            emissiveIntensity: 0.5
+          });
+          
+          const playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
+          playerMesh.position.set(x, y, z);
+          playerMesh.userData = {
+            type: 'entity',
+            entityType: 'player',
+            entityId: `player-${i}`
+          };
+          
+          sceneRef.current.add(playerMesh);
+        }
+        
+        // Add enemy fleet near Earth
+        const enemyFleetPos = new THREE.Vector3(
+          earthPos.x + Math.cos(Math.PI * 0.75) * Math.log10(earth.radius) * 7,
+          earthPos.y,
+          earthPos.z + Math.sin(Math.PI * 0.75) * Math.log10(earth.radius) * 7
+        );
+        
+        // Create enemy ship formation
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            const enemyShipGeometry = new THREE.ConeGeometry(1, 3, 4);
+            const enemyShipMaterial = new THREE.MeshStandardMaterial({
+              color: 0xFF5722,
+              emissive: 0xFF5722,
+              emissiveIntensity: 0.5
+            });
+            
+            const enemyShipMesh = new THREE.Mesh(enemyShipGeometry, enemyShipMaterial);
+            enemyShipMesh.position.set(
+              enemyFleetPos.x + (i - 1) * 3,
+              enemyFleetPos.y,
+              enemyFleetPos.z + (j - 1) * 3
+            );
+            enemyShipMesh.userData = {
+              type: 'entity',
+              entityType: 'npc',
+              entityId: `enemy-${i}-${j}`
+            };
+            
+            // Rotate to face "forward"
+            enemyShipMesh.rotation.x = Math.PI / 2;
+            
+            sceneRef.current.add(enemyShipMesh);
+          }
+        }
+      }
+      
+      // Add transport ships between Earth and Mars
+      if (earth && mars) {
+        const earthPos = new THREE.Vector3(
+          earth.currentPositionX * scale || 0,
+          earth.currentPositionY * scale || 0,
+          earth.currentPositionZ * scale || 0
+        );
+        
+        const marsPos = new THREE.Vector3(
+          mars.currentPositionX * scale || 0,
+          mars.currentPositionY * scale || 0,
+          mars.currentPositionZ * scale || 0
+        );
+        
+        // Create transport ships along the route
+        for (let i = 0; i < 3; i++) {
+          const lerpFactor = 0.3 + (i * 0.2);
+          const shipPos = new THREE.Vector3();
+          shipPos.lerpVectors(earthPos, marsPos, lerpFactor);
+          
+          const transportGeometry = new THREE.CylinderGeometry(1, 2, 5, 8);
+          const transportMaterial = new THREE.MeshStandardMaterial({
+            color: 0xFF9800,
+            emissive: 0xFF9800,
+            emissiveIntensity: 0.5
+          });
+          
+          const transportMesh = new THREE.Mesh(transportGeometry, transportMaterial);
+          transportMesh.position.copy(shipPos);
+          
+          // Calculate direction vector from Earth to Mars
+          const direction = new THREE.Vector3().subVectors(marsPos, earthPos).normalize();
+          
+          // Create a quaternion to rotate from up vector to direction
+          const quaternion = new THREE.Quaternion();
+          quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+          
+          // Apply rotation
+          transportMesh.setRotationFromQuaternion(quaternion);
+          
+          transportMesh.userData = {
+            type: 'entity',
+            entityType: 'npc',
+            entityId: `transport-${i}`
+          };
+          
+          sceneRef.current.add(transportMesh);
+        }
+      }
+      
+      // Add mining ships near Jupiter
+      if (jupiter) {
+        const jupiterPos = new THREE.Vector3(
+          jupiter.currentPositionX * scale || 0,
+          jupiter.currentPositionY * scale || 0,
+          jupiter.currentPositionZ * scale || 0
+        );
+        
+        for (let i = 0; i < 5; i++) {
+          const angle = Math.PI * 0.6 + (i / 10);
+          const radius = Math.log10(jupiter.radius) * 6;
+          const distance = radius * (0.9 + Math.random() * 0.2);
+          
+          const x = jupiterPos.x + Math.cos(angle) * distance;
+          const y = jupiterPos.y;
+          const z = jupiterPos.z + Math.sin(angle) * distance;
+          
+          const miningGeometry = new THREE.BoxGeometry(3, 2, 2);
+          const miningMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8BC34A,
+            emissive: 0x8BC34A,
+            emissiveIntensity: 0.5
+          });
+          
+          const miningMesh = new THREE.Mesh(miningGeometry, miningMaterial);
+          miningMesh.position.set(x, y, z);
+          miningMesh.userData = {
+            type: 'entity',
+            entityType: 'npc',
+            entityId: `mining-${i}`
+          };
+          
+          sceneRef.current.add(miningMesh);
+        }
+      }
+      
+      // Add civilian ships near Saturn
+      if (saturn) {
+        const saturnPos = new THREE.Vector3(
+          saturn.currentPositionX * scale || 0,
+          saturn.currentPositionY * scale || 0,
+          saturn.currentPositionZ * scale || 0
+        );
+        
+        for (let i = 0; i < 7; i++) {
+          const angle = (i / 7) * Math.PI * 2;
+          const radius = Math.log10(saturn.radius) * 5;
+          const distance = radius * (0.9 + Math.random() * 0.3);
+          
+          const x = saturnPos.x + Math.cos(angle) * distance;
+          const y = saturnPos.y;
+          const z = saturnPos.z + Math.sin(angle) * distance;
+          
+          const civilianGeometry = new THREE.SphereGeometry(1.5, 16, 16);
+          const civilianMaterial = new THREE.MeshStandardMaterial({
+            color: 0x03A9F4,
+            emissive: 0x03A9F4,
+            emissiveIntensity: 0.5
+          });
+          
+          const civilianMesh = new THREE.Mesh(civilianGeometry, civilianMaterial);
+          civilianMesh.position.set(x, y, z);
+          civilianMesh.userData = {
+            type: 'entity',
+            entityType: 'npc',
+            entityId: `civilian-${i}`
+          };
+          
+          sceneRef.current.add(civilianMesh);
+        }
+      }
+    }
+  }, [celestialBodies, scale, selectedBodyId, showEntities, entities]);
   
   // Update positions for animation
   useEffect(() => {

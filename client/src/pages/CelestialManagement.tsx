@@ -128,6 +128,7 @@ export default function CelestialManagement() {
                 entities={entities}
                 isLoading={isLoading}
                 onSelectBody={handleBodySelect}
+                showEntities={showEntities}
               />
             )}
           </div>
