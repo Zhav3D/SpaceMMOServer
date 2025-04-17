@@ -24,7 +24,8 @@ export default function SolarSystem3D({
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   
-  const [scale, setScale] = useState<number>(5e-10); // Scale factor for visualization
+  // Use a larger scale factor to make planets visible (not to actual scale)
+  const [scale, setScale] = useState<number>(5e-9); // 10x larger than before for better visibility
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [selectedBodyId, setSelectedBodyId] = useState<number | null>(null);
   
@@ -235,7 +236,8 @@ export default function SolarSystem3D({
       position.multiplyScalar(scale);
       
       // Scale radius for visualization (logarithmic scale for better visibility)
-      const scaledRadius = Math.max(2, Math.log10(body.radius) * 1.5);
+      // Use a much larger factor to make planets visible - not to scale with actual size
+      const scaledRadius = Math.max(3, Math.log10(body.radius) * 2.5);
       
       let geometry, material, mesh;
       
@@ -454,7 +456,7 @@ export default function SolarSystem3D({
   };
   
   const handleResetScale = () => {
-    setScale(5e-10);
+    setScale(5e-9); // Match the default scale
   };
   
   return (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ export default function ServerSettings() {
   });
 
   // Update settings with the fetched values when available
-  useState(() => {
+  useEffect(() => {
     if (settingsData?.success && settingsData.data) {
       const settings = settingsData.data;
       setMaxPlayers(String(settings.maxPlayers));
@@ -59,7 +59,7 @@ export default function ServerSettings() {
       setCompressionEnabled(settings.compressionEnabled);
       setEncryptionEnabled(settings.encryptionEnabled);
     }
-  });
+  }, [settingsData]);
 
   // Mutation to update settings
   const updateSettingsMutation = useMutation({
