@@ -333,40 +333,181 @@ export default function SolarSystemVisualization({
     });
     
     // Draw NPC and player entities if toggle is on
-    if (showEntities && entities.length > 0) {
-      // Draw entities (NPCs and players)
-      entities.forEach(entity => {
-        // Convert entity position to canvas coordinates
-        const entityX = entity.position.x * scaleFactor;
-        const entityY = entity.position.y * scaleFactor;
+    if (showEntities) {
+      // Since we don't have actual entity position data yet from the API,
+      // we'll place entities in a logical way around celestial bodies
+      
+      // Find celestial bodies with fleet or player presence
+      const earthBody = celestialBodies.find(body => body.name === 'Earth');
+      const marsBody = celestialBodies.find(body => body.name === 'Mars');
+      const jupiterBody = celestialBodies.find(body => body.name === 'Jupiter');
+      const saturnBody = celestialBodies.find(body => body.name === 'Saturn');
+      
+      // Distributed fleet positions
+      if (earthBody) {
+        // Earth orbit fleets - place in orbit around Earth
+        const earthX = centerX + (earthBody.currentPositionX || 0) * scaleFactor;
+        const earthY = centerY + (earthBody.currentPositionY || 0) * scaleFactor;
+        const orbitRadius = earthBody.radius * radiusScaleFactor * 5;
         
-        // Calculate screen position
-        const x = centerX + entityX;
-        const y = centerY + entityY;
+        // Draw simulated players
+        for (let i = 0; i < 5; i++) {
+          const angle = (i / 5) * Math.PI * 2;
+          const x = earthX + Math.cos(angle) * orbitRadius;
+          const y = earthY + Math.sin(angle) * orbitRadius;
+          
+          // Draw player
+          ctx.fillStyle = '#4CAF50';
+          ctx.beginPath();
+          ctx.arc(x, y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Draw halo
+          ctx.strokeStyle = '#4CAF50';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(x, y, 8, 0, Math.PI * 2);
+          ctx.stroke();
+        }
         
-        // Skip if off-screen
-        if (x < -10 || x > canvas.width + 10 || y < -10 || y > canvas.height + 10) return;
+        // Draw enemy fleet
+        const enemyAngle = Math.PI * 0.25;
+        const enemyX = earthX + Math.cos(enemyAngle) * orbitRadius * 1.2;
+        const enemyY = earthY + Math.sin(enemyAngle) * orbitRadius * 1.2;
         
-        // Different colors for NPCs and players
-        const entityColor = entity.type === 'player' ? '#4CAF50' : '#FF5722';
-        const entitySize = entity.type === 'player' ? 6 : 4;
+        // Draw enemy ships in a formation
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            const x = enemyX + (i - 1) * 5;
+            const y = enemyY + (j - 1) * 5;
+            
+            ctx.fillStyle = '#FF5722';
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+      
+      // Draw transports between planets
+      if (marsBody && earthBody) {
+        const earthX = centerX + (earthBody.currentPositionX || 0) * scaleFactor;
+        const earthY = centerY + (earthBody.currentPositionY || 0) * scaleFactor;
+        const marsX = centerX + (marsBody.currentPositionX || 0) * scaleFactor;
+        const marsY = centerY + (marsBody.currentPositionY || 0) * scaleFactor;
         
-        // Draw entity
-        ctx.fillStyle = entityColor;
-        ctx.beginPath();
-        ctx.arc(x, y, entitySize, 0, Math.PI * 2);
-        ctx.fill();
+        // Calculate midpoint with offset
+        const midX = (earthX + marsX) / 2;
+        const midY = (earthY + marsY) / 2 - 20;
         
-        // Draw halo effect
-        ctx.strokeStyle = entityColor;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(x, y, entitySize + 2, 0, Math.PI * 2);
-        ctx.stroke();
+        // Draw transport ships
+        for (let i = 0; i < 3; i++) {
+          const lerpFactor = 0.3 + (i * 0.2);
+          const x = earthX + (marsX - earthX) * lerpFactor;
+          const y = earthY + (marsY - earthY) * lerpFactor;
+          
+          ctx.fillStyle = '#FF9800';
+          ctx.beginPath();
+          ctx.arc(x, y, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      
+      // Draw mining operations near Jupiter
+      if (jupiterBody) {
+        const jupiterX = centerX + (jupiterBody.currentPositionX || 0) * scaleFactor;
+        const jupiterY = centerY + (jupiterBody.currentPositionY || 0) * scaleFactor;
+        const orbitRadius = jupiterBody.radius * radiusScaleFactor * 6;
         
-        // Show entity ID on hover (for future implementation)
-        // ctx.fillText(entity.id, x, y - entitySize - 5);
-      });
+        // Draw mining ships in a cluster
+        for (let i = 0; i < 5; i++) {
+          const angle = Math.PI * 0.6 + (i / 10);
+          const distance = orbitRadius * (0.9 + Math.random() * 0.2);
+          const x = jupiterX + Math.cos(angle) * distance;
+          const y = jupiterY + Math.sin(angle) * distance;
+          
+          ctx.fillStyle = '#8BC34A';
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      
+      // Draw civilian ships near Saturn
+      if (saturnBody) {
+        const saturnX = centerX + (saturnBody.currentPositionX || 0) * scaleFactor;
+        const saturnY = centerY + (saturnBody.currentPositionY || 0) * scaleFactor;
+        const orbitRadius = saturnBody.radius * radiusScaleFactor * 4;
+        
+        // Draw civilian ships
+        for (let i = 0; i < 7; i++) {
+          const angle = (i / 7) * Math.PI * 2;
+          const distance = orbitRadius * (0.9 + Math.random() * 0.3);
+          const x = saturnX + Math.cos(angle) * distance;
+          const y = saturnY + Math.sin(angle) * distance;
+          
+          ctx.fillStyle = '#03A9F4';
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      
+      // Draw entity legend
+      const legendX = 20;
+      let legendY = 40;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(legendX - 10, legendY - 25, 140, 110);
+      
+      ctx.fillStyle = 'white';
+      ctx.textAlign = 'left';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('Entity Types:', legendX, legendY - 10);
+      
+      // Players
+      ctx.fillStyle = '#4CAF50';
+      ctx.beginPath();
+      ctx.arc(legendX + 10, legendY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.fillText('Players', legendX + 25, legendY + 4);
+      
+      // Enemy ships
+      legendY += 20;
+      ctx.fillStyle = '#FF5722';
+      ctx.beginPath();
+      ctx.arc(legendX + 10, legendY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.fillText('Enemy Ships', legendX + 25, legendY + 4);
+      
+      // Transport ships
+      legendY += 20;
+      ctx.fillStyle = '#FF9800';
+      ctx.beginPath();
+      ctx.arc(legendX + 10, legendY, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.fillText('Transport Ships', legendX + 25, legendY + 4);
+      
+      // Mining ships
+      legendY += 20;
+      ctx.fillStyle = '#8BC34A';
+      ctx.beginPath();
+      ctx.arc(legendX + 10, legendY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.fillText('Mining Ships', legendX + 25, legendY + 4);
+      
+      // Civilian ships
+      legendY += 20;
+      ctx.fillStyle = '#03A9F4';
+      ctx.beginPath();
+      ctx.arc(legendX + 10, legendY, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.fillText('Civilian Ships', legendX + 25, legendY + 4);
     }
   }, [celestialBodies, scale, focusBody, zoomLevel, showEntities, entities, panOffset]);
 
