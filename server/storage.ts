@@ -23,7 +23,7 @@ import {
 } from '@shared/schema';
 import { Vector3 } from '@shared/math';
 import { AreaOfInterestState } from '@shared/types';
-import { eq, desc, and, isNull } from 'drizzle-orm';
+import { eq, desc, and, isNull, sql } from 'drizzle-orm';
 import { db } from './db';
 
 // Extend the storage interface with all the required methods
@@ -846,6 +846,15 @@ export class DatabaseStorage implements IStorage {
         await tx.delete(npcFleets);
         await tx.delete(areasOfInterest);
         // Don't delete players, logs, or settings
+        
+        // Reset the sequence generators to avoid primary key conflicts
+        await tx.execute(sql`ALTER SEQUENCE celestial_bodies_id_seq RESTART WITH 1;`);
+        await tx.execute(sql`ALTER SEQUENCE npc_ships_id_seq RESTART WITH 1;`);
+        await tx.execute(sql`ALTER SEQUENCE npc_fleets_id_seq RESTART WITH 1;`);
+        await tx.execute(sql`ALTER SEQUENCE areas_of_interest_id_seq RESTART WITH 1;`);
+        await tx.execute(sql`ALTER SEQUENCE missions_id_seq RESTART WITH 1;`);
+        
+        console.log('Database sequences reset');
       });
       
       // Create a log entry for this reset
