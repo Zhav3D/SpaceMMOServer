@@ -110,13 +110,8 @@ export default function CelestialManagement() {
         </TabsContent>
         
         <TabsContent value="management" className="mt-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
-              <CelestialBodyEditor onEdit={handleBodyEdit} />
-            </div>
-            <div>
-              <AsteroidGenerator onGenerate={handleBodyEdit} />
-            </div>
+          <div className="grid grid-cols-1 gap-6">
+            <CelestialBodyEditor onEdit={handleBodyEdit} />
           </div>
         </TabsContent>
         

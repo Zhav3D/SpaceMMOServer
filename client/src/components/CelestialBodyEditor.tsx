@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import AsteroidGenerator from "@/components/AsteroidGenerator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -840,6 +841,20 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
         </TabsContent>
         
         <TabsContent value="asteroids" className="space-y-4">
+          {/* Asteroid Generator */}
+          <Card className="mb-4">
+            <CardHeader className="py-3">
+              <CardTitle className="text-base font-medium">Asteroid Belt Generator</CardTitle>
+              <CardDescription>
+                Generate multiple asteroids with randomized parameters at once
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AsteroidGenerator onGenerate={onEdit} />
+            </CardContent>
+          </Card>
+          
+          {/* Asteroid List */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredBodies.length > 0 ? (
               filteredBodies.map((body) => (
