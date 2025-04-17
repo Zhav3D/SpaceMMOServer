@@ -28,9 +28,9 @@
     "parentBodyId": 1,
     "color": "#b5b5b5",
     "id": 2,
-    "currentPositionX": 109536807.7333276,
-    "currentPositionY": -673311216.8898048,
-    "currentPositionZ": -65056263.96042013
+    "currentPositionX": -134992986.96243528,
+    "currentPositionY": -683546087.4363761,
+    "currentPositionZ": -43447933.44253702
   },
   {
     "name": "Venus",
@@ -45,7 +45,10 @@
     "meanAnomaly": 0.8746717546369582,
     "parentBodyId": 1,
     "color": "#e6e6e6",
-    "id": 3
+    "id": 3,
+    "currentPositionX": -1071448255.6114957,
+    "currentPositionY": -98978738.43311173,
+    "currentPositionZ": 60491722.43656385
   },
   {
     "name": "Earth",
@@ -60,7 +63,10 @@
     "meanAnomaly": 6.259047403624505,
     "parentBodyId": 1,
     "color": "#3498db",
-    "id": 4
+    "id": 4,
+    "currentPositionX": -340665802.89989424,
+    "currentPositionY": 1430994173.7406507,
+    "currentPositionZ": 1166.6858524976135
   },
   {
     "name": "Moon",
@@ -75,7 +81,10 @@
     "meanAnomaly": 2.0135060728802663,
     "parentBodyId": 4,
     "color": "#d0d0d0",
-    "id": 5
+    "id": 5,
+    "currentPositionX": -35842448.803845674,
+    "currentPositionY": -16179617.005298335,
+    "currentPositionZ": 3478257.676055139
   },
   {
     "name": "Mars",
@@ -90,7 +99,10 @@
     "meanAnomaly": 0.3381226359888615,
     "parentBodyId": 1,
     "color": "#e74c3c",
-    "id": 6
+    "id": 6,
+    "currentPositionX": 2081797521.3105762,
+    "currentPositionY": 21134683.27277267,
+    "currentPositionZ": -50732336.19470958
   },
   {
     "name": "Phobos",
@@ -105,7 +117,10 @@
     "meanAnomaly": 2.618988715665131,
     "parentBodyId": 6,
     "color": "#8B4513",
-    "id": 7
+    "id": 7,
+    "currentPositionX": 1302695.7359199645,
+    "currentPositionY": -581136.3896594581,
+    "currentPositionZ": -17850.099734840824
   },
   {
     "name": "Jupiter",
@@ -120,7 +135,10 @@
     "meanAnomaly": 0.34941491624926474,
     "parentBodyId": 1,
     "color": "#f39c12",
-    "id": 8
+    "id": 8,
+    "currentPositionX": 5967451650.634649,
+    "currentPositionY": 4425150750.708057,
+    "currentPositionZ": -151755973.29138947
   },
   {
     "name": "Europa",
@@ -135,7 +153,10 @@
     "meanAnomaly": 3.490658503988659,
     "parentBodyId": 8,
     "color": "#f5f5dc",
-    "id": 9
+    "id": 9,
+    "currentPositionX": 30307289.21596071,
+    "currentPositionY": 60481616.364288956,
+    "currentPositionZ": -341779.41546657356
   },
   {
     "name": "Saturn",
@@ -150,7 +171,10 @@
     "meanAnomaly": 5.533042794672423,
     "parentBodyId": 1,
     "color": "#f1c40f",
-    "id": 10
+    "id": 10,
+    "currentPositionX": 9637785668.577847,
+    "currentPositionY": 9811959731.808762,
+    "currentPositionZ": -554015457.9781923
   },
   {
     "name": "Titan",
@@ -165,7 +189,10 @@
     "meanAnomaly": 3.0688124237816297,
     "parentBodyId": 10,
     "color": "#E49B0F",
-    "id": 11
+    "id": 11,
+    "currentPositionX": 113879512.35610862,
+    "currentPositionY": 53213299.95596786,
+    "currentPositionZ": -40210.80414506142
   },
   {
     "name": "Alpha Station",
@@ -180,6 +207,9 @@
     "meanAnomaly": 0,
     "parentBodyId": 4,
     "color": "#ffffff",
-    "id": 12
+    "id": 12,
+    "currentPositionX": 565756.8789691486,
+    "currentPositionY": 843242.0314574991,
+    "currentPositionZ": 13305.588363678542
   }
 ]
