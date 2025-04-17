@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { Vector3 } from "@shared/math";
 import { serverInstance } from "./index";
+import { log } from "./vite";
 
 // API response interfaces
 interface ApiResponse<T> {
