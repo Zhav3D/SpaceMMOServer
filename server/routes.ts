@@ -1100,5 +1100,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get all API endpoints
+  app.get('/api/endpoints', (req: Request, res: Response) => {
+    const endpoints: {
+      path: string;
+      method: string;
+      description: string;
+      group: string;
+    }[] = [
+      // Server status & settings
+      { path: '/api/status', method: 'GET', description: 'Returns server status information', group: 'Server Status & Settings' },
+      { path: '/api/settings', method: 'GET', description: 'Get server settings', group: 'Server Status & Settings' },
+      { path: '/api/settings', method: 'PUT', description: 'Update server settings', group: 'Server Status & Settings' },
+      { path: '/api/stats', method: 'GET', description: 'Get server performance statistics', group: 'Server Status & Settings' },
+      { path: '/api/logs', method: 'GET', description: 'Get server logs', group: 'Server Status & Settings' },
+      { path: '/api/emergency-stop', method: 'POST', description: 'Emergency stop the server', group: 'Server Status & Settings' },
+      { path: '/api/endpoints', method: 'GET', description: 'Get all API endpoints', group: 'Server Status & Settings' },
+      
+      // Celestial bodies
+      { path: '/api/celestial', method: 'GET', description: 'Get all celestial bodies', group: 'Celestial Bodies' },
+      { path: '/api/celestial/:id', method: 'GET', description: 'Get a specific celestial body by ID', group: 'Celestial Bodies' },
+      { path: '/api/celestial', method: 'POST', description: 'Create a new celestial body', group: 'Celestial Bodies' },
+      { path: '/api/celestial/:id', method: 'PUT', description: 'Update a celestial body', group: 'Celestial Bodies' },
+      { path: '/api/celestial/:id', method: 'DELETE', description: 'Delete a celestial body', group: 'Celestial Bodies' },
+      { path: '/api/celestial/settings', method: 'GET', description: 'Get celestial simulation settings', group: 'Celestial Bodies' },
+      { path: '/api/celestial/simulation', method: 'PUT', description: 'Update celestial simulation settings', group: 'Celestial Bodies' },
+      { path: '/api/celestial/simulation/speed', method: 'GET', description: 'Get simulation speed', group: 'Celestial Bodies' },
+      { path: '/api/celestial/simulation/speed', method: 'PUT', description: 'Update simulation speed', group: 'Celestial Bodies' },
+      { path: '/api/celestial/simulation/test', method: 'POST', description: 'Test celestial simulation', group: 'Celestial Bodies' },
+      
+      // NPCs & Fleets
+      { path: '/api/npc/fleets', method: 'GET', description: 'Get all NPC fleets', group: 'NPCs & Fleets' },
+      { path: '/api/npc/fleets', method: 'POST', description: 'Create a new NPC fleet', group: 'NPCs & Fleets' },
+      { path: '/api/npc/fleets/:fleetId', method: 'DELETE', description: 'Delete an NPC fleet', group: 'NPCs & Fleets' },
+      
+      // Players
+      { path: '/api/players', method: 'GET', description: 'Get all connected players', group: 'Players' },
+      { path: '/api/simulated-players', method: 'GET', description: 'Get all simulated players', group: 'Players' },
+      { path: '/api/simulated-players', method: 'POST', description: 'Create simulated players', group: 'Players' },
+      { path: '/api/simulated-players', method: 'DELETE', description: 'Delete all simulated players', group: 'Players' },
+      
+      // Area of Interest
+      { path: '/api/aoi', method: 'GET', description: 'Get all areas of interest', group: 'Area of Interest' },
+      
+      // Missions
+      { path: '/api/missions', method: 'GET', description: 'Get all missions', group: 'Missions' },
+      { path: '/api/missions/:missionId', method: 'GET', description: 'Get a specific mission by ID', group: 'Missions' },
+      { path: '/api/missions/:missionId', method: 'DELETE', description: 'Delete a mission', group: 'Missions' },
+      { path: '/api/missions/:missionId/assign', method: 'PUT', description: 'Assign a mission to a fleet', group: 'Missions' }
+    ];
+    
+    res.json({ success: true, data: endpoints });
+  });
+  
   return httpServer;
 }

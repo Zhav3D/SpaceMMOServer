@@ -1,9 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+
+interface EndpointInfo {
+  path: string;
+  method: string;
+  description: string;
+  group: string;
+}
 
 export default function ApiDocs() {
   const [activeTab, setActiveTab] = useState("http");
@@ -389,6 +398,7 @@ export default function ApiDocs() {
               <p className="text-sm text-gray-400">Sample code for connecting to the server from Unity3D:</p>
               
               <div className="bg-black rounded-md p-3 font-mono text-xs mt-2 overflow-auto">
+                <pre className="text-gray-300 whitespace-pre">
 {`using UnityEngine;
 using System;
 using System.Collections;
@@ -582,6 +592,7 @@ public class ServerConnection : MonoBehaviour
     private struct ServerStateUpdateMessage { public long server_time; public EntityState[] entities; }
     private struct EntityState { /* Entity state properties */ }
 }`}
+                </pre>
               </div>
             </div>
           </CardContent>
