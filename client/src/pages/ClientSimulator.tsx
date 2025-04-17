@@ -493,6 +493,9 @@ export default function ClientSimulator() {
     areaId: '',
   });
   
+  // State to track if player is registered with server
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  
   // Controls state
   const [selectedArea, setSelectedArea] = useState<string>('');
   const [speed, setSpeed] = useState<number>(50);
@@ -525,6 +528,49 @@ export default function ClientSimulator() {
   
   // Get other players (simulated)
   const otherPlayers = playersData?.success ? playersData.data || [] : [];
+  
+  // Find Earth in celestial bodies
+  const earth = celestialBodies.find(body => body.name === 'Earth');
+  
+  // Register simulated player with server
+  const registerWithServer = async () => {
+    if (isRegistered) return;
+    
+    try {
+      // Position client near Earth if Earth is found
+      if (earth) {
+        setClient(prev => ({
+          ...prev,
+          position: {
+            x: earth.currentPositionX || 0,
+            y: earth.currentPositionY || 0,
+            z: earth.currentPositionZ || 0,
+          }
+        }));
+      }
+      
+      // Create a simulated player on server side
+      const response = await fetch('/api/simulated-players', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          count: 1,
+          areaId: selectedArea || 'area-1'
+        }),
+      });
+      
+      if (response.ok) {
+        setIsRegistered(true);
+        console.log('Player registered with server');
+      } else {
+        console.error('Failed to register player with server');
+      }
+    } catch (error) {
+      console.error('Error registering player:', error);
+    }
+  };
   
   // Movement handlers
   const handleMoveForward = () => {
@@ -678,6 +724,13 @@ export default function ClientSimulator() {
       handleSelectArea(areas[0].areaId);
     }
   }, [areas, selectedArea]);
+  
+  // Register with server when Earth is found and area is selected
+  useEffect(() => {
+    if (earth && selectedArea && !isRegistered) {
+      registerWithServer();
+    }
+  }, [earth, selectedArea, isRegistered]);
   
   return (
     <div className="container py-6">
