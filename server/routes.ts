@@ -436,6 +436,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete NPC fleet API
+  app.delete('/api/npc/fleets/:fleetId', async (req: Request, res: Response) => {
+    try {
+      const { fleetId } = req.params;
+      
+      if (!fleetId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing fleet ID',
+        });
+      }
+      
+      if (!serverInstance || !serverInstance.npcManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'NPC manager not initialized',
+        });
+      }
+      
+      // Find the fleet by fleetId
+      const fleet = await storage.getNpcFleetByFleetId(fleetId);
+      
+      if (!fleet) {
+        return res.status(404).json({
+          success: false,
+          error: `Fleet with ID ${fleetId} not found`,
+        });
+      }
+      
+      // Get all ships in this fleet
+      const ships = await storage.getNpcShipsByFleet(fleetId);
+      
+      // Delete all ships from storage
+      for (const ship of ships) {
+        await storage.deleteNpcShip(ship.id);
+      }
+      
+      // Delete the fleet from storage
+      await storage.deleteNpcFleet(fleet.id);
+      
+      // Remove the fleet and its ships from the NPC manager
+      serverInstance.npcManager.removeFleet(fleetId);
+      
+      const response: ApiResponse<{ message: string, fleetId: string }> = {
+        success: true,
+        data: {
+          message: `Fleet with ID ${fleetId} and all its ships have been deleted`,
+          fleetId
+        },
+      };
+      
+      res.status(200).json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to delete NPC fleet: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
   // Players API
   app.get('/api/players', async (req: Request, res: Response) => {
     try {
