@@ -23,6 +23,7 @@ export default function Sidebar() {
     { name: "Logs", path: "/logs", icon: "article" },
     { name: "Server Settings", path: "/settings", icon: "settings" },
     { name: "API Config", path: "/api-config", icon: "api" },
+    { name: "API Documentation", path: "/api-docs", icon: "description" },
   ];
   
   return (
