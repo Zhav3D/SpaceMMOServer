@@ -177,12 +177,12 @@ export default function ServerSettings() {
                   
                   <div className="flex justify-between">
                     <p className="text-gray-400">CPU Usage</p>
-                    <p className="font-mono">{serverStatus.data.cpuUsage.toFixed(1)}%</p>
+                    <p className="font-mono">{serverStatus?.data?.cpuUsage ? serverStatus.data.cpuUsage.toFixed(1) : '0.0'}%</p>
                   </div>
                   
                   <div className="flex justify-between">
                     <p className="text-gray-400">Memory Usage</p>
-                    <p className="font-mono">{Math.round(serverStatus.data.memoryUsage / 1024 / 1024)} MB</p>
+                    <p className="font-mono">{serverStatus?.data?.memoryUsage ? Math.round(serverStatus.data.memoryUsage / 1024 / 1024) : '0'} MB</p>
                   </div>
                 </>
               )}
@@ -192,7 +192,7 @@ export default function ServerSettings() {
                   <Button 
                     variant="destructive" 
                     className="w-full mt-2"
-                    disabled={!serverStatus?.success || serverStatus.data.status !== 'online'}
+                    disabled={!serverStatus?.success || !serverStatus?.data?.status || serverStatus.data.status !== 'online'}
                   >
                     Emergency Stop Server
                   </Button>

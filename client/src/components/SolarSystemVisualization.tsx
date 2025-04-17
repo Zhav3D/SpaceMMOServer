@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -54,6 +56,10 @@ export default function SolarSystemVisualization({
   const [scale, setScale] = useState("system");
   const [focusBody, setFocusBody] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(4.0); // Custom zoom level - increased by 4x
+  const [showEntities, setShowEntities] = useState(true); // Toggle for NPCs and players
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // For panning
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPos, setLastPanPos] = useState({ x: 0, y: 0 });
   
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !onSelectBody || celestialBodies.length === 0) return;
@@ -369,6 +375,22 @@ export default function SolarSystemVisualization({
               height={450} 
               className="w-full h-full cursor-pointer"
               onClick={handleCanvasClick}
+              onMouseDown={(e) => {
+                if (e.button === 0) { // Left mouse button
+                  setIsPanning(true);
+                  setLastPanPos({ x: e.clientX, y: e.clientY });
+                }
+              }}
+              onMouseMove={(e) => {
+                if (isPanning) {
+                  const dx = e.clientX - lastPanPos.x;
+                  const dy = e.clientY - lastPanPos.y;
+                  setPanOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                  setLastPanPos({ x: e.clientX, y: e.clientY });
+                }
+              }}
+              onMouseUp={() => setIsPanning(false)}
+              onMouseLeave={() => setIsPanning(false)}
             />
             
             {/* Zoom controls */}
