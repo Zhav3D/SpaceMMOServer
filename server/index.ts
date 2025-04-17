@@ -42,6 +42,7 @@ export class GameServer {
     simulationSpeed: 10,
     aoiRadius: 5000,
     aoiMaxEntities: 400,
+    aoiGridCellSize: 1000,
     sanityCheckFrequency: 10,
     reliableResendInterval: 1000,
     maxReliableResends: 5,
@@ -69,7 +70,7 @@ export class GameServer {
     this.expressApp.use(express.urlencoded({ extended: false }));
     
     // Create managers
-    this.aoiManager = new AOIManager(this.settings.aoiRadius);
+    this.aoiManager = new AOIManager(this.settings.aoiGridCellSize);
     this.npcManager = new NPCManager();
     this.gameStateManager = new GameStateManager(this.udpServer, this.aoiManager, this.npcManager);
     this.sanityCheckManager = new SanityCheckManager(this.udpServer);

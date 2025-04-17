@@ -241,6 +241,7 @@ export interface ServerSettings {
   simulationSpeed: number;
   aoiRadius: number;
   aoiMaxEntities: number;
+  aoiGridCellSize: number;
   sanityCheckFrequency: number;
   reliableResendInterval: number;
   maxReliableResends: number;
