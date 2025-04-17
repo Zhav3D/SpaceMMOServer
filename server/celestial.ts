@@ -1,4 +1,5 @@
-import { CelestialBody, CelestialBodyState } from '@shared/types';
+import { CelestialBodyState } from '@shared/types';
+import { InsertCelestialBody, CelestialBody } from '@shared/schema';
 import { MessageType } from '@shared/types';
 import { UDPServer } from './udp';
 import { storage } from './storage';
@@ -19,6 +20,8 @@ export class CelestialManager {
   private simulationTime: number; // Current simulation time in seconds
   private lastUpdateTime: number; // Last real-time update in milliseconds
   private simulationSettings: CelestialSimulationSettings;
+  private frozenMode: boolean = false; // Whether the solar system is frozen
+  private frozenPositions: Map<number, { position: Vector3, velocity: Vector3 }> = new Map(); // Cached positions when frozen
   
   constructor(
     udpServer: UDPServer,
@@ -290,6 +293,13 @@ export class CelestialManager {
   
   // Update the simulation
   update(): void {
+    // If in frozen mode, don't update the simulation time
+    if (this.frozenMode) {
+      // Still update lastUpdateTime to prevent large time jumps when unfreezing
+      this.lastUpdateTime = Date.now();
+      return;
+    }
+    
     const now = Date.now();
     const deltaTimeMs = now - this.lastUpdateTime;
     
@@ -303,6 +313,11 @@ export class CelestialManager {
   
   // Get current positions of all celestial bodies
   getCurrentPositions(): Map<number, { position: Vector3, velocity: Vector3 }> {
+    // If in frozen mode and we have cached positions, return those
+    if (this.frozenMode && this.frozenPositions.size > 0) {
+      return new Map(this.frozenPositions);
+    }
+    
     const positions = new Map<number, { position: Vector3, velocity: Vector3 }>();
     
     for (const [id, body] of this.bodies.entries()) {
@@ -322,9 +337,41 @@ export class CelestialManager {
       // Calculate position using orbital parameters
       const result = updateCelestialBodyPosition(body, parentMass, this.simulationTime);
       positions.set(id, result);
+      
+      // Store the calculated position in the database if it's a significant update (once every minute)
+      if (Date.now() % 60000 < 1000) {
+        this.updateCelestialPosition(id, result);
+      }
+    }
+    
+    // If we're in frozen mode, cache these positions
+    if (this.frozenMode) {
+      this.frozenPositions = new Map(positions);
     }
     
     return positions;
+  }
+  
+  // Update the stored position of a celestial body
+  private async updateCelestialPosition(id: number, posVel: { position: Vector3, velocity: Vector3 }): Promise<void> {
+    try {
+      await storage.updateCelestialBody(id, {
+        currentPositionX: posVel.position.x,
+        currentPositionY: posVel.position.y,
+        currentPositionZ: posVel.position.z
+      });
+      
+      // If in frozen mode, also update frozen positions
+      if (this.frozenMode) {
+        await storage.updateCelestialBody(id, {
+          frozenPositionX: posVel.position.x,
+          frozenPositionY: posVel.position.y,
+          frozenPositionZ: posVel.position.z
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to update celestial position for body ${id}:`, error);
+    }
   }
   
   // Calculate the orbital progress (0-1) for each body
@@ -447,5 +494,92 @@ export class CelestialManager {
   // Get simulation settings
   getSimulationSettings(): CelestialSimulationSettings {
     return { ...this.simulationSettings };
+  }
+  
+  // Get frozen mode state
+  isFrozen(): boolean {
+    return this.frozenMode;
+  }
+  
+  // Toggle frozen mode
+  async toggleFrozenMode(frozen: boolean): Promise<boolean> {
+    // If we're toggling to the state we're already in, do nothing
+    if (this.frozenMode === frozen) {
+      return this.frozenMode;
+    }
+    
+    try {
+      // Update the frozen state
+      this.frozenMode = frozen;
+      
+      if (frozen) {
+        console.log('Freezing solar system...');
+        // Cache the current positions
+        const positions = this.getCurrentPositions();
+        this.frozenPositions = new Map(positions);
+        
+        // Save frozen positions to database
+        for (const [id, posVel] of positions.entries()) {
+          await storage.updateCelestialBody(id, {
+            frozenPositionX: posVel.position.x,
+            frozenPositionY: posVel.position.y,
+            frozenPositionZ: posVel.position.z
+          });
+        }
+        
+        // Log the freeze
+        await storage.createServerLog({
+          timestamp: Date.now() / 1000,
+          level: 'INFO',
+          message: 'Solar system frozen',
+          source: 'celestial',
+          data: null
+        });
+      } else {
+        console.log('Unfreezing solar system...');
+        // Clear the cached positions
+        this.frozenPositions.clear();
+        
+        // Log the unfreeze
+        await storage.createServerLog({
+          timestamp: Date.now() / 1000,
+          level: 'INFO',
+          message: 'Solar system unfrozen',
+          source: 'celestial',
+          data: null
+        });
+      }
+      
+      // Save the setting to the database
+      await storage.updateSetting(
+        'FROZEN_SOLAR_SYSTEM',
+        frozen.toString(),
+        'boolean',
+        'simulation',
+        'Whether the solar system simulation is frozen'
+      );
+      
+      return this.frozenMode;
+    } catch (error) {
+      console.error('Error toggling frozen mode:', error);
+      return this.frozenMode;
+    }
+  }
+  
+  // Load frozen mode setting from database
+  async loadFrozenModeSetting(): Promise<void> {
+    try {
+      const frozen = await storage.getSettingValue<boolean>(
+        'FROZEN_SOLAR_SYSTEM',
+        false
+      );
+      
+      // Only toggle if it's different from current state
+      if (frozen !== this.frozenMode) {
+        await this.toggleFrozenMode(frozen);
+      }
+    } catch (error) {
+      console.error('Error loading frozen mode setting:', error);
+    }
   }
 }
