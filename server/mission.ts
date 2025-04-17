@@ -588,7 +588,116 @@ export class MissionManager {
    * Get a specific mission by ID
    */
   getMission(missionId: string): Mission | undefined {
+    // First check in active missions
+    if (this.activeMissions.has(missionId)) {
+      return this.activeMissions.get(missionId);
+    }
+    
+    // Then check in completed missions
+    if (this.completedMissions.has(missionId)) {
+      return this.completedMissions.get(missionId);
+    }
+    
+    // Finally check in failed missions
+    if (this.failedMissions.has(missionId)) {
+      return this.failedMissions.get(missionId);
+    }
+    
+    // Fallback to the main missions map
     return this.missions.get(missionId);
+  }
+  
+  /**
+   * Delete a mission from the system
+   * @param missionId The ID of the mission to delete
+   * @returns True if the mission was deleted, false otherwise
+   */
+  deleteMission(missionId: string): boolean {
+    // Check and delete from active missions
+    if (this.activeMissions.has(missionId)) {
+      const mission = this.activeMissions.get(missionId);
+      
+      // If mission is assigned to a fleet, unassign it
+      if (mission && mission.assignedFleetId) {
+        const fleet = this.npcManager.getFleet(mission.assignedFleetId);
+        if (fleet) {
+          // Reset fleet behavior to default
+          const fleetShips = this.npcManager.getNPCsByFleet(fleet.fleetId);
+          fleetShips.forEach(ship => {
+            ship.aiState = 'patrolling';
+            ship.status = 'passive';
+          });
+        }
+      }
+      
+      this.activeMissions.delete(missionId);
+      this.missions.delete(missionId);
+      console.log(`Deleted active mission ${missionId}`);
+      return true;
+    }
+    
+    // Check and delete from completed missions
+    if (this.completedMissions.has(missionId)) {
+      this.completedMissions.delete(missionId);
+      this.missions.delete(missionId);
+      console.log(`Deleted completed mission ${missionId}`);
+      return true;
+    }
+    
+    // Check and delete from failed missions
+    if (this.failedMissions.has(missionId)) {
+      this.failedMissions.delete(missionId);
+      this.missions.delete(missionId);
+      console.log(`Deleted failed mission ${missionId}`);
+      return true;
+    }
+    
+    console.log(`Failed to delete mission ${missionId}: not found`);
+    return false;
+  }
+  
+  /**
+   * Assign a mission to a specific fleet
+   * @param missionId The ID of the mission to assign
+   * @param fleetId The ID of the fleet to assign to the mission
+   * @returns True if successful, false otherwise
+   */
+  assignMissionToFleet(missionId: string, fleetId: string): boolean {
+    // Find the mission
+    const mission = this.activeMissions.get(missionId);
+    if (!mission) {
+      console.log(`Cannot assign mission ${missionId} to fleet ${fleetId}: mission not found or not active`);
+      return false;
+    }
+    
+    // Find the fleet
+    const fleet = this.npcManager.getFleet(fleetId);
+    if (!fleet) {
+      console.log(`Cannot assign mission ${missionId} to fleet ${fleetId}: fleet not found`);
+      return false;
+    }
+    
+    // If mission already has a fleet assigned, unassign it first
+    if (mission.assignedFleetId) {
+      const oldFleet = this.npcManager.getFleet(mission.assignedFleetId);
+      if (oldFleet) {
+        // Reset the old fleet's behavior
+        const oldFleetShips = this.npcManager.getNPCsByFleet(oldFleet.fleetId);
+        oldFleetShips.forEach(ship => {
+          ship.aiState = 'patrolling';
+          ship.status = 'passive';
+        });
+      }
+    }
+    
+    // Assign the new fleet to the mission
+    mission.assignedFleetId = fleetId;
+    
+    // Update the fleet's behavior based on the mission type
+    this.updateFleetBehaviorForMission(fleet, mission);
+    
+    console.log(`Assigned ${fleet.type} fleet ${fleetId} to mission ${mission.missionId}`);
+    return true;
   }
   
   /**

@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import {
   Card,
   CardContent,
@@ -8,6 +10,21 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -28,7 +45,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Edit, Trash2, Users } from 'lucide-react';
 import { MissionType, MissionStatus } from '@shared/types';
 
 interface MissionState {
@@ -213,7 +230,12 @@ const MissionDetailCard: React.FC<{ mission: MissionState }> = ({ mission }) => 
   );
 };
 
-const MissionTable: React.FC<{ missions: MissionState[], title: string }> = ({ missions, title }) => {
+const MissionTable: React.FC<{ 
+  missions: MissionState[], 
+  title: string,
+  onDelete?: (mission: MissionState) => void,
+  onAssign?: (mission: MissionState) => void
+}> = ({ missions, title, onDelete, onAssign }) => {
   if (!missions.length) {
     return (
       <Alert variant="default">
@@ -238,6 +260,7 @@ const MissionTable: React.FC<{ missions: MissionState[], title: string }> = ({ m
           <TableHead>Fleet</TableHead>
           <TableHead className="text-right">Progress</TableHead>
           {title === 'Active Missions' && <TableHead className="text-right">Time Left</TableHead>}
+          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -261,6 +284,30 @@ const MissionTable: React.FC<{ missions: MissionState[], title: string }> = ({ m
             {title === 'Active Missions' && (
               <TableCell className="text-right">{getTimeRemaining(mission.expiryTime)}</TableCell>
             )}
+            <TableCell className="text-right">
+              <div className="flex items-center justify-end space-x-2">
+                {mission.status === 'active' && onAssign && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onAssign(mission)}
+                    title="Assign Fleet"
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => onDelete(mission)}
+                    title="Delete Mission"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -270,11 +317,106 @@ const MissionTable: React.FC<{ missions: MissionState[], title: string }> = ({ m
 
 export default function Missions() {
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [selectedMission, setSelectedMission] = useState<MissionState | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [selectedFleetId, setSelectedFleetId] = useState<string>('');
+  const { toast } = useToast();
   
-  const { data, isLoading, error } = useQuery({
+  // Fetch missions data
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/missions'],
     refetchInterval: 5000, // Refresh mission data every 5 seconds
   });
+  
+  // Fetch available fleets for assignment
+  const { data: fleetData } = useQuery({
+    queryKey: ['/api/npc/fleets'],
+    staleTime: 10000,
+  });
+  
+  // Delete mission mutation
+  const deleteMissionMutation = useMutation({
+    mutationFn: (missionId: string) => {
+      return apiRequest('DELETE', `/api/missions/${missionId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/missions'] });
+      setIsDeleteDialogOpen(false);
+      toast({
+        title: "Mission Deleted",
+        description: "The mission has been successfully removed.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete mission",
+        variant: "destructive",
+      });
+      console.error("Error deleting mission:", error);
+    }
+  });
+  
+  // Assign fleet to mission mutation
+  const assignFleetMutation = useMutation({
+    mutationFn: ({ missionId, fleetId }: { missionId: string, fleetId: string }) => {
+      return apiRequest('PUT', `/api/missions/${missionId}/assign`, { fleetId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/missions'] });
+      setIsAssignDialogOpen(false);
+      toast({
+        title: "Fleet Assigned",
+        description: "The fleet has been successfully assigned to the mission.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to assign fleet to mission",
+        variant: "destructive",
+      });
+      console.error("Error assigning fleet to mission:", error);
+    }
+  });
+  
+  const handleDeleteMission = (mission: MissionState) => {
+    setSelectedMission(mission);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const confirmDeleteMission = () => {
+    if (selectedMission) {
+      deleteMissionMutation.mutate(selectedMission.missionId);
+    }
+  };
+  
+  const handleAssignFleet = (mission: MissionState) => {
+    setSelectedMission(mission);
+    setSelectedFleetId(mission.assignedFleetId || '');
+    setIsAssignDialogOpen(true);
+  };
+  
+  const confirmAssignFleet = () => {
+    if (selectedMission && selectedFleetId) {
+      assignFleetMutation.mutate({ 
+        missionId: selectedMission.missionId, 
+        fleetId: selectedFleetId 
+      });
+    }
+  };
+  
+  // Available fleets for dropdown
+  const availableFleets = fleetData?.success ? fleetData.data as any[] : [];
+  
+  // This effect will refetch missions data when a mutation completes
+  useEffect(() => {
+    if (deleteMissionMutation.isSuccess || assignFleetMutation.isSuccess) {
+      // Force refetch with fresh data
+      refetch();
+    }
+  }, [deleteMissionMutation.isSuccess, assignFleetMutation.isSuccess, refetch]);
   
   if (isLoading) {
     return (
@@ -383,7 +525,12 @@ export default function Missions() {
               )}
             </div>
           ) : (
-            <MissionTable missions={active} title="Active Missions" />
+            <MissionTable 
+              missions={active} 
+              title="Active Missions" 
+              onDelete={handleDeleteMission}
+              onAssign={handleAssignFleet}
+            />
           )}
         </TabsContent>
         
@@ -404,7 +551,11 @@ export default function Missions() {
               )}
             </div>
           ) : (
-            <MissionTable missions={completed} title="Completed Missions" />
+            <MissionTable 
+              missions={completed} 
+              title="Completed Missions" 
+              onDelete={handleDeleteMission}
+            />
           )}
         </TabsContent>
         
@@ -425,9 +576,111 @@ export default function Missions() {
               )}
             </div>
           ) : (
-            <MissionTable missions={failed} title="Failed Missions" />
+            <MissionTable 
+              missions={failed} 
+              title="Failed Missions" 
+              onDelete={handleDeleteMission}
+            />
           )}
         </TabsContent>
+        
+        {/* Delete Mission Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Mission</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this mission? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedMission && (
+              <div className="py-4">
+                <p><strong>Name:</strong> {selectedMission.name}</p>
+                <p><strong>Type:</strong> {selectedMission.type}</p>
+                <p><strong>Status:</strong> {selectedMission.status}</p>
+                {selectedMission.assignedFleetId && (
+                  <p className="text-amber-600">
+                    This mission has a fleet assigned to it: {selectedMission.assignedFleetId}
+                  </p>
+                )}
+              </div>
+            )}
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={deleteMissionMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeleteMission}
+                disabled={deleteMissionMutation.isPending}
+              >
+                {deleteMissionMutation.isPending ? "Deleting..." : "Delete Mission"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Assign Fleet Dialog */}
+        <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Assign Fleet to Mission</DialogTitle>
+              <DialogDescription>
+                Select a fleet to assign to this mission. If the mission already has a fleet, it will be reassigned.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedMission && (
+              <div className="py-4">
+                <p><strong>Mission:</strong> {selectedMission.name}</p>
+                <p><strong>Type:</strong> {selectedMission.type}</p>
+                {selectedMission.assignedFleetId && (
+                  <p className="text-amber-600 mb-4">
+                    Currently assigned to: {selectedMission.assignedFleetId}
+                  </p>
+                )}
+                
+                <div className="grid gap-4 py-2">
+                  <div className="grid gap-2">
+                    <Select
+                      value={selectedFleetId}
+                      onValueChange={setSelectedFleetId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a fleet" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableFleets.map((fleet: any) => (
+                          <SelectItem key={fleet.fleetId} value={fleet.fleetId}>
+                            {fleet.type} - {fleet.fleetId}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setIsAssignDialogOpen(false)}
+                disabled={assignFleetMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmAssignFleet}
+                disabled={assignFleetMutation.isPending || !selectedFleetId}
+              >
+                {assignFleetMutation.isPending ? "Assigning..." : "Assign Fleet"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Tabs>
     </div>
   );
