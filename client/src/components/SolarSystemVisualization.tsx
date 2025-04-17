@@ -423,39 +423,49 @@ export default function SolarSystemVisualization({
       // Draw simulated players from API data
       if (simulatedPlayers) {
         // Handle both direct data and API response formats
-        const players = simulatedPlayers.data ? 
-          (simulatedPlayers.data.players || simulatedPlayers.data) : 
-          (Array.isArray(simulatedPlayers) ? simulatedPlayers : []);
+        let players = [];
+        if (simulatedPlayers.data) {
+          if (Array.isArray(simulatedPlayers.data)) {
+            players = simulatedPlayers.data;
+          } else if (simulatedPlayers.data.players && Array.isArray(simulatedPlayers.data.players)) {
+            players = simulatedPlayers.data.players;
+          }
+        } else if (Array.isArray(simulatedPlayers)) {
+          players = simulatedPlayers;
+        }
         
-        players.forEach(player => {
-          // Find nearby celestial body
-          const nearestBodyId = player.nearestCelestialBodyId;
-          const nearbyBody = celestialBodies.find(body => body.id === nearestBodyId);
-          
-          if (!nearbyBody) return;
-          
-          const bodyX = centerX + (nearbyBody.currentPositionX || 0) * scaleFactor;
-          const bodyY = centerY + (nearbyBody.currentPositionY || 0) * scaleFactor;
-          
-          // Calculate position relative to the body
-          const posX = player.positionX || 0;
-          const posY = player.positionY || 0;
-          const displayX = bodyX + posX * scaleFactor * 0.5; // Scale down a bit
-          const displayY = bodyY + posY * scaleFactor * 0.5;
-          
-          // Draw player
-          ctx.fillStyle = '#4CAF50';
-          ctx.beginPath();
-          ctx.arc(displayX, displayY, 6, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // Draw halo
-          ctx.strokeStyle = '#4CAF50';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.arc(displayX, displayY, 8, 0, Math.PI * 2);
-          ctx.stroke();
-        });
+        // Make sure players is always an array
+        if (Array.isArray(players)) {
+          players.forEach(player => {
+            // Find nearby celestial body
+            const nearestBodyId = player.nearestCelestialBodyId;
+            const nearbyBody = celestialBodies.find(body => body.id === nearestBodyId);
+            
+            if (!nearbyBody) return;
+            
+            const bodyX = centerX + (nearbyBody.currentPositionX || 0) * scaleFactor;
+            const bodyY = centerY + (nearbyBody.currentPositionY || 0) * scaleFactor;
+            
+            // Calculate position relative to the body
+            const posX = player.positionX || 0;
+            const posY = player.positionY || 0;
+            const displayX = bodyX + posX * scaleFactor * 0.5; // Scale down a bit
+            const displayY = bodyY + posY * scaleFactor * 0.5;
+            
+            // Draw player
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(displayX, displayY, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw halo
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(displayX, displayY, 8, 0, Math.PI * 2);
+            ctx.stroke();
+          });
+        }
       }
       
       // Draw entity legend

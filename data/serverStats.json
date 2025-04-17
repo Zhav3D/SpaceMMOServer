@@ -2734,5 +2734,301 @@
     "networkTraffic": 0,
     "playerCount": 0,
     "id": 342
+  },
+  {
+    "timestamp": 1744923243.626,
+    "cpuLoad": 10.9977725,
+    "memoryUsage": 185,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 343
+  },
+  {
+    "timestamp": 1744923253.626,
+    "cpuLoad": 11.326827317268274,
+    "memoryUsage": 190,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 344
+  },
+  {
+    "timestamp": 1744923263.626,
+    "cpuLoad": 11.620489548954897,
+    "memoryUsage": 185,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 345
+  },
+  {
+    "timestamp": 1744923273.629,
+    "cpuLoad": 11.951738054778088,
+    "memoryUsage": 190,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 346
+  },
+  {
+    "timestamp": 1744923283.63,
+    "cpuLoad": 12.253544645535447,
+    "memoryUsage": 191,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 347
+  },
+  {
+    "timestamp": 1744923293.63,
+    "cpuLoad": 12.53320875,
+    "memoryUsage": 196,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 348
+  },
+  {
+    "timestamp": 1744923303.63,
+    "cpuLoad": 12.810918749999999,
+    "memoryUsage": 185,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 349
+  },
+  {
+    "timestamp": 1744923313.631,
+    "cpuLoad": 13.102585991400858,
+    "memoryUsage": 195,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 350
+  },
+  {
+    "timestamp": 1744923323.631,
+    "cpuLoad": 13.701983948394838,
+    "memoryUsage": 110,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 351
+  },
+  {
+    "timestamp": 1744923333.631,
+    "cpuLoad": 14.019319999999999,
+    "memoryUsage": 115,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 352
+  },
+  {
+    "timestamp": 1744923343.631,
+    "cpuLoad": 14.3317275,
+    "memoryUsage": 115,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 353
+  },
+  {
+    "timestamp": 1744923353.631,
+    "cpuLoad": 14.626808569143085,
+    "memoryUsage": 116,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 354
+  },
+  {
+    "timestamp": 1744923363.63,
+    "cpuLoad": 14.9132700770077,
+    "memoryUsage": 111,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 355
+  },
+  {
+    "timestamp": 1744923373.631,
+    "cpuLoad": 15.208376662333766,
+    "memoryUsage": 119,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 356
+  },
+  {
+    "timestamp": 1744923383.632,
+    "cpuLoad": 15.533944105589443,
+    "memoryUsage": 109,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 357
+  },
+  {
+    "timestamp": 1744923393.632,
+    "cpuLoad": 15.87535625,
+    "memoryUsage": 121,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 358
+  },
+  {
+    "timestamp": 1744923403.632,
+    "cpuLoad": 16.152816249999997,
+    "memoryUsage": 115,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 359
+  },
+  {
+    "timestamp": 1744923413.632,
+    "cpuLoad": 16.423721122112212,
+    "memoryUsage": 121,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 360
+  },
+  {
+    "timestamp": 1744923423.632,
+    "cpuLoad": 16.71154375,
+    "memoryUsage": 119,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 361
+  },
+  {
+    "timestamp": 1744923433.631,
+    "cpuLoad": 17.317915,
+    "memoryUsage": 109,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 362
+  },
+  {
+    "timestamp": 1744923443.632,
+    "cpuLoad": 17.646514098590142,
+    "memoryUsage": 109,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 363
+  },
+  {
+    "timestamp": 1744923453.632,
+    "cpuLoad": 17.9517775,
+    "memoryUsage": 121,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 364
+  },
+  {
+    "timestamp": 1744923463.633,
+    "cpuLoad": 18.22510498950105,
+    "memoryUsage": 114,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 365
+  },
+  {
+    "timestamp": 1744923473.633,
+    "cpuLoad": 18.512833783378337,
+    "memoryUsage": 109,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 366
+  },
+  {
+    "timestamp": 1744923483.633,
+    "cpuLoad": 18.80522322767723,
+    "memoryUsage": 114,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 367
+  },
+  {
+    "timestamp": 1744923493.634,
+    "cpuLoad": 19.063837499999998,
+    "memoryUsage": 111,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 368
+  },
+  {
+    "timestamp": 1744923503.634,
+    "cpuLoad": 19.336207629237077,
+    "memoryUsage": 120,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 369
+  },
+  {
+    "timestamp": 1744923513.634,
+    "cpuLoad": 19.61786803680368,
+    "memoryUsage": 110,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 370
+  },
+  {
+    "timestamp": 1744923523.634,
+    "cpuLoad": 19.9741700829917,
+    "memoryUsage": 110,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 371
+  },
+  {
+    "timestamp": 1744923533.636,
+    "cpuLoad": 20.489468356328736,
+    "memoryUsage": 107,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 372
+  },
+  {
+    "timestamp": 1744923543.637,
+    "cpuLoad": 20.87164283571643,
+    "memoryUsage": 108,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 373
+  },
+  {
+    "timestamp": 1744923553.637,
+    "cpuLoad": 21.18171817181718,
+    "memoryUsage": 108,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 374
+  },
+  {
+    "timestamp": 1744923563.638,
+    "cpuLoad": 21.504972002799718,
+    "memoryUsage": 109,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 375
+  },
+  {
+    "timestamp": 1744923573.639,
+    "cpuLoad": 21.78962082583483,
+    "memoryUsage": 114,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 376
+  },
+  {
+    "timestamp": 1744923583.639,
+    "cpuLoad": 22.071640914091407,
+    "memoryUsage": 108,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 377
+  },
+  {
+    "timestamp": 1744923689.365,
+    "cpuLoad": 100,
+    "memoryUsage": 72,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 378
+  },
+  {
+    "timestamp": 1744923699.365,
+    "cpuLoad": 11.138182500000001,
+    "memoryUsage": 231,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 379
   }
 ]
