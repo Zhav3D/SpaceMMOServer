@@ -53,6 +53,7 @@ export default function SolarSystemVisualization({
   const [viewMode, setViewMode] = useState("2d");
   const [scale, setScale] = useState("system");
   const [focusBody, setFocusBody] = useState<string | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(1.0); // Custom zoom level
   
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !onSelectBody || celestialBodies.length === 0) return;
@@ -77,17 +78,17 @@ export default function SolarSystemVisualization({
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     
-    // Set up scale factor based on the selected scale
+    // Set up scale factor based on the selected scale and zoom level
     let scaleFactor = 1;
     switch (scale) {
       case "system":
-        scaleFactor = 0.0000000008; // Solar system scale
+        scaleFactor = 0.0000000008 * zoomLevel; // Solar system scale
         break;
       case "inner":
-        scaleFactor = 0.000000004; // Inner planets scale
+        scaleFactor = 0.000000004 * zoomLevel; // Inner planets scale
         break;
       case "outer":
-        scaleFactor = 0.0000000002; // Outer planets scale
+        scaleFactor = 0.0000000002 * zoomLevel; // Outer planets scale
         break;
     }
     
@@ -140,7 +141,7 @@ export default function SolarSystemVisualization({
       onSelectBody(clickedBody);
       setFocusBody(clickedBody.name);
     }
-  }, [celestialBodies, scale, onSelectBody]);
+  }, [celestialBodies, scale, onSelectBody, zoomLevel]);
   
   const renderCanvas = useCallback(() => {
     if (!canvasRef.current || celestialBodies.length === 0) return;
@@ -167,17 +168,17 @@ export default function SolarSystemVisualization({
     }
     ctx.globalAlpha = 1.0;
     
-    // Set up scale factors based on selected scale
+    // Set up scale factors based on selected scale and zoom level
     let scaleFactor = 1;
     switch (scale) {
       case "system":
-        scaleFactor = 0.0000000008; // Solar system scale
+        scaleFactor = 0.0000000008 * zoomLevel; // Solar system scale
         break;
       case "inner":
-        scaleFactor = 0.000000004; // Inner planets scale
+        scaleFactor = 0.000000004 * zoomLevel; // Inner planets scale
         break;
       case "outer":
-        scaleFactor = 0.0000000002; // Outer planets scale
+        scaleFactor = 0.0000000002 * zoomLevel; // Outer planets scale
         break;
     }
     
@@ -312,7 +313,7 @@ export default function SolarSystemVisualization({
         ctx.shadowBlur = 0;
       }
     });
-  }, [celestialBodies, scale, focusBody]);
+  }, [celestialBodies, scale, focusBody, zoomLevel]);
 
   // Setup animation loop
   useEffect(() => {
@@ -370,6 +371,31 @@ export default function SolarSystemVisualization({
               onClick={handleCanvasClick}
             />
             
+            {/* Zoom controls */}
+            <div className="absolute bottom-4 left-4 flex space-x-2 bg-black bg-opacity-50 p-2 rounded-md text-white">
+              <button 
+                onClick={() => setZoomLevel(prev => Math.max(0.2, prev / 1.5))}
+                className="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700"
+                title="Zoom Out"
+              >
+                -
+              </button>
+              <button 
+                onClick={() => setZoomLevel(1.0)}
+                className="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700"
+                title="Reset Zoom"
+              >
+                Reset
+              </button>
+              <button 
+                onClick={() => setZoomLevel(prev => prev * 1.5)}
+                className="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700"
+                title="Zoom In"
+              >
+                +
+              </button>
+            </div>
+            
             {/* Planet selector */}
             <div className="absolute bottom-4 left-0 right-0 flex flex-wrap justify-center gap-1 px-2">
               {celestialBodies.map((body) => (
@@ -407,6 +433,9 @@ export default function SolarSystemVisualization({
                     <p>Radius: {(celestialBodies.find(b => b.name === focusBody)?.radius! / 1000).toLocaleString()} km</p>
                     <p>Mass: {(celestialBodies.find(b => b.name === focusBody)?.mass! / 1e24).toFixed(2)}×10²⁴ kg</p>
                     <p>Orbit Progress: {(celestialBodies.find(b => b.name === focusBody)?.orbitProgress! * 100).toFixed(1)}%</p>
+                    {celestialBodies.find(b => b.name === focusBody)?.orbitalPeriod && (
+                      <p>Orbital Period: {(celestialBodies.find(b => b.name === focusBody)?.orbitalPeriod! / 86400).toFixed(2)} days</p>
+                    )}
                   </div>
                 )}
               </div>
