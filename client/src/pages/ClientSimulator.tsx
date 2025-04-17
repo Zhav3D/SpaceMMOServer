@@ -264,7 +264,7 @@ const ClientControls: React.FC<{
                 onClick={onRegister}
                 className="w-full" 
                 variant="outline"
-                disabled={!selectedArea || !earth}
+                disabled={!selectedArea}
               >
                 Register with Server
               </Button>
@@ -521,6 +521,8 @@ export default function ClientSimulator() {
     rotation: { x: 0, y: 0, z: 0 },
     connected: true,
     areaId: '',
+    targetPosition: null,
+    targetName: null
   });
   
   // State to track if player is registered with server
@@ -762,6 +764,56 @@ export default function ClientSimulator() {
     }
   }, [earth, selectedArea, isRegistered]);
   
+  // Function to target and fly to a celestial body
+  const handleTargetCelestialObject = (body: any) => {
+    if (!body) return;
+    
+    // Create a toast notification
+    alert(`Targeting ${body.name} at distance of ${Math.round(
+      Math.sqrt(
+        Math.pow((body.currentPositionX || 0) - (client?.position?.x || 0), 2) +
+        Math.pow((body.currentPositionY || 0) - (client?.position?.y || 0), 2) +
+        Math.pow((body.currentPositionZ || 0) - (client?.position?.z || 0), 2)
+      )
+    ).toLocaleString()} km`);
+    
+    // Set target position for automated movement
+    setClient(prev => ({
+      ...prev,
+      targetPosition: {
+        x: body.currentPositionX || 0,
+        y: body.currentPositionY || 0,
+        z: body.currentPositionZ || 0,
+      },
+      targetName: body.name
+    }));
+  };
+  
+  // Function to target and fly to an NPC
+  const handleTargetNPC = (npc: any) => {
+    if (!npc) return;
+    
+    // Create a toast notification
+    alert(`Targeting ${npc.type} ship at distance of ${Math.round(
+      Math.sqrt(
+        Math.pow((npc.position?.x || 0) - (client?.position?.x || 0), 2) +
+        Math.pow((npc.position?.y || 0) - (client?.position?.y || 0), 2) +
+        Math.pow((npc.position?.z || 0) - (client?.position?.z || 0), 2)
+      )
+    ).toLocaleString()} km`);
+    
+    // Set target position for automated movement
+    setClient(prev => ({
+      ...prev,
+      targetPosition: {
+        x: npc.position?.x || 0,
+        y: npc.position?.y || 0,
+        z: npc.position?.z || 0,
+      },
+      targetName: `${npc.type} ship`
+    }));
+  };
+  
   return (
     <div className="container py-6">
       <h1 className="text-3xl font-bold mb-6">Client Simulator</h1>
@@ -819,9 +871,9 @@ export default function ClientSimulator() {
                       <tbody>
                         {celestialBodies.slice(0, 5).map((body, index) => {
                           // Calculate distance
-                          const dx = (body.position?.x || 0) - (client?.position?.x || 0);
-                          const dy = (body.position?.y || 0) - (client?.position?.y || 0);
-                          const dz = (body.position?.z || 0) - (client?.position?.z || 0);
+                          const dx = (body.currentPositionX || 0) - (client?.position?.x || 0);
+                          const dy = (body.currentPositionY || 0) - (client?.position?.y || 0);
+                          const dz = (body.currentPositionZ || 0) - (client?.position?.z || 0);
                           const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
                           
                           return (
@@ -834,7 +886,12 @@ export default function ClientSimulator() {
                               <td className="py-2">{body.name}</td>
                               <td className="py-2">{Math.round(distance).toLocaleString()} km</td>
                               <td className="py-2 text-right">
-                                <Button variant="ghost" size="sm">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleTargetCelestialObject(body)}
+                                  title="Target and fly to this celestial body"
+                                >
                                   <Target className="h-4 w-4" />
                                 </Button>
                               </td>
@@ -864,7 +921,12 @@ export default function ClientSimulator() {
                               <td className="py-2">Ship {npc.id || index}</td>
                               <td className="py-2">{Math.round(distance).toLocaleString()} km</td>
                               <td className="py-2 text-right">
-                                <Button variant="ghost" size="sm">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleTargetNPC(npc)}
+                                  title="Target and fly to this ship"
+                                >
                                   <Target className="h-4 w-4" />
                                 </Button>
                               </td>
