@@ -2,6 +2,7 @@ import { Vector3, Quaternion } from '@shared/math';
 import { CelestialBody, NpcShip, NpcFleet } from '@shared/schema';
 import { NPCState } from '@shared/types';
 import { updateCelestialBodyPosition } from '@shared/physics';
+import { log } from './index';
 
 // NPC AI states
 export enum NPCAIState {
@@ -13,6 +14,26 @@ export enum NPCAIState {
   DOCKING = 'docking',
   TRADING = 'trading',
   ESCORTING = 'escorting',
+  // New states for advanced navigation
+  WAYPOINT_FOLLOWING = 'waypoint_following',
+  FORMATION_KEEPING = 'formation_keeping',
+  OBSTACLE_AVOIDANCE = 'obstacle_avoidance',
+}
+
+// NPC navigation states
+export enum NavigationState {
+  NONE = 'none',
+  PATHFINDING = 'pathfinding',
+  WAYPOINT = 'waypoint',
+  FORMATION = 'formation',
+  MISSION = 'mission',
+}
+
+// NPC obstacle avoidance states
+export enum AvoidanceState {
+  NONE = 'none',
+  ACTIVE = 'active',
+  RECOVERING = 'recovering',
 }
 
 // NPC ship types
@@ -20,6 +41,21 @@ export type NPCShipType = 'enemy' | 'transport' | 'civilian' | 'mining';
 
 // NPC ship status
 export type NPCShipStatus = 'hostile' | 'en-route' | 'passive' | 'working';
+
+// Waypoint interface for NPC navigation
+export interface Waypoint {
+  position: Vector3;
+  radius: number;      // How close NPC must get to consider waypoint reached
+  maxSpeed?: number;   // Speed limit near this waypoint
+  waitTime?: number;   // Time to wait at waypoint in seconds
+  isOptional?: boolean; // Can be skipped if blocked
+}
+
+// Fleet formation position
+export interface FormationPosition {
+  relativePosition: Vector3; // Position relative to fleet leader
+  relativeRotation: Quaternion; // Rotation relative to fleet leader
+}
 
 // NPC ship parameters
 interface NPCParameters {
@@ -29,6 +65,10 @@ interface NPCParameters {
   detectionRange: number;
   attackRange: number;
   fleeThreshold: number; // Health percentage to flee
+  waypointArrivalDistance: number; // Distance to consider waypoint reached
+  pathfindingUpdateInterval: number; // How often to update paths (ms)
+  obstacleAvoidanceDistance: number; // Distance to begin obstacle avoidance
+  formationKeepingTolerance: number; // Maximum distance from formation position
 }
 
 // NPC ship parameters by type
@@ -40,6 +80,10 @@ const NPC_PARAMETERS: Record<NPCShipType, NPCParameters> = {
     detectionRange: 1000.0,
     attackRange: 300.0,
     fleeThreshold: 0.3,
+    waypointArrivalDistance: 100.0,
+    pathfindingUpdateInterval: 5000,
+    obstacleAvoidanceDistance: 200.0,
+    formationKeepingTolerance: 50.0,
   },
   transport: {
     maxSpeed: 30.0,
@@ -48,6 +92,10 @@ const NPC_PARAMETERS: Record<NPCShipType, NPCParameters> = {
     detectionRange: 800.0,
     attackRange: 0.0, // Non-combat
     fleeThreshold: 0.5,
+    waypointArrivalDistance: 150.0,
+    pathfindingUpdateInterval: 7000,
+    obstacleAvoidanceDistance: 300.0,
+    formationKeepingTolerance: 75.0,
   },
   civilian: {
     maxSpeed: 20.0,
@@ -56,6 +104,10 @@ const NPC_PARAMETERS: Record<NPCShipType, NPCParameters> = {
     detectionRange: 600.0,
     attackRange: 0.0, // Non-combat
     fleeThreshold: 0.7,
+    waypointArrivalDistance: 80.0,
+    pathfindingUpdateInterval: 6000,
+    obstacleAvoidanceDistance: 250.0,
+    formationKeepingTolerance: 100.0,
   },
   mining: {
     maxSpeed: 15.0,
@@ -64,6 +116,10 @@ const NPC_PARAMETERS: Record<NPCShipType, NPCParameters> = {
     detectionRange: 500.0,
     attackRange: 0.0, // Non-combat
     fleeThreshold: 0.4,
+    waypointArrivalDistance: 50.0,
+    pathfindingUpdateInterval: 10000,
+    obstacleAvoidanceDistance: 150.0,
+    formationKeepingTolerance: 40.0,
   },
 };
 
@@ -134,6 +190,11 @@ export function createNPC(
     fleetId,
     aiState,
     targetId: null,
+    waypointsJson: null,
+    formationPosition: null,
+    navigationState: NavigationState.NONE,
+    pathCompletionPercent: 0,
+    avoidanceState: AvoidanceState.NONE
   };
   
   return ship;
@@ -305,6 +366,107 @@ export class NPCManager {
   }
   
   // Update all NPCs
+  // Set waypoints for an NPC
+  setWaypoints(npcId: number, waypoints: Waypoint[]): boolean {
+    const entityId = `npc-${npcId}`;
+    const npc = this.npcs.get(entityId);
+    
+    if (npc) {
+      npc.waypointsJson = JSON.stringify(waypoints);
+      npc.navigationState = NavigationState.WAYPOINT;
+      npc.aiState = NPCAIState.WAYPOINT_FOLLOWING;
+      npc.pathCompletionPercent = 0;
+      
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Get waypoints for an NPC
+  getWaypoints(npcId: number): Waypoint[] | null {
+    const entityId = `npc-${npcId}`;
+    const npc = this.npcs.get(entityId);
+    
+    if (npc && npc.waypointsJson) {
+      try {
+        return JSON.parse(npc.waypointsJson);
+      } catch (e) {
+        console.error(`Error parsing waypoints for NPC ${npcId}:`, e);
+        return null;
+      }
+    }
+    
+    return null;
+  }
+  
+  // Set a fleet to follow a formation
+  setFleetFormation(fleetId: string, leaderNpcId: number): boolean {
+    const npcs = this.getNPCsByFleet(fleetId);
+    if (npcs.length === 0) return false;
+    
+    // Find leader
+    const leader = npcs.find(npc => npc.id === leaderNpcId);
+    if (!leader) return false;
+    
+    // Create a circular formation
+    const formationRadius = 200.0;
+    const formationHeight = 50.0;
+    
+    for (let i = 0; i < npcs.length; i++) {
+      if (npcs[i].id === leaderNpcId) {
+        // Leader doesn't need formation position
+        continue;
+      }
+      
+      // Assign position in formation
+      const angle = (i / npcs.length) * Math.PI * 2;
+      const formationPos = i % 4 === 0 ? i / 4 : i; // This creates formation positions 0, 1, 2, 3, etc.
+      
+      npcs[i].formationPosition = formationPos;
+      npcs[i].navigationState = NavigationState.FORMATION;
+      npcs[i].aiState = NPCAIState.FORMATION_KEEPING;
+    }
+    
+    return true;
+  }
+  
+  // Find obstacles near a position
+  findObstaclesNear(position: Vector3, radius: number): { position: Vector3, radius: number }[] {
+    const obstacles: { position: Vector3, radius: number }[] = [];
+    
+    // Consider celestial bodies as obstacles
+    for (const [_, celestialBody] of this.celestialBodies.entries()) {
+      const bodyPosition = new Vector3(
+        celestialBody.currentPositionX || 0, 
+        celestialBody.currentPositionY || 0, 
+        celestialBody.currentPositionZ || 0
+      );
+      
+      if (position.distance(bodyPosition) < radius + celestialBody.radius) {
+        obstacles.push({
+          position: bodyPosition,
+          radius: celestialBody.radius
+        });
+      }
+    }
+    
+    // Consider NPCs as obstacles (except self)
+    for (const [_, npc] of this.npcs.entries()) {
+      const npcPosition = new Vector3(npc.positionX, npc.positionY, npc.positionZ);
+      
+      if (position.distance(npcPosition) < radius + 10) { // Assume NPC has radius of 10
+        obstacles.push({
+          position: npcPosition,
+          radius: 10
+        });
+      }
+    }
+    
+    return obstacles;
+  }
+  
+  // Update all NPCs
   update(deltaTime: number, currentTime: number): void {
     const npcs = this.getAllNPCs();
     
@@ -406,6 +568,208 @@ export class NPCManager {
         }
         break;
         
+      case NPCAIState.WAYPOINT_FOLLOWING:
+        // Follow waypoints if available
+        if (npc.waypointsJson) {
+          try {
+            const waypoints: Waypoint[] = JSON.parse(npc.waypointsJson);
+            
+            if (waypoints.length > 0) {
+              // Get current waypoint
+              const currentWaypoint = waypoints[0];
+              
+              // Calculate direction and distance to waypoint
+              const waypointPos = currentWaypoint.position;
+              const dirToWaypoint = waypointPos.subtract(position).normalize();
+              const distanceToWaypoint = position.distance(waypointPos);
+              
+              // Check if we've reached the waypoint
+              if (distanceToWaypoint <= params.waypointArrivalDistance) {
+                // Remove the first waypoint
+                waypoints.shift();
+                
+                // Update completion percentage
+                const waypointCount = waypoints.length;
+                npc.pathCompletionPercent = waypointCount > 0 
+                  ? (1 - waypointCount / (waypointCount + 1)) * 100
+                  : 100;
+                
+                // If all waypoints completed, go back to patrolling
+                if (waypoints.length === 0) {
+                  npc.aiState = NPCAIState.PATROLLING;
+                  npc.navigationState = NavigationState.NONE;
+                  npc.waypointsJson = null;
+                } else {
+                  // Update waypoints in NPC
+                  npc.waypointsJson = JSON.stringify(waypoints);
+                }
+              } else {
+                // Move towards the waypoint
+                let targetSpeed = params.maxSpeed;
+                
+                // Use waypoint's speed limit if specified
+                if (currentWaypoint.maxSpeed && currentWaypoint.maxSpeed < targetSpeed) {
+                  targetSpeed = currentWaypoint.maxSpeed;
+                }
+                
+                // Slow down as we approach the waypoint
+                if (distanceToWaypoint < params.waypointArrivalDistance * 3) {
+                  targetSpeed *= (distanceToWaypoint / (params.waypointArrivalDistance * 3));
+                  targetSpeed = Math.max(targetSpeed, params.maxSpeed * 0.2); // Don't go too slow
+                }
+                
+                // Calculate acceleration needed to reach target speed in target direction
+                const currentVelocityInTargetDirection = velocity.dot(dirToWaypoint);
+                const speedDifference = targetSpeed - currentVelocityInTargetDirection;
+                
+                targetAccel = dirToWaypoint.multiply(speedDifference * 2.0); // Use PD controller
+                
+                // Limit acceleration
+                const accelMagnitude = targetAccel.magnitude();
+                if (accelMagnitude > params.maxAcceleration) {
+                  targetAccel = targetAccel.multiply(params.maxAcceleration / accelMagnitude);
+                }
+              }
+            } else {
+              // No waypoints left, go back to patrolling
+              npc.aiState = NPCAIState.PATROLLING;
+              npc.navigationState = NavigationState.NONE;
+              npc.waypointsJson = null;
+            }
+          } catch (err) {
+            console.error(`Error parsing waypoints for NPC ${npc.id}:`, err);
+            npc.aiState = NPCAIState.PATROLLING;
+            npc.navigationState = NavigationState.NONE;
+            npc.waypointsJson = null;
+          }
+        } else {
+          // No waypoints available, go back to patrolling
+          npc.aiState = NPCAIState.PATROLLING;
+          npc.navigationState = NavigationState.NONE;
+        }
+        break;
+        
+      case NPCAIState.FORMATION_KEEPING:
+        // Keep position in formation relative to leader
+        if (npc.formationPosition !== null && npc.navigationState === NavigationState.FORMATION) {
+          // Get all NPCs in this fleet to find the leader
+          const fleetNpcs = Array.from(this.npcs.values()).filter(n => n.fleetId === npc.fleetId);
+          
+          // Leader is the one with null formation position
+          const leader = fleetNpcs.find(n => n.formationPosition === null);
+          
+          if (leader) {
+            // Calculate desired position in formation
+            const leaderPos = new Vector3(leader.positionX, leader.positionY, leader.positionZ);
+            const leaderRot = new Quaternion(leader.rotationX, leader.rotationY, leader.rotationZ, leader.rotationW);
+            const leaderVel = new Vector3(leader.velocityX, leader.velocityY, leader.velocityZ);
+            
+            // Position based on formation position value
+            const formationPos = npc.formationPosition as number;
+            const formationRadius = 200.0;
+            const formationHeight = 50.0;
+            
+            // Calculate formation position (circular pattern around leader)
+            const angle = (formationPos / fleetNpcs.length) * Math.PI * 2;
+            const relativeX = Math.cos(angle) * formationRadius;
+            const relativeY = Math.sin(angle) * formationRadius;
+            const relativeZ = (formationPos % 2 === 0 ? 1 : -1) * formationHeight;
+            
+            // Rotate relative position by leader's rotation
+            const relativePosition = new Vector3(relativeX, relativeY, relativeZ);
+            const rotatedPosition = leaderRot.rotateVector(relativePosition);
+            
+            // Calculate target position
+            const targetPosition = leaderPos.add(rotatedPosition);
+            
+            // Move towards target position
+            const dirToTarget = targetPosition.subtract(position).normalize();
+            const distanceToTarget = position.distance(targetPosition);
+            
+            // Calculate target velocity (include leader's velocity)
+            let targetSpeed = params.maxSpeed;
+            
+            // Faster speed when far, slower when close
+            if (distanceToTarget < params.formationKeepingTolerance * 3) {
+              targetSpeed *= (distanceToTarget / (params.formationKeepingTolerance * 3));
+              targetSpeed = Math.max(targetSpeed, params.maxSpeed * 0.3);
+            }
+            
+            // Add leader's velocity component 
+            const leaderVelMagnitude = leaderVel.magnitude();
+            const targetVelocity = dirToTarget.multiply(targetSpeed).add(leaderVel);
+            
+            // Calculate acceleration
+            const velocityDifference = targetVelocity.subtract(velocity);
+            targetAccel = velocityDifference.multiply(2.0); // PD controller
+            
+            // Limit acceleration
+            const accelMagnitude = targetAccel.magnitude();
+            if (accelMagnitude > params.maxAcceleration) {
+              targetAccel = targetAccel.multiply(params.maxAcceleration / accelMagnitude);
+            }
+          } else {
+            // No leader found, fall back to patrolling
+            npc.aiState = NPCAIState.PATROLLING;
+            npc.navigationState = NavigationState.NONE;
+            npc.formationPosition = null;
+          }
+        } else {
+          // Not in formation, fall back to patrolling
+          npc.aiState = NPCAIState.PATROLLING;
+          npc.navigationState = NavigationState.NONE;
+          npc.formationPosition = null;
+        }
+        break;
+        
+      case NPCAIState.OBSTACLE_AVOIDANCE:
+        // Implement obstacle avoidance
+        if (npc.avoidanceState === AvoidanceState.ACTIVE) {
+          // Find nearby obstacles
+          const obstacles = this.findObstaclesNear(position, params.obstacleAvoidanceDistance);
+          
+          if (obstacles.length > 0) {
+            // Calculate avoidance vector (away from all obstacles)
+            let avoidanceDir = new Vector3(0, 0, 0);
+            
+            for (const obstacle of obstacles) {
+              const dirFromObstacle = position.subtract(obstacle.position).normalize();
+              const distance = Math.max(position.distance(obstacle.position) - obstacle.radius, 0.1);
+              const weight = 1.0 / (distance * distance); // Weight by inverse square of distance
+              
+              avoidanceDir = avoidanceDir.add(dirFromObstacle.multiply(weight));
+            }
+            
+            // Normalize and apply avoidance
+            if (avoidanceDir.magnitude() > 0.001) {
+              avoidanceDir = avoidanceDir.normalize();
+              targetAccel = avoidanceDir.multiply(params.maxAcceleration);
+            } else {
+              // No significant avoidance direction, transition to recovering
+              npc.avoidanceState = AvoidanceState.RECOVERING;
+            }
+          } else {
+            // No obstacles, transition to recovering
+            npc.avoidanceState = AvoidanceState.RECOVERING;
+          }
+        } else if (npc.avoidanceState === AvoidanceState.RECOVERING) {
+          // Transition back to previous state
+          if (npc.navigationState === NavigationState.WAYPOINT) {
+            npc.aiState = NPCAIState.WAYPOINT_FOLLOWING;
+          } else if (npc.navigationState === NavigationState.FORMATION) {
+            npc.aiState = NPCAIState.FORMATION_KEEPING;
+          } else {
+            npc.aiState = NPCAIState.PATROLLING;
+          }
+          
+          npc.avoidanceState = AvoidanceState.NONE;
+        } else {
+          // Invalid state, go back to patrolling
+          npc.aiState = NPCAIState.PATROLLING;
+          npc.avoidanceState = AvoidanceState.NONE;
+        }
+        break;
+        
       case NPCAIState.IDLE:
       default:
         // Slow down
@@ -413,6 +777,70 @@ export class NPCManager {
           targetAccel = velocity.normalize().multiply(-params.maxAcceleration * 0.2);
         }
         break;
+    }
+    
+    // Check for obstacles before finalizing movement
+    // Only check if we're not already avoiding obstacles and we're not idle
+    if (npc.aiState !== NPCAIState.OBSTACLE_AVOIDANCE && npc.aiState !== NPCAIState.IDLE) {
+      const obstacles = this.findObstaclesNear(position, params.obstacleAvoidanceDistance);
+      
+      // If obstacles are found, transition to obstacle avoidance
+      if (obstacles.length > 0) {
+        // Check if any obstacles are in our current path
+        let needsAvoidance = false;
+        
+        for (const obstacle of obstacles) {
+          // Calculate how close we'll get to the obstacle if we continue on current path
+          const obstaclePos = obstacle.position;
+          const obstacleRadius = obstacle.radius;
+          
+          // Vector from current position to obstacle
+          const toObstacle = obstaclePos.subtract(position);
+          
+          // Project current velocity onto that vector to see if we're heading toward obstacle
+          const currentSpeed = velocity.magnitude();
+          if (currentSpeed > 0.001) { // Only if we're moving
+            const normalizedVelocity = velocity.multiply(1.0 / currentSpeed);
+            const dotProduct = toObstacle.dot(normalizedVelocity);
+            
+            // If dotProduct > 0, we're heading toward the obstacle
+            if (dotProduct > 0) {
+              // Calculate closest approach distance
+              const closestApproachVector = normalizedVelocity.multiply(dotProduct);
+              const perpendicularVector = toObstacle.subtract(closestApproachVector);
+              const closestDistance = perpendicularVector.magnitude();
+              
+              // If closest approach is within obstacle radius plus safety margin, avoid
+              if (closestDistance < obstacleRadius + 50.0) {
+                needsAvoidance = true;
+                break;
+              }
+            }
+          }
+        }
+        
+        if (needsAvoidance) {
+          // Remember current navigation state to return to after avoidance
+          npc.aiState = NPCAIState.OBSTACLE_AVOIDANCE;
+          npc.avoidanceState = AvoidanceState.ACTIVE;
+          
+          // Recalculate acceleration for this frame to initiate avoidance
+          let avoidanceDir = new Vector3(0, 0, 0);
+          
+          for (const obstacle of obstacles) {
+            const dirFromObstacle = position.subtract(obstacle.position).normalize();
+            const distance = Math.max(position.distance(obstacle.position) - obstacle.radius, 0.1);
+            const weight = 1.0 / (distance * distance);
+            
+            avoidanceDir = avoidanceDir.add(dirFromObstacle.multiply(weight));
+          }
+          
+          if (avoidanceDir.magnitude() > 0.001) {
+            avoidanceDir = avoidanceDir.normalize();
+            targetAccel = avoidanceDir.multiply(params.maxAcceleration);
+          }
+        }
+      }
     }
     
     // Apply acceleration to velocity

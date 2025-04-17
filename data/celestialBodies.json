@@ -27,7 +27,10 @@
     "meanAnomaly": 3.0507657193160083,
     "parentBodyId": 1,
     "color": "#b5b5b5",
-    "id": 2
+    "id": 2,
+    "currentPositionX": 109536807.7333276,
+    "currentPositionY": -673311216.8898048,
+    "currentPositionZ": -65056263.96042013
   },
   {
     "name": "Venus",
