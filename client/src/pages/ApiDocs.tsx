@@ -16,6 +16,23 @@ interface EndpointInfo {
 
 export default function ApiDocs() {
   const [activeTab, setActiveTab] = useState("http");
+  const { toast } = useToast();
+  
+  // Query to fetch all API endpoints
+  const { data: endpointsData, isLoading: isLoadingEndpoints } = useQuery({
+    queryKey: ['/api/endpoints']
+  });
+
+  const endpoints = endpointsData?.data as EndpointInfo[] || [];
+  
+  // Group endpoints by their category
+  const groupedEndpoints = endpoints.reduce((acc, endpoint) => {
+    if (!acc[endpoint.group]) {
+      acc[endpoint.group] = [];
+    }
+    acc[endpoint.group].push(endpoint);
+    return acc;
+  }, {} as Record<string, EndpointInfo[]>);
   
   return (
     <div className="p-6">
@@ -210,181 +227,52 @@ export default function ApiDocs() {
             <CardTitle className="text-base font-medium">Full HTTP API Reference</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <Accordion type="multiple" className="w-full">
-              <AccordionItem value="server">
-                <AccordionTrigger className="text-sm">Server Status & Settings</AccordionTrigger>
-                <AccordionContent className="space-y-3">
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/status</span>
+            {isLoadingEndpoints ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                <span className="ml-3 text-sm">Loading API endpoints...</span>
+              </div>
+            ) : (
+              <Accordion type="multiple" className="w-full">
+                {Object.keys(groupedEndpoints).length > 0 ? (
+                  Object.entries(groupedEndpoints).map(([group, groupEndpoints]) => (
+                    <AccordionItem key={group} value={group.toLowerCase().replace(/[^a-z0-9]/g, "-")}>
+                      <AccordionTrigger className="text-sm">{group}</AccordionTrigger>
+                      <AccordionContent className="space-y-3">
+                        {groupEndpoints.map((endpoint, idx) => (
+                          <div key={`${endpoint.path}-${endpoint.method}-${idx}`}>
+                            <div className="flex items-center">
+                              <Badge 
+                                variant="outline" 
+                                className={`mr-2 font-mono ${
+                                  endpoint.method === 'POST' ? 'bg-green-950 text-green-300 border-green-700' :
+                                  endpoint.method === 'PUT' ? 'bg-blue-950 text-blue-300 border-blue-700' :
+                                  endpoint.method === 'DELETE' ? 'bg-red-950 text-red-300 border-red-700' : ''
+                                }`}
+                              >
+                                {endpoint.method}
+                              </Badge>
+                              <span className="font-mono text-sm">{endpoint.path}</span>
+                            </div>
+                            <p className="text-xs text-gray-400 ml-14">{endpoint.description}</p>
+                          </div>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <p>No API endpoints available. Server may be restarting or endpoints are not configured.</p>
+                    <button 
+                      className="mt-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-md text-sm"
+                      onClick={() => window.location.reload()}
+                    >
+                      Refresh
+                    </button>
                   </div>
-                  <p className="text-xs text-gray-400 ml-14">Returns server status information</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/settings</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get server settings</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-blue-950 text-blue-300 border-blue-700">PUT</Badge>
-                    <span className="font-mono text-sm">/api/settings</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Update server settings</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/stats</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get server performance statistics</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/logs</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get server logs</p>
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="celestial">
-                <AccordionTrigger className="text-sm">Celestial Bodies</AccordionTrigger>
-                <AccordionContent className="space-y-3">
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/celestial</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get all celestial bodies</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/celestial/:id</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get a specific celestial body by ID</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-green-950 text-green-300 border-green-700">POST</Badge>
-                    <span className="font-mono text-sm">/api/celestial</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Create a new celestial body</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-blue-950 text-blue-300 border-blue-700">PUT</Badge>
-                    <span className="font-mono text-sm">/api/celestial/:id</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Update a celestial body</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-red-950 text-red-300 border-red-700">DELETE</Badge>
-                    <span className="font-mono text-sm">/api/celestial/:id</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Delete a celestial body</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-blue-950 text-blue-300 border-blue-700">PUT</Badge>
-                    <span className="font-mono text-sm">/api/celestial/simulation</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Update celestial simulation settings</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-blue-950 text-blue-300 border-blue-700">PUT</Badge>
-                    <span className="font-mono text-sm">/api/celestial/simulation/speed</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Update simulation speed</p>
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="npcs">
-                <AccordionTrigger className="text-sm">NPCs & Fleets</AccordionTrigger>
-                <AccordionContent className="space-y-3">
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/npc/fleets</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get all NPC fleets</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-green-950 text-green-300 border-green-700">POST</Badge>
-                    <span className="font-mono text-sm">/api/npc/fleets</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Create a new NPC fleet</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-red-950 text-red-300 border-red-700">DELETE</Badge>
-                    <span className="font-mono text-sm">/api/npc/fleets/:fleetId</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Delete an NPC fleet</p>
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="players">
-                <AccordionTrigger className="text-sm">Players</AccordionTrigger>
-                <AccordionContent className="space-y-3">
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/players</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get all connected players</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/simulated-players</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get all simulated players</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-green-950 text-green-300 border-green-700">POST</Badge>
-                    <span className="font-mono text-sm">/api/simulated-players</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Create simulated players</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-red-950 text-red-300 border-red-700">DELETE</Badge>
-                    <span className="font-mono text-sm">/api/simulated-players</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Delete all simulated players</p>
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="aoi">
-                <AccordionTrigger className="text-sm">Area of Interest</AccordionTrigger>
-                <AccordionContent className="space-y-3">
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/aoi</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get all areas of interest</p>
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="missions">
-                <AccordionTrigger className="text-sm">Missions</AccordionTrigger>
-                <AccordionContent className="space-y-3">
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/missions</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get all missions</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono">GET</Badge>
-                    <span className="font-mono text-sm">/api/missions/:missionId</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Get a specific mission by ID</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-red-950 text-red-300 border-red-700">DELETE</Badge>
-                    <span className="font-mono text-sm">/api/missions/:missionId</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Delete a mission</p>
-                  
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-mono bg-blue-950 text-blue-300 border-blue-700">PUT</Badge>
-                    <span className="font-mono text-sm">/api/missions/:missionId/assign</span>
-                  </div>
-                  <p className="text-xs text-gray-400 ml-14">Assign a mission to a fleet</p>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                )}
+              </Accordion>
+            )}
           </CardContent>
         </Card>
         
