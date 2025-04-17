@@ -560,10 +560,50 @@ export default function ClientSimulator() {
     refetchInterval: 2000,
   });
   
-  // Extract data
-  const areas = areasData?.success ? areasData.data || [] : [];
+  // Extract and transform data
+  const areas = areasData?.success ? areasData.data.map(area => ({
+    areaId: area.id.toString(),
+    name: area.name,
+    entityCount: (area.currentPlayerCount || 0) + (area.currentNpcCount || 0),
+    center: {
+      x: area.centerX || 0,
+      y: area.centerY || 0,
+      z: area.centerZ || 0
+    }
+  })) : [];
+  
   const celestialBodies = celestialData?.success ? celestialData.data || [] : [];
-  const npcs = npcData?.success ? npcData.data || [] : [];
+  
+  // Transform NPC fleet data into individual NPCs for display
+  const npcs = npcData?.success ? npcData.data.flatMap(fleet => {
+    // For each fleet, create a few individual NPC ships
+    const fleetShips = [];
+    const shipCount = Math.min(5, fleet.count || 1);
+    
+    for (let i = 0; i < shipCount; i++) {
+      // Spread ships around a position based on the celestial body they're near
+      const celestialBody = celestialBodies.find(body => body.id === fleet.nearestCelestialBodyId);
+      const baseX = celestialBody?.currentPositionX || 100000 * (i + 1);
+      const baseY = celestialBody?.currentPositionY || 0;
+      const baseZ = celestialBody?.currentPositionZ || 100000 * (i + 1);
+      
+      // Add some randomness to positions
+      const spread = 50000; // 50,000 km spread
+      fleetShips.push({
+        id: `${fleet.fleetId}-ship-${i}`,
+        type: fleet.type,
+        status: fleet.status,
+        fleetId: fleet.fleetId,
+        position: {
+          x: baseX + (Math.random() - 0.5) * spread,
+          y: baseY + (Math.random() - 0.5) * spread,
+          z: baseZ + (Math.random() - 0.5) * spread
+        }
+      });
+    }
+    
+    return fleetShips;
+  }) : [];
   
   // Get other players (simulated)
   const otherPlayers = playersData?.success ? playersData.data || [] : [];
