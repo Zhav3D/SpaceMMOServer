@@ -448,11 +448,11 @@ export default function SolarSystem3D({
   }, [celestialBodies, lastUpdate, scale, simulationSpeed]);
   
   const handleIncreaseScale = () => {
-    setScale(prev => prev * 1.5);
+    setScale(prev => prev * 9); // Increased to 9x zoom factor (instead of 1.5x)
   };
   
   const handleDecreaseScale = () => {
-    setScale(prev => prev / 1.5);
+    setScale(prev => prev / 9); // Decreased by 9x (matching zoom in factor)
   };
   
   const handleResetScale = () => {
