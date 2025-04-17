@@ -21,6 +21,16 @@ export default function SolarSystem() {
     queryKey: ['/api/celestial'],
     staleTime: 5000,
   });
+  
+  const { data: npcFleets } = useQuery({
+    queryKey: ['/api/npc/fleets'],
+    staleTime: 5000,
+  });
+  
+  const { data: simulatedPlayers } = useQuery({
+    queryKey: ['/api/simulated-players'],
+    staleTime: 5000,
+  });
 
   const handleSimulationSpeedChange = async (value: string) => {
     try {
@@ -80,6 +90,8 @@ export default function SolarSystem() {
                 celestialBodies={celestialBodies?.success ? celestialBodies.data : []} 
                 isLoading={isLoading} 
                 fullSize={true}
+                npcData={npcFleets}
+                simulatedPlayers={simulatedPlayers}
               />
             </CardContent>
           </Card>
