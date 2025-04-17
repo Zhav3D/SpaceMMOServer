@@ -1230,13 +1230,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (result) {
         // Reinitialize the server with default state
         if (serverInstance) {
-          // Reset the server state - this method would need to be implemented in the main server class
-          // await serverInstance.reloadDefaultState();
-          
-          // Reload celestial bodies
+          // Reset celestial bodies
           if (serverInstance.celestialManager) {
             await serverInstance.celestialManager.initialize();
           }
+          
+          // Reinitialize NPCs and fleets after celestial bodies are created
+          await serverInstance.initializeNPCs();
         }
         
         const response: ApiResponse<{ message: string }> = {

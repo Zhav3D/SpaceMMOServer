@@ -279,7 +279,13 @@ export default function ServerSettings() {
   };
   
   const handleToggleFrozenSolarSystem = (newValue: boolean) => {
+    // Update local state
     setFrozenSolarSystem(newValue);
+    
+    // Also store in localStorage to persist between page navigations
+    localStorage.setItem('frozenSolarSystem', JSON.stringify(newValue));
+    
+    // Send to server
     toggleFrozenSolarSystemMutation.mutate(newValue);
   };
   
