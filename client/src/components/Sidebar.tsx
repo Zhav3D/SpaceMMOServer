@@ -19,6 +19,7 @@ export default function Sidebar() {
     { name: "Sanity Checks", path: "/sanity-checks", icon: "verified" },
     { name: "Performance", path: "/performance", icon: "speed" },
     { name: "Logs", path: "/logs", icon: "article" },
+    { name: "Server Settings", path: "/settings", icon: "settings" },
     { name: "API Config", path: "/api-config", icon: "api" },
   ];
   
