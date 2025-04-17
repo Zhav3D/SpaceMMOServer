@@ -1100,6 +1100,315 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Frozen solar system toggle API
+  app.get('/api/celestial/frozen', async (req: Request, res: Response) => {
+    try {
+      if (!serverInstance || !serverInstance.celestialManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'Celestial manager not initialized',
+        });
+      }
+      
+      const frozen = serverInstance.celestialManager.isFrozen();
+      
+      const response: ApiResponse<{ frozen: boolean }> = {
+        success: true,
+        data: { frozen },
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to get frozen state: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  app.post('/api/celestial/frozen', async (req: Request, res: Response) => {
+    try {
+      if (!serverInstance || !serverInstance.celestialManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'Celestial manager not initialized',
+        });
+      }
+      
+      const { frozen } = req.body;
+      
+      if (typeof frozen !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid request body. Expected { frozen: boolean }',
+        });
+      }
+      
+      const result = await serverInstance.celestialManager.toggleFrozenMode(frozen);
+      
+      const response: ApiResponse<{ frozen: boolean }> = {
+        success: true,
+        data: { frozen: result },
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to set frozen state: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // World persistence APIs
+  app.post('/api/world/save', async (req: Request, res: Response) => {
+    try {
+      const result = await storage.saveWorldState();
+      
+      if (result) {
+        const response: ApiResponse<{ message: string }> = {
+          success: true,
+          data: { message: 'World state saved successfully' },
+        };
+        
+        res.json(response);
+      } else {
+        const response: ApiResponse<null> = {
+          success: false,
+          error: 'Failed to save world state',
+        };
+        
+        res.status(500).json(response);
+      }
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to save world state: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  app.post('/api/world/load', async (req: Request, res: Response) => {
+    try {
+      const result = await storage.loadWorldState();
+      
+      if (result) {
+        const response: ApiResponse<{ message: string }> = {
+          success: true,
+          data: { message: 'World state loaded successfully' },
+        };
+        
+        res.json(response);
+      } else {
+        const response: ApiResponse<null> = {
+          success: false,
+          error: 'Failed to load world state',
+        };
+        
+        res.status(500).json(response);
+      }
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to load world state: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  app.post('/api/world/reset', async (req: Request, res: Response) => {
+    try {
+      const result = await storage.resetWorldState();
+      
+      if (result) {
+        // Reinitialize the server with default state
+        if (serverInstance) {
+          // Reset the server state - this method would need to be implemented in the main server class
+          // await serverInstance.reloadDefaultState();
+          
+          // Reload celestial bodies
+          if (serverInstance.celestialManager) {
+            await serverInstance.celestialManager.initialize();
+          }
+        }
+        
+        const response: ApiResponse<{ message: string }> = {
+          success: true,
+          data: { message: 'World state reset successfully' },
+        };
+        
+        res.json(response);
+      } else {
+        const response: ApiResponse<null> = {
+          success: false,
+          error: 'Failed to reset world state',
+        };
+        
+        res.status(500).json(response);
+      }
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to reset world state: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // Auto-save settings API
+  app.get('/api/settings/auto-save', async (req: Request, res: Response) => {
+    try {
+      const enabled = await storage.getSettingValue<boolean>('AUTO_SAVE_ENABLED', false);
+      const interval = await storage.getSettingValue<number>('AUTO_SAVE_INTERVAL', 300); // Default 5 minutes (300 seconds)
+      
+      const response: ApiResponse<{ enabled: boolean, interval: number }> = {
+        success: true,
+        data: { enabled, interval },
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to get auto-save settings: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  app.post('/api/settings/auto-save', async (req: Request, res: Response) => {
+    try {
+      const { enabled, interval } = req.body;
+      
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid enabled value. Expected boolean.',
+        });
+      }
+      
+      if (interval !== undefined && (typeof interval !== 'number' || interval < 10)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid interval value. Expected number >= 10 seconds.',
+        });
+      }
+      
+      // Update settings
+      await storage.updateSetting(
+        'AUTO_SAVE_ENABLED',
+        enabled.toString(),
+        'boolean',
+        'persistence',
+        'Whether auto-save is enabled'
+      );
+      
+      if (interval !== undefined) {
+        await storage.updateSetting(
+          'AUTO_SAVE_INTERVAL',
+          interval.toString(),
+          'number',
+          'persistence',
+          'Auto-save interval in seconds'
+        );
+      }
+      
+      // Get updated settings
+      const updatedEnabled = await storage.getSettingValue<boolean>('AUTO_SAVE_ENABLED', false);
+      const updatedInterval = await storage.getSettingValue<number>('AUTO_SAVE_INTERVAL', 300);
+      
+      // Inform the server instance to start/stop auto-save if needed
+      if (serverInstance) {
+        // These methods would need to be implemented in the main server class
+        // if (updatedEnabled) {
+        //   serverInstance.startAutoSave(updatedInterval);
+        // } else {
+        //   serverInstance.stopAutoSave();
+        // }
+        console.log(`Auto-save ${updatedEnabled ? 'enabled' : 'disabled'} with interval ${updatedInterval} seconds`);
+      }
+      
+      const response: ApiResponse<{ enabled: boolean, interval: number }> = {
+        success: true,
+        data: { enabled: updatedEnabled, interval: updatedInterval },
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to update auto-save settings: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // Settings API
+  app.get('/api/settings', async (req: Request, res: Response) => {
+    try {
+      const settings = await storage.getAllSettings();
+      
+      const response: ApiResponse<typeof settings> = {
+        success: true,
+        data: settings,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to get settings: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  app.post('/api/settings', async (req: Request, res: Response) => {
+    try {
+      const { name, value, dataType, category, description } = req.body;
+      
+      if (!name || value === undefined || !dataType || !category) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: name, value, dataType, category',
+        });
+      }
+      
+      const setting = await storage.updateSetting(
+        name,
+        value.toString(),
+        dataType,
+        category,
+        description
+      );
+      
+      const response: ApiResponse<typeof setting> = {
+        success: true,
+        data: setting,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to update setting: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
   // Get all API endpoints
   app.get('/api/endpoints', (req: Request, res: Response) => {
     const endpoints: {
@@ -1116,6 +1425,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       { path: '/api/logs', method: 'GET', description: 'Get server logs', group: 'Server Status & Settings' },
       { path: '/api/emergency-stop', method: 'POST', description: 'Emergency stop the server', group: 'Server Status & Settings' },
       { path: '/api/endpoints', method: 'GET', description: 'Get all API endpoints', group: 'Server Status & Settings' },
+      { path: '/api/settings/auto-save', method: 'GET', description: 'Get auto-save settings', group: 'Server Status & Settings' },
+      { path: '/api/settings/auto-save', method: 'POST', description: 'Update auto-save settings', group: 'Server Status & Settings' },
+      { path: '/api/world/save', method: 'POST', description: 'Manually save world state', group: 'Server Status & Settings' },
+      { path: '/api/world/load', method: 'POST', description: 'Load saved world state', group: 'Server Status & Settings' },
+      { path: '/api/world/reset', method: 'POST', description: 'Reset world state to default', group: 'Server Status & Settings' },
       
       // Celestial bodies
       { path: '/api/celestial', method: 'GET', description: 'Get all celestial bodies', group: 'Celestial Bodies' },
@@ -1128,6 +1442,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       { path: '/api/celestial/simulation/speed', method: 'GET', description: 'Get simulation speed', group: 'Celestial Bodies' },
       { path: '/api/celestial/simulation/speed', method: 'PUT', description: 'Update simulation speed', group: 'Celestial Bodies' },
       { path: '/api/celestial/simulation/test', method: 'POST', description: 'Test celestial simulation', group: 'Celestial Bodies' },
+      { path: '/api/celestial/frozen', method: 'GET', description: 'Get frozen solar system state', group: 'Celestial Bodies' },
+      { path: '/api/celestial/frozen', method: 'POST', description: 'Toggle frozen solar system mode', group: 'Celestial Bodies' },
       
       // NPCs & Fleets
       { path: '/api/npc/fleets', method: 'GET', description: 'Get all NPC fleets', group: 'NPCs & Fleets' },
