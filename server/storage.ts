@@ -953,6 +953,12 @@ export class JsonStorage implements IStorage {
     return result;
   }
   
+  async clearAllAreasOfInterest(): Promise<void> {
+    this.areasOfInterest.clear();
+    this.saveDataToDisk('areasOfInterest', []);
+    log('Cleared all areas of interest', 'info');
+  }
+  
   // Server Log methods
   async createServerLog(log: InsertServerLog): Promise<ServerLog> {
     const id = this.serverLogId++;
