@@ -2718,5 +2718,21 @@
     "networkTraffic": 0,
     "playerCount": 0,
     "id": 340
+  },
+  {
+    "timestamp": 1744923223.626,
+    "cpuLoad": 10.081751824817518,
+    "memoryUsage": 190,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 341
+  },
+  {
+    "timestamp": 1744923233.626,
+    "cpuLoad": 10.61442394239424,
+    "memoryUsage": 184,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 342
   }
 ]
