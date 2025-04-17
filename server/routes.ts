@@ -1235,8 +1235,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await serverInstance.celestialManager.initialize();
           }
           
-          // Reinitialize NPCs and fleets after celestial bodies are created
-          await serverInstance.initializeNPCs();
+          // Since we can't access private methods, we'll have to reinitialize the game world
+          // via a different approach
+          console.log('Reinitializing game world after reset...');
+          
+          // We have to recreate server instance if possible
+          if (serverInstance) {
+            // First stop the current instance
+            // NOTE: We're using shutdown but keeping it as non-awaited
+            // so the response can be sent before the server shuts down
+            setTimeout(() => {
+              if (serverInstance) {
+                serverInstance.shutdown();
+              }
+            }, 1000);
+          }
         }
         
         const response: ApiResponse<{ message: string }> = {

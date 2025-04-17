@@ -95,10 +95,38 @@ export default function ServerSettings() {
     }
   }, [autoSaveData]);
   
-  // Update frozen solar system state
+  // On component mount, load frozen state from localStorage first (for UI persistence between page navigations)
+  useEffect(() => {
+    // Try to load frozen state from localStorage first
+    const savedFrozenState = localStorage.getItem('frozenSolarSystem');
+    if (savedFrozenState !== null) {
+      try {
+        const parsedState = JSON.parse(savedFrozenState);
+        setFrozenSolarSystem(parsedState);
+        
+        // If we restored from localStorage and it doesn't match server state,
+        // update the server to match
+        if (frozenSolarData?.success && frozenSolarData.data && 
+            parsedState !== frozenSolarData.data.frozen) {
+          console.log("Syncing localStorage frozen state to server");
+          toggleFrozenSolarSystemMutation.mutate(parsedState);
+        }
+      } catch (e) {
+        console.error("Error parsing saved frozen state:", e);
+      }
+    }
+  }, []);  // Empty dependency array means this runs once on mount
+  
+  // Update frozen solar system state from API when it changes
   useEffect(() => {
     if (frozenSolarData?.success && frozenSolarData.data) {
-      setFrozenSolarSystem(frozenSolarData.data.frozen);
+      // Only update state from API if it's different from current state
+      // This prevents overwriting the localStorage value unnecessarily
+      if (frozenSolarSystem !== frozenSolarData.data.frozen) {
+        setFrozenSolarSystem(frozenSolarData.data.frozen);
+        // Also update localStorage
+        localStorage.setItem('frozenSolarSystem', JSON.stringify(frozenSolarData.data.frozen));
+      }
     }
   }, [frozenSolarData]);
 
