@@ -41,16 +41,106 @@ interface CelestialBody {
 interface SolarSystemVisualizationProps {
   celestialBodies: CelestialBody[];
   isLoading?: boolean;
+  onSelectBody?: (body: CelestialBody) => void;
 }
 
 export default function SolarSystemVisualization({
   celestialBodies,
   isLoading = false,
+  onSelectBody,
 }: SolarSystemVisualizationProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [viewMode, setViewMode] = useState("2d");
   const [scale, setScale] = useState("system");
   const [focusBody, setFocusBody] = useState<string | null>(null);
+  
+  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || !onSelectBody || celestialBodies.length === 0) return;
+    
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Scale based on the canvas width/height vs the internal canvas size
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const clickX = x * scaleX;
+    const clickY = y * scaleY;
+    
+    // Find central body
+    const centralBody = celestialBodies.find(body => body.parentBodyId === null);
+    if (!centralBody) return;
+    
+    // Calculate center of the canvas
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    // Set up scale factor based on the selected scale
+    let scaleFactor = 1;
+    switch (scale) {
+      case "system":
+        scaleFactor = 0.0000000008; // Solar system scale
+        break;
+      case "inner":
+        scaleFactor = 0.000000004; // Inner planets scale
+        break;
+      case "outer":
+        scaleFactor = 0.0000000002; // Outer planets scale
+        break;
+    }
+    
+    // Define size scaling factor - same as in rendering
+    const radiusScaleFactor = 0.00000003;
+    
+    // Check if we clicked on any celestial body
+    let clickedBody: CelestialBody | null = null;
+    let minDist = Number.MAX_VALUE;
+    
+    // Calculate the distance to the sun first
+    const sunSize = Math.max(15, centralBody.radius * radiusScaleFactor);
+    const sunDist = Math.sqrt(Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2));
+    
+    if (sunDist <= sunSize) {
+      clickedBody = centralBody;
+      minDist = sunDist;
+    }
+    
+    // Check all other bodies
+    for (const body of celestialBodies) {
+      if (body.id === centralBody.id) continue; // Skip central body, already checked
+      
+      // Use the current position data from the API
+      const posX = body.currentPositionX * scaleFactor;
+      const posY = body.currentPositionY * scaleFactor;
+      
+      // Calculate screen position
+      const x = centerX + posX;
+      const y = centerY + posY;
+      
+      // Skip if off-screen
+      if (x < -50 || x > canvas.width + 50 || y < -50 || y > canvas.height + 50) continue;
+      
+      // Size is exaggerated for visibility - same as in rendering
+      const size = Math.max(3, body.radius * radiusScaleFactor * 4);
+      
+      // Calculate distance from click to the body
+      const dist = Math.sqrt(Math.pow(clickX - x, 2) + Math.pow(clickY - y, 2));
+      
+      // If within the body's radius and closer than any previous match
+      if (dist <= size && dist < minDist) {
+        clickedBody = body;
+        minDist = dist;
+      }
+    }
+    
+    // If we found a body and we have an onSelectBody callback
+    if (clickedBody && onSelectBody) {
+      onSelectBody(clickedBody);
+      setFocusBody(clickedBody.name);
+    }
+  }, [celestialBodies, scale, onSelectBody]);
   
   const renderCanvas = useCallback(() => {
     if (!canvasRef.current || celestialBodies.length === 0) return;
@@ -276,7 +366,8 @@ export default function SolarSystemVisualization({
               ref={canvasRef} 
               width={800} 
               height={450} 
-              className="w-full h-full"
+              className="w-full h-full cursor-pointer"
+              onClick={handleCanvasClick}
             />
             
             {/* Planet selector */}
@@ -287,7 +378,13 @@ export default function SolarSystemVisualization({
                     key={body.id}
                     variant={focusBody === body.name ? "default" : "outline"}
                     className="cursor-pointer text-xs transition-all hover:scale-110"
-                    onClick={() => setFocusBody(body.name === focusBody ? null : body.name)}
+                    onClick={() => {
+                      const newFocus = body.name === focusBody ? null : body.name;
+                      setFocusBody(newFocus);
+                      if (newFocus && onSelectBody) {
+                        onSelectBody(body);
+                      }
+                    }}
                     style={{
                       backgroundColor: focusBody === body.name ? body.color : 'transparent',
                       borderColor: body.color,
