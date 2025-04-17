@@ -371,6 +371,11 @@ export class GameServer {
       // Reinitialize all components
       log('Reinitializing server components after world reset...', 'info');
       
+      // Reset AOI Manager
+      log('Reinitializing Areas of Interest...', 'info');
+      this.aoiManager = new AOIManager(this.settings.aoiGridCellSize);
+      await this.initializeAOI();
+      
       // Reload celestial bodies
       log('Reinitializing celestial bodies...', 'info');
       await this.celestialManager.initialize();
@@ -413,11 +418,12 @@ export class GameServer {
   // Initialize areas of interest
   private async initializeAOI(): Promise<void> {
     try {
-      // Get existing areas from storage
+      // Get existing areas from storage - but force creation of new ones after reset
       const areas = await storage.getAllAreasOfInterest();
       
-      if (areas.length === 0) {
-        // Create default areas if none exist
+      // Always recreate default areas after a world reset
+      if (true) {
+        // Create default areas
         log('Creating default areas of interest...', 'info');
         
         // Earth orbit
