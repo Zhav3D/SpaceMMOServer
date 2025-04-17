@@ -14,6 +14,7 @@ export default function CelestialManagement() {
   const [lastUpdate, setLastUpdate] = useState(Date.now());
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [selectedBodyId, setSelectedBodyId] = useState<number | null>(null);
+  const [showEntities, setShowEntities] = useState<boolean>(true);
   
   // Fetch celestial bodies with refreshing when edits happen
   const { data: celestialData, isLoading } = useQuery({
@@ -97,7 +98,16 @@ export default function CelestialManagement() {
         </TabsList>
         
         <TabsContent value="visualization" className="mt-2">
-          <div className="flex justify-end mb-2">
+          <div className="flex justify-between mb-2">
+            <div className="bg-muted rounded-md p-1 inline-flex items-center space-x-2">
+              <button 
+                onClick={() => setShowEntities(!showEntities)}
+                className={`px-3 py-1 rounded ${showEntities ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'}`}
+              >
+                {showEntities ? 'Entities: On' : 'Entities: Off'}
+              </button>
+            </div>
+            
             <div className="bg-muted rounded-md p-1 inline-flex">
               <button 
                 onClick={() => setViewMode('2d')}
@@ -121,6 +131,7 @@ export default function CelestialManagement() {
                 entities={entities}
                 isLoading={isLoading}
                 onSelectBody={handleBodySelect}
+                showEntities={showEntities}
               />
             ) : (
               <SolarSystem3D 

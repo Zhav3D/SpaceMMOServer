@@ -55,6 +55,7 @@ interface SolarSystemVisualizationProps {
   isLoading?: boolean;
   onSelectBody?: (body: CelestialBody) => void;
   entities?: Entity[]; // NPCs and players
+  showEntities?: boolean;
 }
 
 export default function SolarSystemVisualization({
