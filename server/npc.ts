@@ -567,4 +567,15 @@ export class NPCManager {
       this.removeNPC(npcId);
     }
   }
+  
+  // Clear all NPCs and fleets (used during world reset)
+  clearAllNPCs(): void {
+    // Clear all fleets
+    this.fleets.clear();
+    
+    // Clear all NPCs
+    this.npcs.clear();
+    
+    console.log('Cleared all NPCs and fleets from memory');
+  }
 }

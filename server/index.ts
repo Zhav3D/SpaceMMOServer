@@ -8,7 +8,8 @@ import {
   ClientConnectMessage, 
   ClientStateUpdateMessage 
 } from '@shared/types';
-import { CelestialBody } from '@shared/schema';
+import { CelestialBody, npcShips, npcFleets } from '@shared/schema';
+import { db } from './db';
 import { storage } from './storage';
 import { AOIManager } from './aoi';
 import { GameStateManager } from './state';
@@ -517,12 +518,20 @@ export class GameServer {
     try {
       log('Creating default NPC fleets with increased counts...', 'info');
       
-      // Don't clear or delete existing NPCs here as that should be done by the reset function
-      // before this method is called. Doing it here can lead to race conditions 
-      // with the sequence generation.
+      // Manually delete all existing NPCs and fleets to avoid duplicate key issues
+      // This is needed after a reset because the server instance might still have stale NPC data
+      this.npcManager.clearAllNPCs();
       
-      // We'll skip sequence reset here since it's already done in resetWorldState()
-      // and doing it again can cause race conditions
+      // Also ensure the database is clean
+      // We normally shouldn't need this since resetWorldState clears tables,
+      // but we'll do it here as an extra safety measure
+      try {
+        await db.delete(npcShips);
+        await db.delete(npcFleets);
+        log('Cleared existing NPCs and fleets from database', 'info');
+      } catch (err) {
+        log(`Warning: Error clearing NPCs: ${err}`, 'warn');
+      }
 
       let totalShips = 0;
       let totalFleets = 0;
