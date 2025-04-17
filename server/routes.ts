@@ -1302,14 +1302,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // In a production environment, we would use a process manager
                 // to restart the server. For now, we'll just restart the server
                 // in this process after a brief delay
-                setTimeout(async () => {
+                setTimeout(() => {
                   try {
-                    console.log('Restarting server after world reset...');
-                    const udpPort = parseInt(process.env.UDP_PORT || '7777', 10);
-                    const httpPort = 5000;
-                    
-                    serverInstance = new GameServer(udpPort, httpPort);
-                    await serverInstance.start();
+                    console.log('Restarting workflow after world reset...');
+                    process.exit(0); // Exit with success code to trigger workflow restart
                   } catch (err) {
                     console.error('Failed to restart server:', err);
                   }
