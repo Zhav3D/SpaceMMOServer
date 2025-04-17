@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "name": "Earth Orbit (Alpha Sector)",
+    "centerX": 0,
+    "centerY": 0,
+    "centerZ": 0,
+    "radius": 5000,
+    "nearestCelestialBodyId": 3,
+    "playerCount": 0,
+    "npcCount": 0,
+    "updateFrequency": 60,
+    "latency": 0,
+    "load": 0,
+    "capacityLimit": 400,
+    "id": 1
+  },
+  {
+    "name": "Mars Colony (Beta Sector)",
+    "centerX": 200000000,
+    "centerY": 0,
+    "centerZ": 0,
+    "radius": 5000,
+    "nearestCelestialBodyId": 4,
+    "playerCount": 0,
+    "npcCount": 0,
+    "updateFrequency": 40,
+    "latency": 0,
+    "load": 0,
+    "capacityLimit": 400,
+    "id": 2
+  },
+  {
+    "name": "Jupiter Mining Belt (Gamma Sector)",
+    "centerX": 600000000,
+    "centerY": 0,
+    "centerZ": 0,
+    "radius": 5000,
+    "nearestCelestialBodyId": 5,
+    "playerCount": 0,
+    "npcCount": 0,
+    "updateFrequency": 30,
+    "latency": 0,
+    "load": 0,
+    "capacityLimit": 400,
+    "id": 3
+  },
+  {
+    "name": "Saturn Rings (Delta Sector)",
+    "centerX": 1200000000,
+    "centerY": 0,
+    "centerZ": 0,
+    "radius": 5000,
+    "nearestCelestialBodyId": 6,
+    "playerCount": 0,
+    "npcCount": 0,
+    "updateFrequency": 60,
+    "latency": 0,
+    "load": 0,
+    "capacityLimit": 400,
+    "id": 4
+  }
+]

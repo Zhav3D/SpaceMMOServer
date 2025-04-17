@@ -1302,12 +1302,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // In a production environment, we would use a process manager
                 // to restart the server. For now, we'll just restart the server
                 // in this process after a brief delay
-                setTimeout(() => {
+                setTimeout(async () => {
                   try {
-                    console.log('Restarting workflow after world reset...');
-                    process.exit(0); // Exit with success code to trigger workflow restart
+                    console.log('Reinitializing server after world reset...');
+                    if (serverInstance) {
+                      // Reinitialize the server components without shutting down
+                      await serverInstance.reinitializeAfterReset();
+                      console.log('Server reinitialized successfully!');
+                    }
                   } catch (err) {
-                    console.error('Failed to restart server:', err);
+                    console.error('Failed to reinitialize server:', err);
                   }
                 }, 1000);
               }

@@ -361,6 +361,55 @@ export class GameServer {
     }
   }
   
+  // Method to reinitialize the server after a world reset without restarting the application
+  public async reinitializeAfterReset(): Promise<void> {
+    try {
+      // Pause the update loops temporarily
+      const wasRunning = this.isRunning;
+      this.isRunning = false;
+      
+      // Reinitialize all components
+      log('Reinitializing server components after world reset...', 'info');
+      
+      // Reload celestial bodies
+      log('Reinitializing celestial bodies...', 'info');
+      await this.celestialManager.initialize();
+      
+      // Reload NPC system
+      log('Reinitializing NPC system...', 'info');
+      await this.initializeNPCs();
+      
+      // Reload Game State
+      log('Reinitializing Game State...', 'info');
+      await this.gameStateManager.initialize();
+      
+      // Reinitialize Mission Manager
+      log('Reinitializing Mission system...', 'info');
+      if (this.missionManager) {
+        await this.missionManager.initialize();
+      } else {
+        this.missionManager = new MissionManager(
+          this.udpServer,
+          this.gameStateManager,
+          this.npcManager,
+          this.celestialManager
+        );
+        await this.missionManager.initialize();
+      }
+      
+      // Resume server only if it was running before
+      this.isRunning = wasRunning;
+      this.isShuttingDown = false;
+      log('Server reinitialized successfully', 'info');
+      
+      // Record server stats after reinitialization
+      this.recordServerStats();
+    } catch (error) {
+      log(`Failed to reinitialize server: ${error}`, 'error');
+      throw error;
+    }
+  }
+  
   // Initialize areas of interest
   private async initializeAOI(): Promise<void> {
     try {
