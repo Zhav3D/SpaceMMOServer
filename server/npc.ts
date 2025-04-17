@@ -572,7 +572,16 @@ export class NPCManager {
         // Follow waypoints if available
         if (npc.waypointsJson) {
           try {
-            const waypoints: Waypoint[] = JSON.parse(npc.waypointsJson);
+            const parsedWaypoints = JSON.parse(npc.waypointsJson);
+            
+            // Convert the parsed waypoints to proper Waypoint objects with Vector3 positions
+            const waypoints: Waypoint[] = parsedWaypoints.map((wp: any) => ({
+              position: new Vector3(wp.position.x, wp.position.y, wp.position.z),
+              radius: wp.radius,
+              maxSpeed: wp.maxSpeed,
+              waitTime: wp.waitTime,
+              isOptional: wp.isOptional
+            }));
             
             if (waypoints.length > 0) {
               // Get current waypoint
