@@ -495,15 +495,15 @@ export class DatabaseStorage implements IStorage {
     try {
       // Reset all table sequences to properly start from 1 after a world reset
       await db.execute(sql`
-        ALTER SEQUENCE "celestial_bodies_id_seq" RESTART WITH 1;
-        ALTER SEQUENCE "npc_ships_id_seq" RESTART WITH 1;
-        ALTER SEQUENCE "npc_fleets_id_seq" RESTART WITH 1;
-        ALTER SEQUENCE "areas_of_interest_id_seq" RESTART WITH 1;
-        ALTER SEQUENCE "server_logs_id_seq" RESTART WITH 1;
-        ALTER SEQUENCE "server_stats_id_seq" RESTART WITH 1;
-        ALTER SEQUENCE "server_settings_id_seq" RESTART WITH 1;
-        ALTER SEQUENCE "players_id_seq" RESTART WITH 1;
-        ALTER SEQUENCE "users_id_seq" RESTART WITH 1;
+        SELECT setval('"celestial_bodies_id_seq"', 1, false);
+        SELECT setval('"npc_ships_id_seq"', 1, false);
+        SELECT setval('"npc_fleets_id_seq"', 1, false);
+        SELECT setval('"areas_of_interest_id_seq"', 1, false);
+        SELECT setval('"server_logs_id_seq"', 1, false);
+        SELECT setval('"server_stats_id_seq"', 1, false);
+        SELECT setval('"server_settings_id_seq"', 1, false);
+        SELECT setval('"players_id_seq"', 1, false);
+        SELECT setval('"users_id_seq"', 1, false);
       `);
       console.log('Database sequences reset');
       return true;
@@ -879,24 +879,36 @@ export class DatabaseStorage implements IStorage {
       
       // Delete all entities from the database
       await db.transaction(async (tx) => {
+        // Delete existing entities
         await tx.delete(celestialBodies);
         await tx.delete(npcShips);
         await tx.delete(npcFleets);
         await tx.delete(areasOfInterest);
-        // Don't delete players, logs, or settings
         
-        // Reset the sequence generators to avoid primary key conflicts
-        await tx.execute(sql`ALTER SEQUENCE celestial_bodies_id_seq RESTART WITH 1;`);
-        await tx.execute(sql`ALTER SEQUENCE npc_ships_id_seq RESTART WITH 1;`);
-        await tx.execute(sql`ALTER SEQUENCE npc_fleets_id_seq RESTART WITH 1;`);
-        await tx.execute(sql`ALTER SEQUENCE areas_of_interest_id_seq RESTART WITH 1;`);
-        await tx.execute(sql`ALTER SEQUENCE missions_id_seq RESTART WITH 1;`);
+        // Also delete logs and stats, as they can cause sequence conflicts
+        await tx.delete(serverLogs);
+        await tx.delete(serverStats);
         
-        console.log('Database sequences reset');
+        // Keep players and settings
+        
+        // Reset all sequences using setval 
+        await tx.execute(sql`
+          SELECT setval('"celestial_bodies_id_seq"', 1, false); 
+          SELECT setval('"npc_ships_id_seq"', 1, false);
+          SELECT setval('"npc_fleets_id_seq"', 1, false);
+          SELECT setval('"areas_of_interest_id_seq"', 1, false);
+          SELECT setval('"server_logs_id_seq"', 1, false);
+          SELECT setval('"server_stats_id_seq"', 1, false);
+          SELECT setval('"missions_id_seq"', 1, false);
+        `);
+        
+        console.log('Database tables cleared and sequences reset');
       });
       
-      // Create a log entry for this reset
-      await this.createServerLog({
+      // After resetting, create a fresh log entry outside the transaction
+      // This should be ID 1 in the logs table
+      await db.insert(serverLogs).values({
+        id: 1, // Explicitly set ID to 1
         timestamp: Date.now() / 1000,
         level: 'INFO',
         message: 'World state reset completed',
