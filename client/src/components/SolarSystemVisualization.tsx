@@ -40,16 +40,28 @@ interface CelestialBody {
   orbitProgress: number;
 }
 
+interface Entity {
+  id: string;
+  position: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  type: 'player' | 'npc';
+}
+
 interface SolarSystemVisualizationProps {
   celestialBodies: CelestialBody[];
   isLoading?: boolean;
   onSelectBody?: (body: CelestialBody) => void;
+  entities?: Entity[]; // NPCs and players
 }
 
 export default function SolarSystemVisualization({
   celestialBodies,
   isLoading = false,
   onSelectBody,
+  entities = []
 }: SolarSystemVisualizationProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [viewMode, setViewMode] = useState("2d");
@@ -80,9 +92,9 @@ export default function SolarSystemVisualization({
     const centralBody = celestialBodies.find(body => body.parentBodyId === null);
     if (!centralBody) return;
     
-    // Calculate center of the canvas
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    // Calculate center of the canvas with panning
+    const centerX = canvas.width / 2 + panOffset.x;
+    const centerY = canvas.height / 2 + panOffset.y;
     
     // Set up scale factor based on the selected scale and zoom level
     let scaleFactor = 1;
@@ -147,7 +159,7 @@ export default function SolarSystemVisualization({
       onSelectBody(clickedBody);
       setFocusBody(clickedBody.name);
     }
-  }, [celestialBodies, scale, onSelectBody, zoomLevel]);
+  }, [celestialBodies, scale, onSelectBody, zoomLevel, panOffset]);
   
   const renderCanvas = useCallback(() => {
     if (!canvasRef.current || celestialBodies.length === 0) return;
@@ -193,9 +205,9 @@ export default function SolarSystemVisualization({
     
     if (!centralBody) return;
     
-    // Canvas center
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    // Apply panning offset to the canvas center
+    const centerX = canvas.width / 2 + panOffset.x;
+    const centerY = canvas.height / 2 + panOffset.y;
     
     // Draw orbit paths for all planets
     celestialBodies.forEach(body => {
@@ -319,7 +331,44 @@ export default function SolarSystemVisualization({
         ctx.shadowBlur = 0;
       }
     });
-  }, [celestialBodies, scale, focusBody, zoomLevel]);
+    
+    // Draw NPC and player entities if toggle is on
+    if (showEntities && entities.length > 0) {
+      // Draw entities (NPCs and players)
+      entities.forEach(entity => {
+        // Convert entity position to canvas coordinates
+        const entityX = entity.position.x * scaleFactor;
+        const entityY = entity.position.y * scaleFactor;
+        
+        // Calculate screen position
+        const x = centerX + entityX;
+        const y = centerY + entityY;
+        
+        // Skip if off-screen
+        if (x < -10 || x > canvas.width + 10 || y < -10 || y > canvas.height + 10) return;
+        
+        // Different colors for NPCs and players
+        const entityColor = entity.type === 'player' ? '#4CAF50' : '#FF5722';
+        const entitySize = entity.type === 'player' ? 6 : 4;
+        
+        // Draw entity
+        ctx.fillStyle = entityColor;
+        ctx.beginPath();
+        ctx.arc(x, y, entitySize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw halo effect
+        ctx.strokeStyle = entityColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, entitySize + 2, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Show entity ID on hover (for future implementation)
+        // ctx.fillText(entity.id, x, y - entitySize - 5);
+      });
+    }
+  }, [celestialBodies, scale, focusBody, zoomLevel, showEntities, entities, panOffset]);
 
   // Setup animation loop
   useEffect(() => {
@@ -348,7 +397,15 @@ export default function SolarSystemVisualization({
           <span className="text-yellow-500 mr-2">☀</span>
           Solar System Visualization
         </CardTitle>
-        <div className="flex space-x-2">
+        <div className="flex space-x-3 items-center">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-entities"
+              checked={showEntities}
+              onCheckedChange={setShowEntities}
+            />
+            <Label htmlFor="show-entities" className="text-sm">Show NPCs/Players</Label>
+          </div>
           <Select value={scale} onValueChange={setScale}>
             <SelectTrigger className="bg-background text-sm rounded border border-input w-28 h-8">
               <SelectValue placeholder="Scale" />
@@ -393,7 +450,7 @@ export default function SolarSystemVisualization({
               onMouseLeave={() => setIsPanning(false)}
             />
             
-            {/* Zoom controls */}
+            {/* Zoom and pan controls */}
             <div className="absolute bottom-4 left-4 flex space-x-2 bg-black bg-opacity-50 p-2 rounded-md text-white">
               <button 
                 onClick={() => setZoomLevel(prev => Math.max(0.2, prev / 1.5))}
@@ -407,7 +464,7 @@ export default function SolarSystemVisualization({
                 className="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700"
                 title="Reset Zoom"
               >
-                Reset
+                Reset Zoom
               </button>
               <button 
                 onClick={() => setZoomLevel(prev => prev * 1.5)}
@@ -415,6 +472,13 @@ export default function SolarSystemVisualization({
                 title="Zoom In"
               >
                 +
+              </button>
+              <button 
+                onClick={() => setPanOffset({ x: 0, y: 0 })}
+                className="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700 ml-2"
+                title="Reset Pan"
+              >
+                Reset Pan
               </button>
             </div>
             
