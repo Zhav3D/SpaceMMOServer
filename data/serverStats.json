@@ -2318,5 +2318,101 @@
     "networkTraffic": 0,
     "playerCount": 0,
     "id": 290
+  },
+  {
+    "timestamp": 1744922727.271,
+    "cpuLoad": 11.22983,
+    "memoryUsage": 138,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 291
+  },
+  {
+    "timestamp": 1744922737.272,
+    "cpuLoad": 11.5813825,
+    "memoryUsage": 142,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 292
+  },
+  {
+    "timestamp": 1744922747.272,
+    "cpuLoad": 11.939658534146586,
+    "memoryUsage": 149,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 293
+  },
+  {
+    "timestamp": 1744922757.272,
+    "cpuLoad": 12.25736625,
+    "memoryUsage": 148,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 294
+  },
+  {
+    "timestamp": 1744922767.272,
+    "cpuLoad": 12.8889275,
+    "memoryUsage": 146,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 295
+  },
+  {
+    "timestamp": 1744922777.272,
+    "cpuLoad": 13.21880125,
+    "memoryUsage": 156,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 296
+  },
+  {
+    "timestamp": 1744922787.272,
+    "cpuLoad": 13.5167025,
+    "memoryUsage": 146,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 297
+  },
+  {
+    "timestamp": 1744922797.272,
+    "cpuLoad": 13.80036875,
+    "memoryUsage": 155,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 298
+  },
+  {
+    "timestamp": 1744922807.273,
+    "cpuLoad": 14.096871562843717,
+    "memoryUsage": 151,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 299
+  },
+  {
+    "timestamp": 1744922817.273,
+    "cpuLoad": 14.6161075,
+    "memoryUsage": 110,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 300
+  },
+  {
+    "timestamp": 1744922827.273,
+    "cpuLoad": 15.0890825,
+    "memoryUsage": 113,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 301
+  },
+  {
+    "timestamp": 1744922837.273,
+    "cpuLoad": 15.377017500000001,
+    "memoryUsage": 123,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 302
   }
 ]

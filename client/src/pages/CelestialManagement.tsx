@@ -188,6 +188,8 @@ export default function CelestialManagement() {
                   <SolarSystemVisualization 
                     celestialBodies={celestialBodies} 
                     entities={entities}
+                    npcData={npcFleetsData}
+                    simulatedPlayers={playersData}
                     isLoading={isLoading}
                     onSelectBody={handleBodySelect}
                     showEntities={showEntities}
