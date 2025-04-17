@@ -102,8 +102,20 @@ export default function SolarSystemVisualization({
     ctx.arc(centerX, centerY, centralSize, 0, 2 * Math.PI);
     ctx.fill();
     
+    // Define planet colors if they don't exist
+    const planetColors = [
+      "#3498db", // Blue
+      "#e74c3c", // Red
+      "#2ecc71", // Green
+      "#9b59b6", // Purple
+      "#1abc9c", // Teal
+      "#f39c12", // Orange
+      "#34495e", // Dark Blue
+      "#7f8c8d"  // Gray
+    ];
+    
     // Draw planets
-    celestialBodies.forEach(body => {
+    celestialBodies.forEach((body, index) => {
       if (body.id === centralBody.id) return; // Skip central body
       
       // Calculate position based on orbital parameters
@@ -113,6 +125,11 @@ export default function SolarSystemVisualization({
       const x = centerX + distance * Math.cos(angle);
       const y = centerY + distance * Math.sin(angle);
       
+      // Assign a color if not already defined
+      if (!body.color) {
+        body.color = planetColors[index % planetColors.length];
+      }
+      
       // Draw planet
       ctx.beginPath();
       ctx.fillStyle = body.color || "#3498db";
@@ -121,11 +138,13 @@ export default function SolarSystemVisualization({
       ctx.arc(x, y, size, 0, 2 * Math.PI);
       ctx.fill();
       
-      // Draw planet name if it's the focused body
-      if (focusBody === body.name) {
-        ctx.font = "12px sans-serif";
-        ctx.fillStyle = "#ffffff";
-        ctx.textAlign = "center";
+      // Draw planet name label
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      
+      // Always show name for larger bodies, or show when focused
+      if (focusBody === body.name || size > 5) {
         ctx.fillText(body.name, x, y - size - 5);
       }
     });

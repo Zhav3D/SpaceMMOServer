@@ -617,8 +617,16 @@ export class GameServer {
     if (this.isShuttingDown) return;
     
     try {
+      // Calculate delta time
+      const now = Date.now();
+      const deltaTime = (now - this.lastUpdateTime) / 1000;
+      this.lastUpdateTime = now;
+      
       // Update celestial bodies
       this.celestialManager.update();
+      
+      // Update simulated players
+      this.gameStateManager.updateSimulatedPlayers(deltaTime);
       
       // Update game state and send to clients
       this.gameStateManager.sendStateUpdates();
