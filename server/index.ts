@@ -527,6 +527,9 @@ export class GameServer {
         await storage.deleteNpcFleet(fleet.id);
       }
       
+      // Reset the sequences to avoid primary key conflicts
+      await storage.resetSequences();
+      
       // Find Earth
       const earth = celestialBodies.find(body => body.name === 'Earth');
       

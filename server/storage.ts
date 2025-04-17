@@ -32,6 +32,7 @@ export interface IStorage {
   saveWorldState(): Promise<boolean>;
   loadWorldState(): Promise<boolean>;
   resetWorldState(): Promise<boolean>;
+  resetSequences(): Promise<boolean>;
   
   // Server settings methods
   getSetting(name: string): Promise<ServerSetting | undefined>;
@@ -160,6 +161,21 @@ export class MemStorage implements IStorage {
     this.npcFleetId = 1;
     this.areaOfInterestId = 1;
     
+    return true;
+  }
+  
+  async resetSequences(): Promise<boolean> {
+    console.log('Resetting in-memory sequences');
+    // For in-memory storage, just reset the counters
+    this.celestialBodyId = 1;
+    this.npcShipId = 1;
+    this.npcFleetId = 1;
+    this.areaOfInterestId = 1;
+    this.serverLogId = 1;
+    this.serverStatId = 1;
+    this.settingId = 1;
+    this.userId = 1;
+    this.playerId = 1;
     return true;
   }
   
@@ -475,6 +491,28 @@ export class MemStorage implements IStorage {
 
 // Database storage implementation
 export class DatabaseStorage implements IStorage {
+  async resetSequences(): Promise<boolean> {
+    try {
+      // Reset all table sequences to properly start from 1 after a world reset
+      await db.execute(sql`
+        ALTER SEQUENCE "celestial_bodies_id_seq" RESTART WITH 1;
+        ALTER SEQUENCE "npc_ships_id_seq" RESTART WITH 1;
+        ALTER SEQUENCE "npc_fleets_id_seq" RESTART WITH 1;
+        ALTER SEQUENCE "areas_of_interest_id_seq" RESTART WITH 1;
+        ALTER SEQUENCE "server_logs_id_seq" RESTART WITH 1;
+        ALTER SEQUENCE "server_stats_id_seq" RESTART WITH 1;
+        ALTER SEQUENCE "server_settings_id_seq" RESTART WITH 1;
+        ALTER SEQUENCE "players_id_seq" RESTART WITH 1;
+        ALTER SEQUENCE "users_id_seq" RESTART WITH 1;
+      `);
+      console.log('Database sequences reset');
+      return true;
+    } catch (error) {
+      console.error('Error resetting sequences:', error);
+      return false;
+    }
+  }
+  
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));

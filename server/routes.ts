@@ -1240,6 +1240,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Get celestial bodies for NPC initialization
             const celestialBodies = await storage.getAllCelestialBodies();
             
+            // In case resetSequences was called elsewhere, wait a moment to ensure
+            // all database operations have settled
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Reset sequences again to be extra sure
+            await storage.resetSequences();
+            
             // Create default NPCs
             if (celestialBodies.length > 0) {
               log('Reinitializing NPCs after world reset...', 'info');
