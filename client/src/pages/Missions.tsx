@@ -205,7 +205,7 @@ const MissionDetailCard: React.FC<{ mission: MissionState }> = ({ mission }) => 
         <div className="text-sm text-muted-foreground">
           Started: {formatTimestamp(mission.startTime)}
         </div>
-        <Badge variant={mission.status === 'active' ? 'default' : mission.status === 'completed' ? 'success' : 'destructive'}>
+        <Badge variant={mission.status === 'active' ? 'default' : mission.status === 'completed' ? 'outline' : 'destructive'}>
           {mission.status.charAt(0).toUpperCase() + mission.status.slice(1)}
         </Badge>
       </CardFooter>
@@ -216,7 +216,7 @@ const MissionDetailCard: React.FC<{ mission: MissionState }> = ({ mission }) => 
 const MissionTable: React.FC<{ missions: MissionState[], title: string }> = ({ missions, title }) => {
   if (!missions.length) {
     return (
-      <Alert>
+      <Alert variant="default">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>No missions</AlertTitle>
         <AlertDescription>
@@ -373,7 +373,7 @@ export default function Missions() {
                 <MissionDetailCard key={mission.missionId} mission={mission} />
               ))}
               {active.length === 0 && (
-                <Alert className="col-span-full">
+                <Alert variant="default" className="col-span-full">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>No active missions</AlertTitle>
                   <AlertDescription>
@@ -394,7 +394,7 @@ export default function Missions() {
                 <MissionDetailCard key={mission.missionId} mission={mission} />
               ))}
               {completed.length === 0 && (
-                <Alert>
+                <Alert variant="default" className="col-span-full">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>No completed missions</AlertTitle>
                   <AlertDescription>
@@ -415,7 +415,7 @@ export default function Missions() {
                 <MissionDetailCard key={mission.missionId} mission={mission} />
               ))}
               {failed.length === 0 && (
-                <Alert>
+                <Alert variant="default" className="col-span-full">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>No failed missions</AlertTitle>
                   <AlertDescription>

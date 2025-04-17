@@ -15,6 +15,7 @@ export default function Sidebar() {
     { name: "Celestial Management", path: "/celestial-management", icon: "stars" },
     { name: "Players", path: "/players", icon: "person" },
     { name: "NPCs", path: "/npcs", icon: "smart_toy" },
+    { name: "Missions", path: "/missions", icon: "assignment" },
     { name: "State Replication", path: "/state-replication", icon: "sync" },
     { name: "Sanity Checks", path: "/sanity-checks", icon: "verified" },
     { name: "Performance", path: "/performance", icon: "speed" },
