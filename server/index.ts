@@ -47,6 +47,7 @@ export class GameServer {
   
   // Tracking
   private startTime: number = Date.now();
+  private lastUpdateTime: number = Date.now();
   private isRunning: boolean = false;
   private isShuttingDown: boolean = false;
   

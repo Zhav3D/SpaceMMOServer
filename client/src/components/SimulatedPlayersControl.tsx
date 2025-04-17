@@ -45,7 +45,6 @@ export default function SimulatedPlayersControl() {
       toast({
         title: "Players Created",
         description: `Successfully created ${playerCount} simulated players`,
-        variant: "success",
       });
     },
     onError: (error: Error) => {
@@ -79,7 +78,6 @@ export default function SimulatedPlayersControl() {
       toast({
         title: "Players Removed",
         description: "All simulated players have been removed",
-        variant: "success",
       });
     },
     onError: (error: Error) => {
@@ -108,7 +106,7 @@ export default function SimulatedPlayersControl() {
   
   // Calculate server load percentage (rough estimation)
   const getServerLoad = () => {
-    if (!simulatedStats?.success) return 0;
+    if (!simulatedStats || !simulatedStats.success) return 0;
     return Math.min(100, (simulatedStats.data.totalPlayers / 2000) * 100);
   };
   
@@ -120,15 +118,23 @@ export default function SimulatedPlayersControl() {
     return "text-red-500";
   };
   
+  // Get appropriate background color class for progress bar
+  const getProgressColorClass = () => {
+    const load = getServerLoad();
+    if (load < 30) return "bg-emerald-500";
+    if (load < 70) return "bg-amber-500";
+    return "bg-red-500";
+  };
+  
   return (
-    <Card className="bg-background-dark border-gray-800 shadow-lg">
-      <CardHeader className="border-b border-gray-800 py-3 px-4 flex flex-row justify-between items-center">
+    <Card className="bg-background border border-border shadow-lg">
+      <CardHeader className="border-b border-border py-3 px-4 flex flex-row justify-between items-center">
         <CardTitle className="text-base font-medium">Simulated Players</CardTitle>
         <Badge 
-          variant={simulatedStats?.success && simulatedStats.data.count > 0 ? "success" : "outline"}
+          variant={simulatedStats && simulatedStats.success && simulatedStats.data.count > 0 ? "outline" : "secondary"}
           className="text-xs"
         >
-          {simulatedStats?.success ? `${simulatedStats.data.count} active` : 'No active players'}
+          {simulatedStats && simulatedStats.success ? `${simulatedStats.data.count} active` : 'No active players'}
         </Badge>
       </CardHeader>
       <CardContent className="p-4 space-y-4">
@@ -142,15 +148,20 @@ export default function SimulatedPlayersControl() {
           <>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Server Load</span>
+                <span className="text-muted-foreground">Server Load</span>
                 <span className={getLoadColorClass()}>
                   {getServerLoad().toFixed(1)}%
                 </span>
               </div>
-              <Progress value={getServerLoad()} className={`h-2 ${getLoadColorClass()}`} />
+              <div className="h-2 w-full bg-muted rounded overflow-hidden">
+                <div 
+                  className={`h-full ${getProgressColorClass()} transition-all duration-300`} 
+                  style={{ width: `${getServerLoad()}%` }}
+                />
+              </div>
               
-              <div className="text-xs text-gray-500 mt-1">
-                {simulatedStats?.success ? (
+              <div className="text-xs text-muted-foreground mt-1">
+                {simulatedStats && simulatedStats.success ? (
                   <>
                     {simulatedStats.data.count} simulated players
                     {simulatedStats.data.realPlayers > 0 && ` + ${simulatedStats.data.realPlayers} real players`}
@@ -163,7 +174,7 @@ export default function SimulatedPlayersControl() {
             
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Simulated Player Count</span>
+                <span className="text-muted-foreground">Simulated Player Count</span>
                 <span className="font-medium">{playerCount}</span>
               </div>
               <Slider
@@ -189,13 +200,13 @@ export default function SimulatedPlayersControl() {
                 onClick={handleRemovePlayers}
                 variant="destructive"
                 className="flex-1"
-                disabled={removePlayersMutation.isPending || (simulatedStats?.success && simulatedStats.data.count === 0)}
+                disabled={removePlayersMutation.isPending || (simulatedStats && simulatedStats.success && simulatedStats.data.count === 0)}
               >
                 {removePlayersMutation.isPending ? "Removing..." : "Remove All"}
               </Button>
             </div>
             
-            <div className="text-xs text-gray-400 mt-2">
+            <div className="text-xs text-muted-foreground mt-2">
               Create simulated players to test system load and behavior. These players will move around randomly in the game world.
             </div>
           </>
