@@ -38,10 +38,27 @@ export default function ServerSettings() {
   const [useBinaryProtocol, setUseBinaryProtocol] = useState(false);
   const [compressionEnabled, setCompressionEnabled] = useState(false);
   const [encryptionEnabled, setEncryptionEnabled] = useState(false);
+  
+  // World persistence settings
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [autoSaveInterval, setAutoSaveInterval] = useState("300");
+  
+  // Frozen solar system state
+  const [frozenSolarSystem, setFrozenSolarSystem] = useState(false);
 
   // Fetch current settings
-  const { data: settingsData, isLoading } = useQuery({
+  const { data: settingsData, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['/api/settings'],
+  });
+  
+  // Fetch auto-save settings
+  const { data: autoSaveData, isLoading: isLoadingAutoSave } = useQuery({
+    queryKey: ['/api/settings/auto-save'],
+  });
+  
+  // Fetch frozen solar system state
+  const { data: frozenSolarData, isLoading: isLoadingFrozen } = useQuery({
+    queryKey: ['/api/celestial/frozen'],
   });
 
   // Update settings with the fetched values when available
@@ -60,6 +77,21 @@ export default function ServerSettings() {
       setEncryptionEnabled(settings.encryptionEnabled);
     }
   }, [settingsData]);
+  
+  // Update auto-save settings
+  useEffect(() => {
+    if (autoSaveData?.success && autoSaveData.data) {
+      setAutoSaveEnabled(autoSaveData.data.enabled);
+      setAutoSaveInterval(String(autoSaveData.data.interval));
+    }
+  }, [autoSaveData]);
+  
+  // Update frozen solar system state
+  useEffect(() => {
+    if (frozenSolarData?.success && frozenSolarData.data) {
+      setFrozenSolarSystem(frozenSolarData.data.frozen);
+    }
+  }, [frozenSolarData]);
 
   // Mutation to update settings
   const updateSettingsMutation = useMutation({
@@ -134,6 +166,120 @@ export default function ServerSettings() {
     emergencyStopMutation.mutate();
   };
 
+  // Mutation for updating auto-save settings
+  const updateAutoSaveMutation = useMutation({
+    mutationFn: async ({ enabled, interval }: { enabled: boolean; interval: number }) => {
+      const response = await fetch('/api/settings/auto-save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ enabled, interval }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/auto-save'] });
+      toast({
+        title: "Auto-Save Settings Updated",
+        description: "Auto-save settings have been successfully updated.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update auto-save settings: ${error.toString()}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutation for toggling frozen solar system
+  const toggleFrozenSolarSystemMutation = useMutation({
+    mutationFn: async (frozen: boolean) => {
+      const response = await fetch('/api/celestial/frozen', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ frozen }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/celestial/frozen'] });
+      toast({
+        title: "Solar System Mode Updated",
+        description: frozenSolarSystem 
+          ? "Solar system is now in frozen mode - planet positions are fixed."
+          : "Solar system is now in dynamic mode - planets will continue their orbits.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update solar system mode: ${error.toString()}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutation for world state operations (save, load, reset)
+  const worldStateMutation = useMutation({
+    mutationFn: async ({ action }: { action: 'save' | 'load' | 'reset' }) => {
+      const response = await fetch(`/api/world/${action}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['/api/celestial'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/npc/fleets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/players'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/aoi'] });
+      
+      const actionMessages = {
+        save: "World state has been saved successfully.",
+        load: "World state has been loaded successfully.",
+        reset: "World state has been reset to default."
+      };
+      
+      toast({
+        title: `World State ${variables.action.charAt(0).toUpperCase() + variables.action.slice(1)}`,
+        description: actionMessages[variables.action],
+      });
+    },
+    onError: (error, variables) => {
+      toast({
+        title: "Error",
+        description: `Failed to ${variables.action} world state: ${error.toString()}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleSaveAutoSaveSettings = () => {
+    updateAutoSaveMutation.mutate({ 
+      enabled: autoSaveEnabled, 
+      interval: parseInt(autoSaveInterval, 10)
+    });
+  };
+  
+  const handleToggleFrozenSolarSystem = (newValue: boolean) => {
+    setFrozenSolarSystem(newValue);
+    toggleFrozenSolarSystemMutation.mutate(newValue);
+  };
+  
+  const handleWorldStateAction = (action: 'save' | 'load' | 'reset') => {
+    worldStateMutation.mutate({ action });
+  };
+  
+  const isLoading = isLoadingSettings || isLoadingAutoSave || isLoadingFrozen;
+  
   if (isLoading) {
     return <div className="p-6">Loading settings...</div>;
   }
@@ -220,12 +366,149 @@ export default function ServerSettings() {
           </CardContent>
         </Card>
         
-        <Card className="bg-background-dark border-gray-800 shadow-lg lg:col-span-2">
+        <Card className="bg-background-dark border-gray-800 shadow-lg">
+          <CardHeader className="border-b border-gray-800 py-3 px-4">
+            <CardTitle className="text-base font-medium">World Persistence</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-save" className="text-base">Auto-Save</Label>
+                  <p className="text-sm text-gray-400">
+                    Automatically save world state
+                  </p>
+                </div>
+                <Switch 
+                  id="auto-save" 
+                  checked={autoSaveEnabled}
+                  onCheckedChange={setAutoSaveEnabled}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="auto-save-interval">Auto-Save Interval (seconds)</Label>
+                <Input
+                  id="auto-save-interval"
+                  type="number"
+                  className="bg-background border-gray-700"
+                  value={autoSaveInterval}
+                  onChange={(e) => setAutoSaveInterval(e.target.value)}
+                  min="10"
+                  disabled={!autoSaveEnabled}
+                />
+                <p className="text-xs text-gray-400">How often world state is automatically saved</p>
+              </div>
+              
+              <Button 
+                onClick={handleSaveAutoSaveSettings} 
+                className="w-full bg-primary hover:bg-primary/80 mb-4"
+                disabled={updateAutoSaveMutation.isPending}
+              >
+                {updateAutoSaveMutation.isPending ? "Saving..." : "Save Auto-Save Settings"}
+              </Button>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <Button 
+                  onClick={() => handleWorldStateAction('save')} 
+                  className="w-full"
+                  variant="outline"
+                  disabled={worldStateMutation.isPending}
+                >
+                  Save World
+                </Button>
+                
+                <Button 
+                  onClick={() => handleWorldStateAction('load')} 
+                  className="w-full"
+                  variant="outline"
+                  disabled={worldStateMutation.isPending}
+                >
+                  Load World
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full text-destructive border-destructive/50 hover:bg-destructive/10"
+                    >
+                      Reset World
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Reset world state?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action will reset the world to its default state.
+                        All custom celestial bodies, NPC fleets, and other entities will be deleted.
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => handleWorldStateAction('reset')}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Reset World
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-background-dark border-gray-800 shadow-lg">
+          <CardHeader className="border-b border-gray-800 py-3 px-4">
+            <CardTitle className="text-base font-medium">Solar System Simulation</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="frozen-solar-system" className="text-base">Frozen Mode</Label>
+                  <p className="text-sm text-gray-400">
+                    Planets maintain fixed positions
+                  </p>
+                </div>
+                <Switch 
+                  id="frozen-solar-system" 
+                  checked={frozenSolarSystem}
+                  onCheckedChange={handleToggleFrozenSolarSystem}
+                  disabled={toggleFrozenSolarSystemMutation.isPending}
+                />
+              </div>
+              
+              <div className="p-4 bg-background rounded-md border border-gray-700 mt-2">
+                <h4 className="font-medium mb-2">{frozenSolarSystem ? "Frozen Mode" : "Dynamic Mode"}</h4>
+                <p className="text-sm text-gray-400 mb-3">
+                  {frozenSolarSystem 
+                    ? "In frozen mode, celestial bodies maintain fixed positions, making navigation and gameplay more approachable for new players."
+                    : "In dynamic mode, celestial bodies follow realistic orbital mechanics, creating a more realistic space environment."}
+                </p>
+                {frozenSolarSystem ? (
+                  <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                    Fixed Positions
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-orange-500/10 text-orange-400 border-orange-500/20">
+                    Orbital Mechanics
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-background-dark border-gray-800 shadow-lg lg:col-span-3">
           <CardHeader className="border-b border-gray-800 py-3 px-4">
             <CardTitle className="text-base font-medium">Server Configuration</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="space-y-2">
                 <Label htmlFor="max-players">Max Players</Label>
                 <Input
