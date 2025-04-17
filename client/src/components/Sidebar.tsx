@@ -12,6 +12,7 @@ export default function Sidebar() {
   const navItems: NavItem[] = [
     { name: "Dashboard", path: "/", icon: "dashboard" },
     { name: "Solar System", path: "/solar-system", icon: "public" },
+    { name: "Celestial Management", path: "/celestial-management", icon: "stars" },
     { name: "Players", path: "/players", icon: "person" },
     { name: "NPCs", path: "/npcs", icon: "smart_toy" },
     { name: "State Replication", path: "/state-replication", icon: "sync" },

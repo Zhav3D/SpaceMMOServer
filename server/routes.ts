@@ -79,6 +79,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get single celestial body
+  app.get('/api/celestial/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid celestial body ID',
+        });
+      }
+      
+      const body = await storage.getCelestialBody(id);
+      if (!body) {
+        return res.status(404).json({
+          success: false,
+          error: 'Celestial body not found',
+        });
+      }
+      
+      // Get current position if server instance is available
+      let bodyData = body;
+      
+      if (serverInstance && serverInstance.celestialManager) {
+        const positions = serverInstance.celestialManager.getCurrentPositions();
+        const progress = serverInstance.celestialManager.calculateOrbitalProgress();
+        const posVel = positions.get(body.id);
+        
+        if (posVel) {
+          bodyData = {
+            ...body,
+            currentPositionX: posVel.position.x,
+            currentPositionY: posVel.position.y,
+            currentPositionZ: posVel.position.z,
+            currentVelocityX: posVel.velocity.x,
+            currentVelocityY: posVel.velocity.y,
+            currentVelocityZ: posVel.velocity.z,
+            orbitProgress: progress.get(body.id) || 0,
+          };
+        }
+      }
+      
+      const response: ApiResponse<typeof bodyData> = {
+        success: true,
+        data: bodyData,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to fetch celestial body: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // Create new celestial body
+  app.post('/api/celestial', async (req: Request, res: Response) => {
+    try {
+      if (!serverInstance || !serverInstance.celestialManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'Celestial manager not initialized',
+        });
+      }
+      
+      // Create new celestial body
+      const newBody = req.body;
+      
+      // Basic validation
+      if (!newBody.name || !newBody.type || newBody.radius === undefined || newBody.mass === undefined) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: name, type, radius, mass',
+        });
+      }
+      
+      // Create the body first in storage
+      const createdBody = await storage.createCelestialBody(newBody);
+      
+      // Add to celestial manager
+      const addedBody = await serverInstance.celestialManager.addBody(createdBody);
+      
+      const response: ApiResponse<typeof addedBody> = {
+        success: true,
+        data: addedBody,
+      };
+      
+      res.status(201).json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to create celestial body: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // Update celestial body
+  app.put('/api/celestial/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid celestial body ID',
+        });
+      }
+      
+      if (!serverInstance || !serverInstance.celestialManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'Celestial manager not initialized',
+        });
+      }
+      
+      // Check if body exists
+      const existingBody = await storage.getCelestialBody(id);
+      if (!existingBody) {
+        return res.status(404).json({
+          success: false,
+          error: 'Celestial body not found',
+        });
+      }
+      
+      // Update the body
+      const updatedData = req.body;
+      updatedData.id = id; // Ensure ID matches
+      
+      // Update in storage first
+      const updatedBody = await storage.updateCelestialBody(id, updatedData);
+      
+      // Update in celestial manager (remove and add again with new data)
+      await serverInstance.celestialManager.removeBody(id);
+      const readdedBody = await serverInstance.celestialManager.addBody(updatedBody);
+      
+      const response: ApiResponse<typeof readdedBody> = {
+        success: true,
+        data: readdedBody,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to update celestial body: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // Delete celestial body
+  app.delete('/api/celestial/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid celestial body ID',
+        });
+      }
+      
+      if (!serverInstance || !serverInstance.celestialManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'Celestial manager not initialized',
+        });
+      }
+      
+      // Check if body exists
+      const existingBody = await storage.getCelestialBody(id);
+      if (!existingBody) {
+        return res.status(404).json({
+          success: false,
+          error: 'Celestial body not found',
+        });
+      }
+      
+      // Check if this body has children (bodies that have this body as parent)
+      const allBodies = await storage.getAllCelestialBodies();
+      const hasChildren = allBodies.some(body => body.parentBodyId === id);
+      
+      if (hasChildren) {
+        return res.status(400).json({
+          success: false,
+          error: 'Cannot delete a celestial body that has other bodies orbiting it. Please reassign or delete the dependent bodies first.',
+        });
+      }
+      
+      // Remove from celestial manager first
+      await serverInstance.celestialManager.removeBody(id);
+      
+      // Remove from storage
+      await storage.deleteCelestialBody(id);
+      
+      const response: ApiResponse<{ id: number, message: string }> = {
+        success: true,
+        data: {
+          id,
+          message: 'Celestial body deleted successfully',
+        },
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to delete celestial body: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
+  // Get celestial simulation settings
+  app.get('/api/celestial/settings', (req: Request, res: Response) => {
+    if (!serverInstance || !serverInstance.celestialManager) {
+      return res.status(500).json({
+        success: false,
+        error: 'Celestial manager not initialized',
+      });
+    }
+    
+    try {
+      const settings = serverInstance.celestialManager.getSimulationSettings();
+      
+      const response: ApiResponse<typeof settings> = {
+        success: true,
+        data: settings,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to get celestial simulation settings: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
   // NPC fleets API
   app.get('/api/npc/fleets', async (req: Request, res: Response) => {
     try {

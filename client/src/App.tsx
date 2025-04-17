@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import SolarSystem from "@/pages/SolarSystem";
+import CelestialManagement from "@/pages/CelestialManagement";
 import Players from "@/pages/Players";
 import Npcs from "@/pages/Npcs";
 import Performance from "@/pages/Performance";
@@ -27,6 +28,7 @@ function Router() {
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/solar-system" component={SolarSystem} />
+            <Route path="/celestial-management" component={CelestialManagement} />
             <Route path="/players" component={Players} />
             <Route path="/npcs" component={Npcs} />
             <Route path="/performance" component={Performance} />
