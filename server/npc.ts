@@ -260,19 +260,24 @@ export class NPCManager {
     }
   }
   
-  // Get all registered NPCs
-  getAllNPCs(): NpcShip[] {
-    return Array.from(this.npcs.values());
+  // Get a specific fleet by ID
+  getFleet(fleetId: string): NpcFleet | undefined {
+    return this.fleets.get(fleetId);
   }
   
-  // Get all registered fleets
+  // Get all fleets
   getAllFleets(): NpcFleet[] {
     return Array.from(this.fleets.values());
   }
   
-  // Get NPCs by fleet ID
+  // Get all NPCs in a specific fleet
   getNPCsByFleet(fleetId: string): NpcShip[] {
-    return this.getAllNPCs().filter(npc => npc.fleetId === fleetId);
+    return Array.from(this.npcs.values()).filter(npc => npc.fleetId === fleetId);
+  }
+  
+  // Get all registered NPCs
+  getAllNPCs(): NpcShip[] {
+    return Array.from(this.npcs.values());
   }
   
   // Get NPCs near a position within a radius
