@@ -48,6 +48,8 @@ export default function Npcs() {
   const [newFleetCount, setNewFleetCount] = useState("100");
   const [newFleetLocation, setNewFleetLocation] = useState("Earth Orbit");
   const [newFleetCelestialId, setNewFleetCelestialId] = useState("3"); // Default to Earth
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fleetToDelete, setFleetToDelete] = useState<string | null>(null);
   
   const { toast } = useToast();
 
@@ -82,6 +84,29 @@ export default function Npcs() {
       console.error("Error spawning fleet:", error);
     }
   });
+  
+  const deleteFleetMutation = useMutation({
+    mutationFn: (fleetId: string) => {
+      return apiRequest('DELETE', `/api/npc/fleets/${fleetId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/npc/fleets'] });
+      setDeleteDialogOpen(false);
+      setFleetToDelete(null);
+      toast({
+        title: "Fleet Deleted",
+        description: "The NPC fleet has been successfully removed",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete fleet",
+        variant: "destructive",
+      });
+      console.error("Error deleting fleet:", error);
+    }
+  });
 
   const handleSpawnFleet = () => {
     spawnFleetMutation.mutate({
@@ -90,6 +115,17 @@ export default function Npcs() {
       location: newFleetLocation,
       nearestCelestialBodyId: parseInt(newFleetCelestialId, 10)
     });
+  };
+  
+  const handleDeleteFleet = (fleetId: string) => {
+    setFleetToDelete(fleetId);
+    setDeleteDialogOpen(true);
+  };
+  
+  const confirmDeleteFleet = () => {
+    if (fleetToDelete) {
+      deleteFleetMutation.mutate(fleetToDelete);
+    }
   };
 
   const getBadgeColorForType = (type: string) => {
@@ -179,6 +215,7 @@ export default function Npcs() {
                     <TableHead className="w-[100px]">Count</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead className="w-[120px]">Celestial ID</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -199,6 +236,15 @@ export default function Npcs() {
                       <TableCell className="font-mono">{fleet.count}</TableCell>
                       <TableCell>{fleet.location}</TableCell>
                       <TableCell className="font-mono">{fleet.nearestCelestialBodyId}</TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteFleet(fleet.fleetId)}
+                        >
+                          <span className="material-icons text-sm">delete</span>
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -288,6 +334,39 @@ export default function Npcs() {
               className="bg-secondary hover:bg-secondary/80"
             >
               {spawnFleetMutation.isPending ? "Spawning..." : "Spawn Fleet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="bg-background-dark border-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Delete NPC Fleet</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to delete this fleet? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-sm font-mono bg-background p-2 rounded">
+              Fleet ID: {fleetToDelete}
+            </p>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteFleet}
+              disabled={deleteFleetMutation.isPending}
+            >
+              {deleteFleetMutation.isPending ? "Deleting..." : "Delete Fleet"}
             </Button>
           </DialogFooter>
         </DialogContent>
