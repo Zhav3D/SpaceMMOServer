@@ -1,0 +1,119 @@
+[
+  {
+    "id": 1,
+    "fleetId": "fleet-enemy-1744919699388-159",
+    "type": "enemy",
+    "status": "hostile",
+    "count": 15,
+    "location": "Earth Orbit",
+    "nearestCelestialBodyId": 4
+  },
+  {
+    "id": 2,
+    "fleetId": "fleet-enemy-1744919699414-247",
+    "type": "enemy",
+    "status": "hostile",
+    "count": 10,
+    "location": "Earth Defense",
+    "nearestCelestialBodyId": 4
+  },
+  {
+    "id": 3,
+    "fleetId": "fleet-civilian-1744919699432-987",
+    "type": "civilian",
+    "status": "passive",
+    "count": 20,
+    "location": "Earth Tourism",
+    "nearestCelestialBodyId": 4
+  },
+  {
+    "id": 4,
+    "fleetId": "fleet-transport-1744919699475-713",
+    "type": "transport",
+    "status": "en-route",
+    "count": 12,
+    "location": "Mars Colonization",
+    "nearestCelestialBodyId": 6
+  },
+  {
+    "id": 5,
+    "fleetId": "fleet-mining-1744919699507-641",
+    "type": "mining",
+    "status": "working",
+    "count": 15,
+    "location": "Mars Mining",
+    "nearestCelestialBodyId": 6
+  },
+  {
+    "id": 6,
+    "fleetId": "fleet-transport-1744919699545-953",
+    "type": "transport",
+    "status": "en-route",
+    "count": 10,
+    "location": "Jupiter → Mars",
+    "nearestCelestialBodyId": 8
+  },
+  {
+    "id": 7,
+    "fleetId": "fleet-mining-1744919699570-724",
+    "type": "mining",
+    "status": "working",
+    "count": 15,
+    "location": "Asteroid Belt",
+    "nearestCelestialBodyId": 8
+  },
+  {
+    "id": 8,
+    "fleetId": "fleet-civilian-1744919699610-701",
+    "type": "civilian",
+    "status": "passive",
+    "count": 18,
+    "location": "Saturn Rings",
+    "nearestCelestialBodyId": 10
+  },
+  {
+    "id": 9,
+    "fleetId": "fleet-mining-1744919699663-567",
+    "type": "mining",
+    "status": "working",
+    "count": 12,
+    "location": "Saturn Ring Mining",
+    "nearestCelestialBodyId": 10
+  },
+  {
+    "id": 10,
+    "fleetId": "fleet-civilian-1744919699696-697",
+    "type": "civilian",
+    "status": "passive",
+    "count": 15,
+    "location": "Venus Exploration",
+    "nearestCelestialBodyId": 3
+  },
+  {
+    "id": 11,
+    "fleetId": "fleet-enemy-1744919699730-89",
+    "type": "enemy",
+    "status": "hostile",
+    "count": 12,
+    "location": "Venus Orbit",
+    "nearestCelestialBodyId": 3
+  },
+  {
+    "id": 12,
+    "fleetId": "fleet-mining-1744919699760-590",
+    "type": "mining",
+    "status": "working",
+    "count": 10,
+    "location": "Mercury Mining",
+    "nearestCelestialBodyId": 2
+  },
+  {
+    "id": 13,
+    "fleetId": "fleet-transport-1744919699784-848",
+    "type": "transport",
+    "status": "en-route",
+    "count": 12,
+    "location": "Mars → Jupiter",
+    "nearestCelestialBodyId": 6
+  }
+]

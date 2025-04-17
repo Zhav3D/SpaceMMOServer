@@ -8,23 +8,13 @@ import {
   ServerLog, InsertServerLog,
   ServerStat, InsertServerStat,
   ServerSetting, InsertServerSetting,
-  SERVER_SETTINGS,
-  
-  // Table references for database queries
-  users,
-  celestialBodies,
-  npcShips,
-  npcFleets,
-  players,
-  areasOfInterest,
-  serverLogs,
-  serverStats,
-  serverSettings
+  SERVER_SETTINGS
 } from '@shared/schema';
 import { Vector3 } from '@shared/math';
 import { AreaOfInterestState } from '@shared/types';
-import { eq, desc, and, isNull, sql } from 'drizzle-orm';
-import { db } from './db';
+import * as fs from 'fs';
+import * as path from 'path';
+import { log } from './vite';
 
 // Extend the storage interface with all the required methods
 export interface IStorage {
@@ -489,260 +479,533 @@ export class MemStorage implements IStorage {
 
 
 
-// Database storage implementation
-export class DatabaseStorage implements IStorage {
+// Json file storage implementation
+export class JsonStorage implements IStorage {
+  private dataDir: string;
+  private users: Map<number, User>;
+  private celestialBodies: Map<number, CelestialBody>;
+  private npcShips: Map<number, NpcShip>;
+  private npcFleets: Map<number, NpcFleet>;
+  private players: Map<number, Player>;
+  private areasOfInterest: Map<number, AreaOfInterestRecord>;
+  private serverLogs: ServerLog[];
+  private serverStats: ServerStat[];
+  private settings: Map<string, ServerSetting>;
+  
+  // ID counters
+  private userId: number;
+  private celestialBodyId: number;
+  private npcShipId: number;
+  private npcFleetId: number;
+  private playerId: number;
+  private areaOfInterestId: number;
+  private serverLogId: number;
+  private serverStatId: number;
+  private settingId: number;
+  
+  constructor() {
+    this.dataDir = path.resolve('./data');
+    
+    // Create data directory if it doesn't exist
+    if (!fs.existsSync(this.dataDir)) {
+      fs.mkdirSync(this.dataDir, { recursive: true });
+      log(`Created data directory at ${this.dataDir}`, 'info');
+    }
+    
+    // Initialize data structures
+    this.users = new Map();
+    this.celestialBodies = new Map();
+    this.npcShips = new Map();
+    this.npcFleets = new Map();
+    this.players = new Map();
+    this.areasOfInterest = new Map();
+    this.serverLogs = [];
+    this.serverStats = [];
+    this.settings = new Map();
+    
+    // Initialize ID counters
+    this.userId = 1;
+    this.celestialBodyId = 1;
+    this.npcShipId = 1;
+    this.npcFleetId = 1;
+    this.playerId = 1;
+    this.areaOfInterestId = 1;
+    this.serverLogId = 1;
+    this.serverStatId = 1;
+    this.settingId = 1;
+    
+    // Load data from disk if it exists
+    this.loadDataFromDisk();
+  }
+  
+  private getFilePath(entityType: string): string {
+    return path.join(this.dataDir, `${entityType}.json`);
+  }
+  
+  private saveDataToDisk(entityType: string, data: any): void {
+    try {
+      const filePath = this.getFilePath(entityType);
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    } catch (error) {
+      log(`Error saving ${entityType} data to disk: ${error}`, 'error');
+    }
+  }
+  
+  private loadDataFromFile<T>(entityType: string): T | null {
+    try {
+      const filePath = this.getFilePath(entityType);
+      if (fs.existsSync(filePath)) {
+        const data = fs.readFileSync(filePath, 'utf8');
+        return JSON.parse(data) as T;
+      }
+    } catch (error) {
+      log(`Error loading ${entityType} data from disk: ${error}`, 'error');
+    }
+    return null;
+  }
+  
+  private loadDataFromDisk(): void {
+    // Load users
+    const users = this.loadDataFromFile<User[]>('users');
+    if (users) {
+      users.forEach(user => {
+        this.users.set(user.id, user);
+        this.userId = Math.max(this.userId, user.id + 1);
+      });
+      log(`Loaded ${users.length} users from disk`, 'info');
+    }
+    
+    // Load celestial bodies
+    const celestialBodies = this.loadDataFromFile<CelestialBody[]>('celestialBodies');
+    if (celestialBodies) {
+      celestialBodies.forEach(body => {
+        this.celestialBodies.set(body.id, body);
+        this.celestialBodyId = Math.max(this.celestialBodyId, body.id + 1);
+      });
+      log(`Loaded ${celestialBodies.length} celestial bodies from disk`, 'info');
+    }
+    
+    // Load NPC ships
+    const npcShips = this.loadDataFromFile<NpcShip[]>('npcShips');
+    if (npcShips) {
+      npcShips.forEach(ship => {
+        this.npcShips.set(ship.id, ship);
+        this.npcShipId = Math.max(this.npcShipId, ship.id + 1);
+      });
+      log(`Loaded ${npcShips.length} NPC ships from disk`, 'info');
+    }
+    
+    // Load NPC fleets
+    const npcFleets = this.loadDataFromFile<NpcFleet[]>('npcFleets');
+    if (npcFleets) {
+      npcFleets.forEach(fleet => {
+        this.npcFleets.set(fleet.id, fleet);
+        this.npcFleetId = Math.max(this.npcFleetId, fleet.id + 1);
+      });
+      log(`Loaded ${npcFleets.length} NPC fleets from disk`, 'info');
+    }
+    
+    // Load players
+    const players = this.loadDataFromFile<Player[]>('players');
+    if (players) {
+      players.forEach(player => {
+        this.players.set(player.id, player);
+        this.playerId = Math.max(this.playerId, player.id + 1);
+      });
+      log(`Loaded ${players.length} players from disk`, 'info');
+    }
+    
+    // Load areas of interest
+    const aoi = this.loadDataFromFile<AreaOfInterestRecord[]>('areasOfInterest');
+    if (aoi) {
+      aoi.forEach(area => {
+        this.areasOfInterest.set(area.id, area);
+        this.areaOfInterestId = Math.max(this.areaOfInterestId, area.id + 1);
+      });
+      log(`Loaded ${aoi.length} areas of interest from disk`, 'info');
+    }
+    
+    // Load server logs
+    const logs = this.loadDataFromFile<ServerLog[]>('serverLogs');
+    if (logs) {
+      this.serverLogs = logs;
+      if (logs.length > 0) {
+        this.serverLogId = Math.max(...logs.map(log => log.id)) + 1;
+      }
+      log(`Loaded ${logs.length} server logs from disk`, 'info');
+    }
+    
+    // Load server stats
+    const stats = this.loadDataFromFile<ServerStat[]>('serverStats');
+    if (stats) {
+      this.serverStats = stats;
+      if (stats.length > 0) {
+        this.serverStatId = Math.max(...stats.map(stat => stat.id)) + 1;
+      }
+      log(`Loaded ${stats.length} server stats from disk`, 'info');
+    }
+    
+    // Load settings
+    const settings = this.loadDataFromFile<ServerSetting[]>('settings');
+    if (settings) {
+      settings.forEach(setting => {
+        this.settings.set(setting.id.toString(), setting);
+        this.settingId = Math.max(this.settingId, setting.id + 1);
+      });
+      log(`Loaded ${settings.length} server settings from disk`, 'info');
+    }
+  }
+  
   async resetSequences(): Promise<boolean> {
     try {
-      // First get the maximum IDs from each table
-      const [maxNpcShipId] = await db.select({maxId: sql`MAX(id)`}).from(npcShips);
-      const [maxNpcFleetId] = await db.select({maxId: sql`MAX(id)`}).from(npcFleets);
-      const [maxCelestialBodyId] = await db.select({maxId: sql`MAX(id)`}).from(celestialBodies);
-      const [maxAreaOfInterestId] = await db.select({maxId: sql`MAX(id)`}).from(areasOfInterest);
-      const [maxServerLogId] = await db.select({maxId: sql`MAX(id)`}).from(serverLogs);
-      const [maxServerStatId] = await db.select({maxId: sql`MAX(id)`}).from(serverStats);
+      log('Resetting JSON storage sequences', 'info');
       
-      // Execute each setval individually to avoid the multiple commands error
-      await db.execute(sql`SELECT setval('"celestial_bodies_id_seq"', COALESCE(${maxCelestialBodyId?.maxId || 0}, 0) + 1, false)`);
-      await db.execute(sql`SELECT setval('"npc_ships_id_seq"', COALESCE(${maxNpcShipId?.maxId || 0}, 0) + 1, false)`);
-      await db.execute(sql`SELECT setval('"npc_fleets_id_seq"', COALESCE(${maxNpcFleetId?.maxId || 0}, 0) + 1, false)`);
-      await db.execute(sql`SELECT setval('"areas_of_interest_id_seq"', COALESCE(${maxAreaOfInterestId?.maxId || 0}, 0) + 1, false)`);
-      await db.execute(sql`SELECT setval('"server_logs_id_seq"', COALESCE(${maxServerLogId?.maxId || 0}, 0) + 1, false)`);
-      await db.execute(sql`SELECT setval('"server_stats_id_seq"', COALESCE(${maxServerStatId?.maxId || 0}, 0) + 1, false)`);
-      await db.execute(sql`SELECT setval('"server_settings_id_seq"', 1, false)`);
-      await db.execute(sql`SELECT setval('"players_id_seq"', 1, false)`);
-      await db.execute(sql`SELECT setval('"users_id_seq"', 1, false)`);
-      await db.execute(sql`SELECT setval('"missions_id_seq"', 1, false)`);
+      // Get the maximum IDs from each storage
+      const maxNpcShipId = this.npcShips.size > 0 ? Math.max(...this.npcShips.keys()) : 0;
+      const maxNpcFleetId = this.npcFleets.size > 0 ? Math.max(...this.npcFleets.keys()) : 0;
+      const maxCelestialBodyId = this.celestialBodies.size > 0 ? Math.max(...this.celestialBodies.keys()) : 0;
+      const maxAreaOfInterestId = this.areasOfInterest.size > 0 ? Math.max(...this.areasOfInterest.keys()) : 0;
+      const maxServerLogId = this.serverLogs.length > 0 ? Math.max(...this.serverLogs.map(log => log.id)) : 0;
+      const maxServerStatId = this.serverStats.length > 0 ? Math.max(...this.serverStats.map(stat => stat.id)) : 0;
       
-      console.log('Database sequences reset based on max IDs');
+      // Reset the counters
+      this.npcShipId = maxNpcShipId + 1;
+      this.npcFleetId = maxNpcFleetId + 1;
+      this.celestialBodyId = maxCelestialBodyId + 1;
+      this.areaOfInterestId = maxAreaOfInterestId + 1;
+      this.serverLogId = maxServerLogId + 1;
+      this.serverStatId = maxServerStatId + 1;
+      
+      log('JSON sequences reset successfully', 'info');
       return true;
     } catch (error) {
-      console.error('Error resetting sequences:', error);
+      log(`Error resetting JSON sequences: ${error}`, 'error');
+      return false;
+    }
+  }
+  
+  // World persistence methods
+  async saveWorldState(): Promise<boolean> {
+    try {
+      log('Saving world state to JSON files...', 'info');
+      
+      // Save each entity type to its own file
+      this.saveDataToDisk('users', Array.from(this.users.values()));
+      this.saveDataToDisk('celestialBodies', Array.from(this.celestialBodies.values()));
+      this.saveDataToDisk('npcShips', Array.from(this.npcShips.values()));
+      this.saveDataToDisk('npcFleets', Array.from(this.npcFleets.values()));
+      this.saveDataToDisk('players', Array.from(this.players.values()));
+      this.saveDataToDisk('areasOfInterest', Array.from(this.areasOfInterest.values()));
+      this.saveDataToDisk('serverLogs', this.serverLogs);
+      this.saveDataToDisk('serverStats', this.serverStats);
+      this.saveDataToDisk('settings', Array.from(this.settings.values()));
+      
+      log('World state saved successfully', 'info');
+      return true;
+    } catch (error) {
+      log(`Error saving world state: ${error}`, 'error');
+      return false;
+    }
+  }
+  
+  async loadWorldState(): Promise<boolean> {
+    try {
+      log('Loading world state from JSON files...', 'info');
+      this.loadDataFromDisk();
+      log('World state loaded successfully', 'info');
+      return true;
+    } catch (error) {
+      log(`Error loading world state: ${error}`, 'error');
+      return false;
+    }
+  }
+  
+  async resetWorldState(): Promise<boolean> {
+    try {
+      log('Resetting world state (JSON implementation)', 'info');
+      
+      // Clear all data
+      this.celestialBodies.clear();
+      this.npcShips.clear();
+      this.npcFleets.clear();
+      this.areasOfInterest.clear();
+      
+      // Reset ID counters
+      this.celestialBodyId = 1;
+      this.npcShipId = 1;
+      this.npcFleetId = 1;
+      this.areaOfInterestId = 1;
+      
+      // Save cleared state to disk
+      this.saveDataToDisk('celestialBodies', []);
+      this.saveDataToDisk('npcShips', []);
+      this.saveDataToDisk('npcFleets', []);
+      this.saveDataToDisk('areasOfInterest', []);
+      
+      log('World state reset successfully', 'info');
+      return true;
+    } catch (error) {
+      log(`Error resetting world state: ${error}`, 'error');
       return false;
     }
   }
   
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return this.users.get(id);
   }
-
+  
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    return Array.from(this.users.values()).find(user => user.username === username);
   }
-
+  
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const id = this.userId++;
+    const user: User = { ...insertUser, id };
+    this.users.set(id, user);
+    this.saveDataToDisk('users', Array.from(this.users.values()));
     return user;
   }
   
   // Celestial Body methods
   async getCelestialBody(id: number): Promise<CelestialBody | undefined> {
-    const [body] = await db.select().from(celestialBodies).where(eq(celestialBodies.id, id));
-    return body;
+    return this.celestialBodies.get(id);
   }
   
   async getAllCelestialBodies(): Promise<CelestialBody[]> {
-    return db.select().from(celestialBodies);
+    return Array.from(this.celestialBodies.values());
   }
   
   async createCelestialBody(body: InsertCelestialBody): Promise<CelestialBody> {
-    const [celestialBody] = await db.insert(celestialBodies).values(body).returning();
+    const id = this.celestialBodyId++;
+    const celestialBody: CelestialBody = { ...body, id };
+    this.celestialBodies.set(id, celestialBody);
+    this.saveDataToDisk('celestialBodies', Array.from(this.celestialBodies.values()));
     return celestialBody;
   }
   
   async updateCelestialBody(id: number, body: Partial<CelestialBody>): Promise<CelestialBody | undefined> {
-    const [updated] = await db
-      .update(celestialBodies)
-      .set(body)
-      .where(eq(celestialBodies.id, id))
-      .returning();
+    const existing = this.celestialBodies.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...body };
+    this.celestialBodies.set(id, updated);
+    this.saveDataToDisk('celestialBodies', Array.from(this.celestialBodies.values()));
     return updated;
   }
   
   async deleteCelestialBody(id: number): Promise<boolean> {
-    const result = await db
-      .delete(celestialBodies)
-      .where(eq(celestialBodies.id, id));
-    return true; // neon doesn't support rowCount
+    const result = this.celestialBodies.delete(id);
+    this.saveDataToDisk('celestialBodies', Array.from(this.celestialBodies.values()));
+    return result;
   }
   
   // NPC Ship methods
   async getNpcShip(id: number): Promise<NpcShip | undefined> {
-    const [ship] = await db.select().from(npcShips).where(eq(npcShips.id, id));
-    return ship;
+    return this.npcShips.get(id);
   }
   
   async getNpcShipsByFleet(fleetId: string): Promise<NpcShip[]> {
-    return db.select().from(npcShips).where(eq(npcShips.fleetId, fleetId));
+    return Array.from(this.npcShips.values()).filter(ship => ship.fleetId === fleetId);
   }
   
   async getAllNpcShips(): Promise<NpcShip[]> {
-    return db.select().from(npcShips);
+    return Array.from(this.npcShips.values());
   }
   
   async createNpcShip(ship: InsertNpcShip): Promise<NpcShip> {
-    const [npcShip] = await db.insert(npcShips).values(ship).returning();
+    const id = this.npcShipId++;
+    const npcShip: NpcShip = { ...ship, id };
+    this.npcShips.set(id, npcShip);
+    this.saveDataToDisk('npcShips', Array.from(this.npcShips.values()));
     return npcShip;
   }
   
   async updateNpcShip(id: number, ship: Partial<NpcShip>): Promise<NpcShip | undefined> {
-    const [updated] = await db
-      .update(npcShips)
-      .set(ship)
-      .where(eq(npcShips.id, id))
-      .returning();
+    const existing = this.npcShips.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...ship };
+    this.npcShips.set(id, updated);
+    this.saveDataToDisk('npcShips', Array.from(this.npcShips.values()));
     return updated;
   }
   
   async deleteNpcShip(id: number): Promise<boolean> {
-    await db.delete(npcShips).where(eq(npcShips.id, id));
-    return true;
+    const result = this.npcShips.delete(id);
+    this.saveDataToDisk('npcShips', Array.from(this.npcShips.values()));
+    return result;
   }
   
   // NPC Fleet methods
   async getNpcFleet(id: number): Promise<NpcFleet | undefined> {
-    const [fleet] = await db.select().from(npcFleets).where(eq(npcFleets.id, id));
-    return fleet;
+    return this.npcFleets.get(id);
   }
   
   async getNpcFleetByFleetId(fleetId: string): Promise<NpcFleet | undefined> {
-    const [fleet] = await db.select().from(npcFleets).where(eq(npcFleets.fleetId, fleetId));
-    return fleet;
+    return Array.from(this.npcFleets.values()).find(fleet => fleet.fleetId === fleetId);
   }
   
   async getAllNpcFleets(): Promise<NpcFleet[]> {
-    return db.select().from(npcFleets);
+    return Array.from(this.npcFleets.values());
   }
   
   async createNpcFleet(fleet: InsertNpcFleet): Promise<NpcFleet> {
-    const [npcFleet] = await db.insert(npcFleets).values(fleet).returning();
+    const id = this.npcFleetId++;
+    const npcFleet: NpcFleet = { ...fleet, id };
+    this.npcFleets.set(id, npcFleet);
+    this.saveDataToDisk('npcFleets', Array.from(this.npcFleets.values()));
     return npcFleet;
   }
   
   async updateNpcFleet(id: number, fleet: Partial<NpcFleet>): Promise<NpcFleet | undefined> {
-    const [updated] = await db
-      .update(npcFleets)
-      .set(fleet)
-      .where(eq(npcFleets.id, id))
-      .returning();
+    const existing = this.npcFleets.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...fleet };
+    this.npcFleets.set(id, updated);
+    this.saveDataToDisk('npcFleets', Array.from(this.npcFleets.values()));
     return updated;
   }
   
   async deleteNpcFleet(id: number): Promise<boolean> {
-    await db.delete(npcFleets).where(eq(npcFleets.id, id));
-    return true;
+    const result = this.npcFleets.delete(id);
+    this.saveDataToDisk('npcFleets', Array.from(this.npcFleets.values()));
+    return result;
   }
   
   // Player methods
   async getPlayer(id: number): Promise<Player | undefined> {
-    const [player] = await db.select().from(players).where(eq(players.id, id));
-    return player;
+    return this.players.get(id);
   }
   
   async getPlayerByClientId(clientId: string): Promise<Player | undefined> {
-    const [player] = await db.select().from(players).where(eq(players.clientId, clientId));
-    return player;
+    return Array.from(this.players.values()).find(player => player.clientId === clientId);
   }
   
   async getAllPlayers(): Promise<Player[]> {
-    return db.select().from(players);
+    return Array.from(this.players.values());
   }
   
   async getConnectedPlayers(): Promise<Player[]> {
-    return db.select().from(players).where(eq(players.isConnected, true));
+    return Array.from(this.players.values()).filter(player => player.isConnected);
   }
   
   async createPlayer(player: InsertPlayer): Promise<Player> {
-    const [newPlayer] = await db.insert(players).values(player).returning();
+    const id = this.playerId++;
+    const newPlayer: Player = { ...player, id };
+    this.players.set(id, newPlayer);
+    this.saveDataToDisk('players', Array.from(this.players.values()));
     return newPlayer;
   }
   
   async updatePlayer(id: number, player: Partial<Player>): Promise<Player | undefined> {
-    const [updated] = await db
-      .update(players)
-      .set(player)
-      .where(eq(players.id, id))
-      .returning();
+    const existing = this.players.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...player };
+    this.players.set(id, updated);
+    this.saveDataToDisk('players', Array.from(this.players.values()));
     return updated;
   }
   
   async deletePlayer(id: number): Promise<boolean> {
-    await db.delete(players).where(eq(players.id, id));
-    return true;
+    const result = this.players.delete(id);
+    this.saveDataToDisk('players', Array.from(this.players.values()));
+    return result;
   }
   
   // Area of Interest methods
   async getAreaOfInterest(id: number): Promise<AreaOfInterestRecord | undefined> {
-    const [area] = await db.select().from(areasOfInterest).where(eq(areasOfInterest.id, id));
-    return area;
+    return this.areasOfInterest.get(id);
   }
   
   async getAllAreasOfInterest(): Promise<AreaOfInterestRecord[]> {
-    return db.select().from(areasOfInterest);
+    return Array.from(this.areasOfInterest.values());
   }
   
   async createAreaOfInterest(area: InsertAreaOfInterest): Promise<AreaOfInterestRecord> {
-    const [newArea] = await db.insert(areasOfInterest).values(area).returning();
+    const id = this.areaOfInterestId++;
+    const newArea: AreaOfInterestRecord = { ...area, id };
+    this.areasOfInterest.set(id, newArea);
+    this.saveDataToDisk('areasOfInterest', Array.from(this.areasOfInterest.values()));
     return newArea;
   }
   
   async updateAreaOfInterest(id: number, area: Partial<AreaOfInterestRecord>): Promise<AreaOfInterestRecord | undefined> {
-    const [updated] = await db
-      .update(areasOfInterest)
-      .set(area)
-      .where(eq(areasOfInterest.id, id))
-      .returning();
+    const existing = this.areasOfInterest.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...area };
+    this.areasOfInterest.set(id, updated);
+    this.saveDataToDisk('areasOfInterest', Array.from(this.areasOfInterest.values()));
     return updated;
   }
   
   async deleteAreaOfInterest(id: number): Promise<boolean> {
-    await db.delete(areasOfInterest).where(eq(areasOfInterest.id, id));
-    return true;
+    const result = this.areasOfInterest.delete(id);
+    this.saveDataToDisk('areasOfInterest', Array.from(this.areasOfInterest.values()));
+    return result;
   }
   
   // Server Log methods
   async createServerLog(log: InsertServerLog): Promise<ServerLog> {
-    const [serverLog] = await db.insert(serverLogs).values(log).returning();
+    const id = this.serverLogId++;
+    const serverLog: ServerLog = { ...log, id };
+    this.serverLogs.push(serverLog);
+    
+    // Keep only the most recent logs (e.g., last 1000)
+    const maxLogs = 1000;
+    if (this.serverLogs.length > maxLogs) {
+      this.serverLogs = this.serverLogs.slice(-maxLogs);
+    }
+    
+    this.saveDataToDisk('serverLogs', this.serverLogs);
     return serverLog;
   }
   
   async getRecentLogs(limit: number, level?: string): Promise<ServerLog[]> {
-    let query = db
-      .select()
-      .from(serverLogs)
-      .orderBy(desc(serverLogs.timestamp))
-      .limit(limit);
+    let logs = [...this.serverLogs];
     
+    // Sort by timestamp (descending)
+    logs.sort((a, b) => b.timestamp - a.timestamp);
+    
+    // Filter by level if specified
     if (level) {
-      query = query.where(eq(serverLogs.level, level));
+      logs = logs.filter((log) => log.level === level);
     }
     
-    return query;
+    // Return limited number
+    return logs.slice(0, limit);
   }
   
   // Server Stats methods
   async createServerStat(stat: InsertServerStat): Promise<ServerStat> {
-    const [serverStat] = await db.insert(serverStats).values(stat).returning();
+    const id = this.serverStatId++;
+    const serverStat: ServerStat = { ...stat, id };
+    this.serverStats.push(serverStat);
+    
+    // Keep only the most recent stats (e.g., last 1000)
+    const maxStats = 1000;
+    if (this.serverStats.length > maxStats) {
+      this.serverStats = this.serverStats.slice(-maxStats);
+    }
+    
+    this.saveDataToDisk('serverStats', this.serverStats);
     return serverStat;
   }
   
   async getRecentStats(limit: number): Promise<ServerStat[]> {
-    return db
-      .select()
-      .from(serverStats)
-      .orderBy(desc(serverStats.timestamp))
-      .limit(limit);
+    // Sort by timestamp (descending)
+    const stats = [...this.serverStats].sort((a, b) => b.timestamp - a.timestamp);
+    
+    // Return limited number
+    return stats.slice(0, limit);
   }
   
   // Server Settings methods
   async getSetting(name: string): Promise<ServerSetting | undefined> {
-    const [setting] = await db
-      .select()
-      .from(serverSettings)
-      .where(eq(serverSettings.name, name));
-    return setting;
+    return Array.from(this.settings.values()).find(setting => setting.name === name);
   }
   
   async getSettingValue<T>(name: string, defaultValue: T): Promise<T> {
@@ -761,7 +1024,7 @@ export class DatabaseStorage implements IStorage {
           return setting.value as unknown as T;
       }
     } catch (error) {
-      console.error(`Error parsing setting ${name}:`, error);
+      log(`Error parsing setting ${name}: ${error}`, 'error');
       return defaultValue;
     }
   }
@@ -777,184 +1040,41 @@ export class DatabaseStorage implements IStorage {
     const lastUpdated = Date.now() / 1000; // Convert to seconds
     
     if (existing) {
-      const [updated] = await db
-        .update(serverSettings)
-        .set({
-          value,
-          dataType,
-          category,
-          description: description ?? existing.description,
-          lastUpdated
-        })
-        .where(eq(serverSettings.name, name))
-        .returning();
+      const updated: ServerSetting = {
+        ...existing,
+        value,
+        dataType,
+        category,
+        description: description || existing.description,
+        lastUpdated
+      };
+      this.settings.set(existing.id.toString(), updated);
+      this.saveDataToDisk('settings', Array.from(this.settings.values()));
       return updated;
     } else {
-      const [newSetting] = await db
-        .insert(serverSettings)
-        .values({
-          name,
-          value,
-          dataType,
-          category,
-          description: description ?? null,
-          lastUpdated
-        })
-        .returning();
+      const id = this.settingId++;
+      const newSetting: ServerSetting = {
+        id,
+        name,
+        value,
+        dataType,
+        category,
+        description: description || null,
+        lastUpdated
+      };
+      this.settings.set(id.toString(), newSetting);
+      this.saveDataToDisk('settings', Array.from(this.settings.values()));
       return newSetting;
     }
   }
   
   async getAllSettings(): Promise<ServerSetting[]> {
-    return db.select().from(serverSettings);
-  }
-  
-  // World persistence methods
-  async saveWorldState(): Promise<boolean> {
-    try {
-      console.log('Saving world state to database...');
-      
-      // This is a placeholder for actual implementation
-      // In a real implementation, you would:
-      // 1. Get the current state from the GameServer instance
-      // 2. Convert it to database format
-      // 3. Use a transaction to save everything
-      
-      // Create a log entry for this save
-      await this.createServerLog({
-        timestamp: Date.now() / 1000,
-        level: 'INFO',
-        message: 'Manual world state save completed',
-        source: 'worldPersistence',
-        data: null
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving world state:', error);
-      
-      // Log the error
-      await this.createServerLog({
-        timestamp: Date.now() / 1000,
-        level: 'ERROR',
-        message: `World state save failed: ${error instanceof Error ? error.message : String(error)}`,
-        source: 'worldPersistence',
-        data: null
-      });
-      
-      return false;
-    }
-  }
-  
-  async loadWorldState(): Promise<boolean> {
-    try {
-      console.log('Loading world state from database...');
-      
-      // This is a placeholder for actual implementation
-      // In a real implementation, you would:
-      // 1. Load all entities from the database
-      // 2. Initialize the GameServer with this data
-      
-      // Create a log entry for this load
-      await this.createServerLog({
-        timestamp: Date.now() / 1000,
-        level: 'INFO',
-        message: 'Manual world state load completed',
-        source: 'worldPersistence',
-        data: null
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error loading world state:', error);
-      
-      // Log the error
-      await this.createServerLog({
-        timestamp: Date.now() / 1000,
-        level: 'ERROR',
-        message: `World state load failed: ${error instanceof Error ? error.message : String(error)}`,
-        source: 'worldPersistence',
-        data: null
-      });
-      
-      return false;
-    }
-  }
-  
-  async resetWorldState(): Promise<boolean> {
-    try {
-      console.log('Resetting world state...');
-      
-      // Delete all entities from the database
-      await db.transaction(async (tx) => {
-        // Delete existing entities
-        await tx.delete(celestialBodies);
-        await tx.delete(npcShips);
-        await tx.delete(npcFleets);
-        await tx.delete(areasOfInterest);
-        
-        // Also delete logs and stats, as they can cause sequence conflicts
-        await tx.delete(serverLogs);
-        await tx.delete(serverStats);
-        
-        // Keep players and settings
-        
-        // Reset all sequences using setval - one by one to avoid the multiple commands error
-        await tx.execute(sql`SELECT setval('"celestial_bodies_id_seq"', 1, false)`);
-        await tx.execute(sql`SELECT setval('"npc_ships_id_seq"', 1, false)`);
-        await tx.execute(sql`SELECT setval('"npc_fleets_id_seq"', 1, false)`);
-        await tx.execute(sql`SELECT setval('"areas_of_interest_id_seq"', 1, false)`);
-        await tx.execute(sql`SELECT setval('"server_logs_id_seq"', 1, false)`);
-        await tx.execute(sql`SELECT setval('"server_stats_id_seq"', 1, false)`);
-        await tx.execute(sql`SELECT setval('"missions_id_seq"', 1, false)`);
-        
-        console.log('Database tables cleared and sequences reset');
-      });
-      
-      // After resetting, create a fresh log entry outside the transaction
-      // This should be ID 1 in the logs table
-      await db.insert(serverLogs).values({
-        id: 1, // Explicitly set ID to 1
-        timestamp: Date.now() / 1000,
-        level: 'INFO',
-        message: 'World state reset completed',
-        source: 'worldPersistence',
-        data: null
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error resetting world state:', error);
-      
-      // Log the error
-      await this.createServerLog({
-        timestamp: Date.now() / 1000,
-        level: 'ERROR',
-        message: `World state reset failed: ${error instanceof Error ? error.message : String(error)}`,
-        source: 'worldPersistence',
-        data: null
-      });
-      
-      return false;
-    }
+    return Array.from(this.settings.values());
   }
 }
 
-// Create a database connection to check if it exists
-let storage: IStorage;
+// Create and export the storage instance
+const storage = new JsonStorage();
+console.log('Using JSON file storage');
 
-try {
-  // Check if we have a database connection
-  if (process.env.DATABASE_URL) {
-    console.log('Using database storage');
-    storage = new DatabaseStorage();
-  } else {
-    console.log('No database connection, using in-memory storage');
-    storage = new MemStorage();
-  }
-} catch (error) {
-  console.error('Error initializing database storage, falling back to in-memory storage:', error);
-  storage = new MemStorage();
-}
-
-export { storage };
+export { storage, IStorage };
