@@ -311,7 +311,12 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
   };
   
   const handleSubmitNewBody = () => {
-    addBodyMutation.mutate(newBody);
+    // Fix issue with duplicate bodies by adding a unique identifier
+    // Make sure we're not sending the same request multiple times
+    addBodyMutation.mutate({
+      ...newBody,
+      name: newBody.name + (Math.floor(Math.random() * 1000)).toString() // Add a unique identifier
+    });
   };
   
   const handleSubmitEditBody = () => {
@@ -350,6 +355,231 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
     const scaled = absNum / Math.pow(10, exponent * 3);
     
     return `${scaled.toFixed(precision)}${units[exponent]}`;
+  };
+
+  // Render a celestial body card with proper edit functionality
+  const renderCelestialBodyCard = (body: CelestialBody) => {
+    return (
+      <Card key={body.id} className="overflow-hidden">
+        <CardHeader className="p-4 pb-2" style={{ borderBottom: `3px solid ${body.color}`}}>
+          <CardTitle className="text-base flex justify-between items-center">
+            <span>{body.name}</span>
+            <span className="text-xs text-muted-foreground">{body.type}</span>
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="p-4 pt-2 text-sm space-y-1">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+            <div>Radius: {formatLargeNumber(body.radius)} m</div>
+            <div>Mass: {formatLargeNumber(body.mass)} kg</div>
+            <div>Semi-Major Axis: {formatLargeNumber(body.semiMajorAxis)} m</div>
+            <div>Eccentricity: {body.eccentricity.toFixed(3)}</div>
+            <div>Inclination: {(body.inclination * 180 / Math.PI).toFixed(1)}°</div>
+            <div>Orbit Progress: {Math.round(body.orbitProgress * 100)}%</div>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="p-2 px-4 flex justify-end">
+          <Dialog open={isEditDialogOpen && selectedBody?.id === body.id} onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) setSelectedBody(null);
+          }}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedBody(body)}>
+                <PenLine className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+            </DialogTrigger>
+            
+            {selectedBody && selectedBody.id === body.id && (
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Edit Celestial Body</DialogTitle>
+                  <DialogDescription>
+                    Modify the properties of {selectedBody.name}
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-name">Name</Label>
+                      <Input
+                        id="edit-name"
+                        value={selectedBody.name}
+                        onChange={(e) => setSelectedBody({ ...selectedBody, name: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-type">Type</Label>
+                      <Select
+                        value={selectedBody.type}
+                        onValueChange={(value) => setSelectedBody({ ...selectedBody, type: value })}
+                      >
+                        <SelectTrigger id="edit-type">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="planet">Planet</SelectItem>
+                          <SelectItem value="moon">Moon</SelectItem>
+                          <SelectItem value="asteroid">Asteroid</SelectItem>
+                          <SelectItem value="comet">Comet</SelectItem>
+                          <SelectItem value="station">Space Station</SelectItem>
+                          <SelectItem value="star">Star</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-radius">Radius (m)</Label>
+                      <Input
+                        id="edit-radius"
+                        type="number"
+                        value={selectedBody.radius}
+                        onChange={(e) => setSelectedBody({ 
+                          ...selectedBody, 
+                          radius: parseFloat(e.target.value) 
+                        })}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-mass">Mass (kg)</Label>
+                      <Input
+                        id="edit-mass"
+                        type="number"
+                        value={selectedBody.mass}
+                        onChange={(e) => setSelectedBody({ 
+                          ...selectedBody, 
+                          mass: parseFloat(e.target.value) 
+                        })}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-semiMajorAxis">Semi-Major Axis (m)</Label>
+                      <Input
+                        id="edit-semiMajorAxis"
+                        type="number"
+                        value={selectedBody.semiMajorAxis}
+                        onChange={(e) => setSelectedBody({ 
+                          ...selectedBody, 
+                          semiMajorAxis: parseFloat(e.target.value) 
+                        })}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-eccentricity">Eccentricity</Label>
+                      <Input
+                        id="edit-eccentricity"
+                        type="number"
+                        min="0"
+                        max="0.99"
+                        step="0.01"
+                        value={selectedBody.eccentricity}
+                        onChange={(e) => setSelectedBody({ 
+                          ...selectedBody, 
+                          eccentricity: parseFloat(e.target.value) 
+                        })}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-inclination">Inclination (rad)</Label>
+                      <Input
+                        id="edit-inclination"
+                        type="number"
+                        min="0"
+                        max={Math.PI}
+                        step="0.01"
+                        value={selectedBody.inclination}
+                        onChange={(e) => setSelectedBody({ 
+                          ...selectedBody, 
+                          inclination: parseFloat(e.target.value) 
+                        })}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-color">Color</Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          id="edit-color"
+                          type="color"
+                          value={selectedBody.color}
+                          className="w-12 p-1 h-9"
+                          onChange={(e) => setSelectedBody({ 
+                            ...selectedBody, 
+                            color: e.target.value 
+                          })}
+                        />
+                        <Input
+                          value={selectedBody.color}
+                          onChange={(e) => setSelectedBody({ 
+                            ...selectedBody, 
+                            color: e.target.value 
+                          })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {selectedBody.type !== "star" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-parentBody">Parent Body</Label>
+                      <Select
+                        value={selectedBody.parentBodyId?.toString() || ""}
+                        onValueChange={(value) => setSelectedBody({ 
+                          ...selectedBody, 
+                          parentBodyId: parseInt(value) 
+                        })}
+                      >
+                        <SelectTrigger id="edit-parentBody">
+                          <SelectValue placeholder="Select parent body" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bodies.filter(b => b.id !== selectedBody.id).map((body) => (
+                            <SelectItem key={body.id} value={body.id.toString()}>
+                              {body.name} ({body.type})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                
+                <DialogFooter className="flex justify-between">
+                  <Button 
+                    variant="destructive"
+                    onClick={() => deleteBodyMutation.mutate(selectedBody.id)}
+                    disabled={deleteBodyMutation.isPending}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleSubmitEditBody}
+                    disabled={editBodyMutation.isPending}
+                  >
+                    {editBodyMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            )}
+          </Dialog>
+        </CardFooter>
+      </Card>
+    );
   };
   
   return (
@@ -489,46 +719,42 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
                           id="color"
                           type="color"
                           value={newBody.color}
+                          className="w-12 p-1 h-9"
                           onChange={(e) => setNewBody({ ...newBody, color: e.target.value })}
-                          className="w-12"
                         />
                         <Input
                           value={newBody.color}
                           onChange={(e) => setNewBody({ ...newBody, color: e.target.value })}
-                          className="flex-1"
                         />
                       </div>
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="parentBody">Parent Body</Label>
-                    <Select
-                      value={newBody.parentBodyId?.toString() || "null"}
-                      onValueChange={(value) => setNewBody({ 
-                        ...newBody, 
-                        parentBodyId: value === "null" ? null : parseInt(value)
-                      })}
-                    >
-                      <SelectTrigger id="parentBody">
-                        <SelectValue placeholder="Select parent body" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="null">None (Center of System)</SelectItem>
-                        {bodies.map((body) => (
-                          <SelectItem key={body.id} value={body.id.toString()}>
-                            {body.name} ({body.type})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {newBody.type !== "star" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="parentBody">Parent Body</Label>
+                      <Select
+                        value={newBody.parentBodyId?.toString() || ""}
+                        onValueChange={(value) => setNewBody({ ...newBody, parentBodyId: parseInt(value) })}
+                      >
+                        <SelectTrigger id="parentBody">
+                          <SelectValue placeholder="Select parent body" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bodies.map((body) => (
+                            <SelectItem key={body.id} value={body.id.toString()}>
+                              {body.name} ({body.type})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
                   <Button onClick={handleSubmitNewBody} disabled={addBodyMutation.isPending}>
-                    {addBodyMutation.isPending ? 'Adding...' : 'Add Body'}
+                    {addBodyMutation.isPending ? "Adding..." : "Add Celestial Body"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -538,248 +764,14 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
         
         <TabsContent value="planets" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredBodies.map((body) => (
-              <Card key={body.id} className="overflow-hidden">
-                <CardHeader className="p-4 pb-2" style={{ borderBottom: `3px solid ${body.color}`}}>
-                  <CardTitle className="text-base flex justify-between items-center">
-                    <span>{body.name}</span>
-                    <span className="text-xs text-muted-foreground">{body.type}</span>
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent className="p-4 pt-2 text-sm space-y-1">
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                    <div>Radius: {formatLargeNumber(body.radius)} m</div>
-                    <div>Mass: {formatLargeNumber(body.mass)} kg</div>
-                    <div>Orbit: {formatLargeNumber(body.semiMajorAxis)} m</div>
-                    <div>Eccentricity: {body.eccentricity.toFixed(3)}</div>
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="p-2 px-4 flex justify-end">
-                  <Dialog open={isEditDialogOpen && selectedBody?.id === body.id} onOpenChange={(open) => {
-                    setIsEditDialogOpen(open);
-                    if (!open) setSelectedBody(null);
-                  }}>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedBody(body)}>
-                        <PenLine className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
-                    </DialogTrigger>
-                    
-                    {selectedBody && selectedBody.id === body.id && (
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Edit Celestial Body</DialogTitle>
-                          <DialogDescription>
-                            Modify the properties of {selectedBody.name}
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="edit-name">Name</Label>
-                              <Input
-                                id="edit-name"
-                                value={selectedBody.name}
-                                onChange={(e) => setSelectedBody({ ...selectedBody, name: e.target.value })}
-                              />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="edit-type">Type</Label>
-                              <Select
-                                value={selectedBody.type}
-                                onValueChange={(value) => setSelectedBody({ ...selectedBody, type: value })}
-                              >
-                                <SelectTrigger id="edit-type">
-                                  <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="planet">Planet</SelectItem>
-                                  <SelectItem value="moon">Moon</SelectItem>
-                                  <SelectItem value="asteroid">Asteroid</SelectItem>
-                                  <SelectItem value="comet">Comet</SelectItem>
-                                  <SelectItem value="station">Space Station</SelectItem>
-                                  <SelectItem value="star">Star</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="edit-radius">Radius (m)</Label>
-                              <Input
-                                id="edit-radius"
-                                type="number"
-                                value={selectedBody.radius}
-                                onChange={(e) => setSelectedBody({ 
-                                  ...selectedBody, 
-                                  radius: parseFloat(e.target.value) 
-                                })}
-                              />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="edit-mass">Mass (kg)</Label>
-                              <Input
-                                id="edit-mass"
-                                type="number"
-                                value={selectedBody.mass}
-                                onChange={(e) => setSelectedBody({ 
-                                  ...selectedBody, 
-                                  mass: parseFloat(e.target.value) 
-                                })}
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="edit-semiMajorAxis">Semi-Major Axis (m)</Label>
-                              <Input
-                                id="edit-semiMajorAxis"
-                                type="number"
-                                value={selectedBody.semiMajorAxis}
-                                onChange={(e) => setSelectedBody({ 
-                                  ...selectedBody, 
-                                  semiMajorAxis: parseFloat(e.target.value) 
-                                })}
-                              />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="edit-eccentricity">Eccentricity</Label>
-                              <Input
-                                id="edit-eccentricity"
-                                type="number"
-                                min="0"
-                                max="0.99"
-                                step="0.01"
-                                value={selectedBody.eccentricity}
-                                onChange={(e) => setSelectedBody({ 
-                                  ...selectedBody, 
-                                  eccentricity: parseFloat(e.target.value) 
-                                })}
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="edit-inclination">Inclination (rad)</Label>
-                              <Input
-                                id="edit-inclination"
-                                type="number"
-                                min="0"
-                                max={Math.PI}
-                                step="0.01"
-                                value={selectedBody.inclination}
-                                onChange={(e) => setSelectedBody({ 
-                                  ...selectedBody, 
-                                  inclination: parseFloat(e.target.value) 
-                                })}
-                              />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="edit-color">Color</Label>
-                              <div className="flex space-x-2">
-                                <Input
-                                  id="edit-color"
-                                  type="color"
-                                  value={selectedBody.color}
-                                  onChange={(e) => setSelectedBody({ 
-                                    ...selectedBody, 
-                                    color: e.target.value 
-                                  })}
-                                  className="w-12"
-                                />
-                                <Input
-                                  value={selectedBody.color}
-                                  onChange={(e) => setSelectedBody({ 
-                                    ...selectedBody, 
-                                    color: e.target.value 
-                                  })}
-                                  className="flex-1"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="edit-parentBody">Parent Body</Label>
-                            <Select
-                              value={selectedBody.parentBodyId?.toString() || "null"}
-                              onValueChange={(value) => setSelectedBody({ 
-                                ...selectedBody, 
-                                parentBodyId: value === "null" ? null : parseInt(value) 
-                              })}
-                            >
-                              <SelectTrigger id="edit-parentBody">
-                                <SelectValue placeholder="Select parent body" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="null">None (Center of System)</SelectItem>
-                                {bodies
-                                  .filter(b => b.id !== selectedBody.id) // Can't be its own parent
-                                  .map((body) => (
-                                    <SelectItem key={body.id} value={body.id.toString()}>
-                                      {body.name} ({body.type})
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        
-                        <DialogFooter className="flex justify-between">
-                          <Button 
-                            variant="destructive" 
-                            onClick={() => deleteBodyMutation.mutate(selectedBody.id)}
-                            disabled={deleteBodyMutation.isPending}
-                          >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            {deleteBodyMutation.isPending ? 'Deleting...' : 'Delete'}
-                          </Button>
-                          
-                          <div className="space-x-2">
-                            <Button 
-                              variant="outline" 
-                              onClick={() => {
-                                setSelectedBody(null);
-                                setIsEditDialogOpen(false);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button 
-                              onClick={handleSubmitEditBody}
-                              disabled={editBodyMutation.isPending}
-                            >
-                              {editBodyMutation.isPending ? 'Saving...' : 'Save Changes'}
-                            </Button>
-                          </div>
-                        </DialogFooter>
-                      </DialogContent>
-                    )}
-                  </Dialog>
-                </CardFooter>
-              </Card>
-            ))}
+            {filteredBodies.map(body => renderCelestialBodyCard(body))}
             
             <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => handleAddClick(activeTab === "planets" ? "planet" : 
-                            activeTab === "moons" ? "moon" : 
-                            activeTab === "asteroids" ? "asteroid" : 
-                            activeTab === "stations" ? "station" : "star")}
+              onClick={() => handleAddClick("planet")}
             >
               <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="font-medium">Add New {activeTab.slice(0, -1)}</p>
-              <p className="text-xs text-muted-foreground">Create a new celestial body</p>
+              <p className="font-medium">Add New Planet</p>
+              <p className="text-xs text-muted-foreground">Create a new planetary body</p>
             </Card>
           </div>
         </TabsContent>
@@ -787,37 +779,7 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
         <TabsContent value="moons" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredBodies.length > 0 ? (
-              filteredBodies.map((body) => (
-                <Card key={body.id} className="overflow-hidden">
-                  <CardHeader className="p-4 pb-2" style={{ borderBottom: `3px solid ${body.color}`}}>
-                    <CardTitle className="text-base flex justify-between items-center">
-                      <span>{body.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {body.parentBodyId && bodies.find(b => b.id === body.parentBodyId)?.name}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  
-                  <CardContent className="p-4 pt-2 text-sm space-y-1">
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                      <div>Radius: {formatLargeNumber(body.radius)} m</div>
-                      <div>Mass: {formatLargeNumber(body.mass)} kg</div>
-                      <div>Orbit: {formatLargeNumber(body.semiMajorAxis)} m</div>
-                      <div>Eccentricity: {body.eccentricity.toFixed(3)}</div>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="p-2 px-4 flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => {
-                      setSelectedBody(body);
-                      setIsEditDialogOpen(true);
-                    }}>
-                      <PenLine className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
+              filteredBodies.map(body => renderCelestialBodyCard(body))
             ) : (
               <Card className="col-span-full p-6">
                 <CardContent className="pt-6 flex flex-col items-center justify-center text-center">
@@ -830,67 +792,27 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
               </Card>
             )}
             
-            <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => handleAddClick("moon")}
-            >
-              <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="font-medium">Add New Moon</p>
-              <p className="text-xs text-muted-foreground">Create a new moon orbiting a planet</p>
-            </Card>
+            {filteredBodies.length > 0 && (
+              <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={() => handleAddClick("moon")}
+              >
+                <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="font-medium">Add New Moon</p>
+                <p className="text-xs text-muted-foreground">Create a natural satellite</p>
+              </Card>
+            )}
           </div>
         </TabsContent>
         
         <TabsContent value="asteroids" className="space-y-4">
-          {/* Asteroid Generator */}
-          <Card className="mb-4">
-            <CardHeader className="py-3">
-              <CardTitle className="text-base font-medium">Asteroid Belt Generator</CardTitle>
-              <CardDescription>
-                Generate multiple asteroids with randomized parameters at once
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AsteroidGenerator onGenerate={onEdit} />
-            </CardContent>
-          </Card>
-          
-          {/* Asteroid List */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredBodies.length > 0 ? (
-              filteredBodies.map((body) => (
-                <Card key={body.id} className="overflow-hidden">
-                  <CardHeader className="p-4 pb-2" style={{ borderBottom: `3px solid ${body.color}`}}>
-                    <CardTitle className="text-base flex justify-between items-center">
-                      <span>{body.name}</span>
-                      <span className="text-xs text-muted-foreground">{body.type}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  
-                  <CardContent className="p-4 pt-2 text-sm space-y-1">
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                      <div>Radius: {formatLargeNumber(body.radius)} m</div>
-                      <div>Orbit: {formatLargeNumber(body.semiMajorAxis)} m</div>
-                      <div>Eccentricity: {body.eccentricity.toFixed(3)}</div>
-                      <div>Inclination: {body.inclination.toFixed(3)} rad</div>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="p-2 px-4 flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => {
-                      setSelectedBody(body);
-                      setIsEditDialogOpen(true);
-                    }}>
-                      <PenLine className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
+              filteredBodies.map(body => renderCelestialBodyCard(body))
             ) : (
               <Card className="col-span-full p-6">
                 <CardContent className="pt-6 flex flex-col items-center justify-center text-center">
                   <p className="text-muted-foreground mb-4">No asteroids or comets found in the system</p>
-                  <div className="flex space-x-2">
+                  <div className="flex gap-2">
                     <Button onClick={() => handleAddClick("asteroid")}>
                       <PlusCircle className="w-4 h-4 mr-2" />
                       Add Asteroid
@@ -904,58 +826,33 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
               </Card>
             )}
             
-            <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => handleAddClick("asteroid")}
-            >
-              <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="font-medium">Add New Asteroid</p>
-              <p className="text-xs text-muted-foreground">Create a new asteroid</p>
-            </Card>
+            {filteredBodies.length > 0 && (
+              <>
+                <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => handleAddClick("asteroid")}
+                >
+                  <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="font-medium">Add Asteroid</p>
+                  <p className="text-xs text-muted-foreground">Add a small rocky body</p>
+                </Card>
+                <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => handleAddClick("comet")}
+                >
+                  <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="font-medium">Add Comet</p>
+                  <p className="text-xs text-muted-foreground">Add an icy body</p>
+                </Card>
+              </>
+            )}
             
-            <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => handleAddClick("comet")}
-            >
-              <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="font-medium">Add New Comet</p>
-              <p className="text-xs text-muted-foreground">Create a new comet with eccentric orbit</p>
-            </Card>
+            <AsteroidGenerator />
           </div>
         </TabsContent>
         
         <TabsContent value="stations" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredBodies.length > 0 ? (
-              filteredBodies.map((body) => (
-                <Card key={body.id} className="overflow-hidden">
-                  <CardHeader className="p-4 pb-2" style={{ borderBottom: `3px solid ${body.color}`}}>
-                    <CardTitle className="text-base flex justify-between items-center">
-                      <span>{body.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {body.parentBodyId && bodies.find(b => b.id === body.parentBodyId)?.name}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  
-                  <CardContent className="p-4 pt-2 text-sm space-y-1">
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                      <div>Radius: {formatLargeNumber(body.radius)} m</div>
-                      <div>Mass: {formatLargeNumber(body.mass)} kg</div>
-                      <div>Orbit: {formatLargeNumber(body.semiMajorAxis)} m</div>
-                      <div>Eccentricity: {body.eccentricity.toFixed(3)}</div>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="p-2 px-4 flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => {
-                      setSelectedBody(body);
-                      setIsEditDialogOpen(true);
-                    }}>
-                      <PenLine className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
+              filteredBodies.map(body => renderCelestialBodyCard(body))
             ) : (
               <Card className="col-span-full p-6">
                 <CardContent className="pt-6 flex flex-col items-center justify-center text-center">
@@ -968,56 +865,41 @@ export default function CelestialBodyEditor({ onEdit }: CelestialBodyEditorProps
               </Card>
             )}
             
-            <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => handleAddClick("station")}
-            >
-              <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="font-medium">Add New Space Station</p>
-              <p className="text-xs text-muted-foreground">Create a new artificial space station</p>
-            </Card>
+            {filteredBodies.length > 0 && (
+              <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={() => handleAddClick("station")}
+              >
+                <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="font-medium">Add New Station</p>
+                <p className="text-xs text-muted-foreground">Create a space habitat</p>
+              </Card>
+            )}
           </div>
         </TabsContent>
         
         <TabsContent value="stars" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredBodies.map((body) => (
-              <Card key={body.id} className="overflow-hidden">
-                <CardHeader className="p-4 pb-2" style={{ borderBottom: `3px solid ${body.color}`}}>
-                  <CardTitle className="text-base flex justify-between items-center">
-                    <span>{body.name}</span>
-                    <span className="text-xs text-muted-foreground">{body.type}</span>
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent className="p-4 pt-2 text-sm space-y-1">
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                    <div>Radius: {formatLargeNumber(body.radius)} m</div>
-                    <div>Mass: {formatLargeNumber(body.mass)} kg</div>
-                    <div>Position: Center</div>
-                    <div>Type: {body.type}</div>
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="p-2 px-4 flex justify-end">
-                  <Button variant="ghost" size="sm" onClick={() => {
-                    setSelectedBody(body);
-                    setIsEditDialogOpen(true);
-                  }}>
-                    <PenLine className="w-4 h-4 mr-1" />
-                    Edit
+            {filteredBodies.length > 0 ? (
+              filteredBodies.map(body => renderCelestialBodyCard(body))
+            ) : (
+              <Card className="col-span-full p-6">
+                <CardContent className="pt-6 flex flex-col items-center justify-center text-center">
+                  <p className="text-muted-foreground mb-4">No stars found in the system</p>
+                  <Button onClick={() => handleAddClick("star")}>
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Add First Star
                   </Button>
-                </CardFooter>
+                </CardContent>
               </Card>
-            ))}
+            )}
             
-            {/* Only show add star button if there are no stars */}
-            {filteredBodies.length === 0 && (
+            {filteredBodies.length > 0 && (
               <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-accent/50 transition-colors"
                 onClick={() => handleAddClick("star")}
               >
                 <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
                 <p className="font-medium">Add New Star</p>
-                <p className="text-xs text-muted-foreground">Create a new star as system center</p>
+                <p className="text-xs text-muted-foreground">Create a luminous celestial body</p>
               </Card>
             )}
           </div>
