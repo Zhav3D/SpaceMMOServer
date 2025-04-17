@@ -1291,31 +1291,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
               log('Cannot create default NPCs - no celestial bodies found', 'warn');
             }
             
-            // Since we've modified our state significantly, schedule a restart
-            // to ensure everything is properly initialized
-            console.log('Scheduling server restart after world reset...');
+            // Reinitialize the server components immediately
+            console.log('Reinitializing server after world reset...');
             
-            setTimeout(() => {
-              if (serverInstance) {
-                serverInstance.shutdown();
-                
-                // In a production environment, we would use a process manager
-                // to restart the server. For now, we'll just restart the server
-                // in this process after a brief delay
-                setTimeout(async () => {
-                  try {
-                    console.log('Reinitializing server after world reset...');
-                    if (serverInstance) {
-                      // Reinitialize the server components without shutting down
-                      await serverInstance.reinitializeAfterReset();
-                      console.log('Server reinitialized successfully!');
-                    }
-                  } catch (err) {
-                    console.error('Failed to reinitialize server:', err);
-                  }
-                }, 1000);
-              }
-            }, 2000);
+            if (serverInstance) {
+              // No need to shut down first - just reinitialize
+              serverInstance.reinitializeAfterReset()
+                .then(() => {
+                  console.log('Server reinitialized successfully!');
+                })
+                .catch((err) => {
+                  console.error('Failed to reinitialize server:', err);
+                });
+            }
           } catch (err) {
             log(`Error during server reinitialization: ${err}`, 'error');
           }
@@ -1323,7 +1311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const response: ApiResponse<{ message: string }> = {
           success: true,
-          data: { message: 'World state reset successfully. Server will restart shortly.' },
+          data: { message: 'World state reset successfully. Server will reinitialize without interruption.' },
         };
         
         res.json(response);
