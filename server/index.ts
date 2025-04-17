@@ -501,103 +501,202 @@ export class GameServer {
       
       // Create default fleets if none exist
       if (npcFleets.length === 0) {
-        log('Creating default NPC fleets...', 'info');
-        
-        // Find Earth
-        const earth = celestialBodies.find(body => body.name === 'Earth');
-        
-        if (earth) {
-          // Enemy fleet near Earth
-          const { fleet: enemyFleet, ships: enemyShips } = this.npcManager.createNPCFleet(
-            'enemy',
-            247,
-            'Earth Orbit',
-            earth.id
-          );
-          
-          const savedEnemyFleet = await storage.createNpcFleet(enemyFleet);
-          this.npcManager.registerFleet(savedEnemyFleet);
-          
-          for (const ship of enemyShips) {
-            const savedShip = await storage.createNpcShip(ship);
-            this.npcManager.registerNPC(savedShip);
-          }
-          
-          log(`Created enemy fleet with ${enemyShips.length} ships`, 'info');
-        }
-        
-        // Find Mars and Jupiter
-        const mars = celestialBodies.find(body => body.name === 'Mars');
-        const jupiter = celestialBodies.find(body => body.name === 'Jupiter');
-        
-        if (mars && jupiter) {
-          // Transport fleet between Mars and Jupiter
-          const { fleet: transportFleet, ships: transportShips } = this.npcManager.createNPCFleet(
-            'transport',
-            85,
-            'Mars → Jupiter',
-            mars.id
-          );
-          
-          const savedTransportFleet = await storage.createNpcFleet(transportFleet);
-          this.npcManager.registerFleet(savedTransportFleet);
-          
-          for (const ship of transportShips) {
-            const savedShip = await storage.createNpcShip(ship);
-            this.npcManager.registerNPC(savedShip);
-          }
-          
-          log(`Created transport fleet with ${transportShips.length} ships`, 'info');
-        }
-        
-        // Find Saturn
-        const saturn = celestialBodies.find(body => body.name === 'Saturn');
-        
-        if (saturn) {
-          // Civilian fleet near Saturn
-          const { fleet: civilianFleet, ships: civilianShips } = this.npcManager.createNPCFleet(
-            'civilian',
-            312,
-            'Saturn Rings',
-            saturn.id
-          );
-          
-          const savedCivilianFleet = await storage.createNpcFleet(civilianFleet);
-          this.npcManager.registerFleet(savedCivilianFleet);
-          
-          for (const ship of civilianShips) {
-            const savedShip = await storage.createNpcShip(ship);
-            this.npcManager.registerNPC(savedShip);
-          }
-          
-          log(`Created civilian fleet with ${civilianShips.length} ships`, 'info');
-        }
-        
-        // Asteroid belt mining fleet
-        if (jupiter) {
-          // Mining fleet in asteroid belt
-          const { fleet: miningFleet, ships: miningShips } = this.npcManager.createNPCFleet(
-            'mining',
-            178,
-            'Asteroid Belt',
-            jupiter.id // Just as a reference point
-          );
-          
-          const savedMiningFleet = await storage.createNpcFleet(miningFleet);
-          this.npcManager.registerFleet(savedMiningFleet);
-          
-          for (const ship of miningShips) {
-            const savedShip = await storage.createNpcShip(ship);
-            this.npcManager.registerNPC(savedShip);
-          }
-          
-          log(`Created mining fleet with ${miningShips.length} ships`, 'info');
-        }
+        await this.createDefaultNPCs(celestialBodies);
       }
       
       log(`Initialized NPCs: ${npcShips.length} ships in ${npcFleets.length} fleets`, 'info');
     } catch (error) {
       log(`Error initializing NPCs: ${error}`, 'error');
+      throw error;
+    }
+  }
+  
+  // Create default NPCs with higher counts
+  public async createDefaultNPCs(celestialBodies: CelestialBody[]): Promise<void> {
+    try {
+      log('Creating default NPC fleets...', 'info');
+      
+      // First, clear any existing NPCs and fleets
+      const existingNpcShips = await storage.getAllNpcShips();
+      for (const ship of existingNpcShips) {
+        await storage.deleteNpcShip(ship.id);
+      }
+      
+      const existingNpcFleets = await storage.getAllNpcFleets();
+      for (const fleet of existingNpcFleets) {
+        await storage.deleteNpcFleet(fleet.id);
+      }
+      
+      // Find Earth
+      const earth = celestialBodies.find(body => body.name === 'Earth');
+      
+      if (earth) {
+        // Enemy fleet near Earth - increased count
+        const { fleet: enemyFleet, ships: enemyShips } = this.npcManager.createNPCFleet(
+          'enemy',
+          400, // Increased from 247
+          'Earth Orbit',
+          earth.id
+        );
+        
+        const savedEnemyFleet = await storage.createNpcFleet(enemyFleet);
+        this.npcManager.registerFleet(savedEnemyFleet);
+        
+        for (const ship of enemyShips) {
+          const savedShip = await storage.createNpcShip(ship);
+          this.npcManager.registerNPC(savedShip);
+        }
+        
+        log(`Created enemy fleet with ${enemyShips.length} ships`, 'info');
+        
+        // Add additional enemy fleets in different positions
+        const { fleet: enemyFleet2, ships: enemyShips2 } = this.npcManager.createNPCFleet(
+          'enemy',
+          300,
+          'Earth Defense',
+          earth.id
+        );
+        
+        const savedEnemyFleet2 = await storage.createNpcFleet(enemyFleet2);
+        this.npcManager.registerFleet(savedEnemyFleet2);
+        
+        for (const ship of enemyShips2) {
+          const savedShip = await storage.createNpcShip(ship);
+          this.npcManager.registerNPC(savedShip);
+        }
+        
+        log(`Created second enemy fleet with ${enemyShips2.length} ships`, 'info');
+      }
+      
+      // Find Mars and Jupiter
+      const mars = celestialBodies.find(body => body.name === 'Mars');
+      const jupiter = celestialBodies.find(body => body.name === 'Jupiter');
+      
+      if (mars && jupiter) {
+        // Transport fleet between Mars and Jupiter - increased count
+        const { fleet: transportFleet, ships: transportShips } = this.npcManager.createNPCFleet(
+          'transport',
+          250, // Increased from 85
+          'Mars → Jupiter',
+          mars.id
+        );
+        
+        const savedTransportFleet = await storage.createNpcFleet(transportFleet);
+        this.npcManager.registerFleet(savedTransportFleet);
+        
+        for (const ship of transportShips) {
+          const savedShip = await storage.createNpcShip(ship);
+          this.npcManager.registerNPC(savedShip);
+        }
+        
+        log(`Created transport fleet with ${transportShips.length} ships`, 'info');
+        
+        // Add a second transport fleet
+        const { fleet: transportFleet2, ships: transportShips2 } = this.npcManager.createNPCFleet(
+          'transport',
+          200,
+          'Jupiter → Mars',
+          jupiter.id
+        );
+        
+        const savedTransportFleet2 = await storage.createNpcFleet(transportFleet2);
+        this.npcManager.registerFleet(savedTransportFleet2);
+        
+        for (const ship of transportShips2) {
+          const savedShip = await storage.createNpcShip(ship);
+          this.npcManager.registerNPC(savedShip);
+        }
+        
+        log(`Created second transport fleet with ${transportShips2.length} ships`, 'info');
+      }
+      
+      // Find Saturn
+      const saturn = celestialBodies.find(body => body.name === 'Saturn');
+      
+      if (saturn) {
+        // Civilian fleet near Saturn - increased count
+        const { fleet: civilianFleet, ships: civilianShips } = this.npcManager.createNPCFleet(
+          'civilian',
+          350, // Increased from 312
+          'Saturn Rings',
+          saturn.id
+        );
+        
+        const savedCivilianFleet = await storage.createNpcFleet(civilianFleet);
+        this.npcManager.registerFleet(savedCivilianFleet);
+        
+        for (const ship of civilianShips) {
+          const savedShip = await storage.createNpcShip(ship);
+          this.npcManager.registerNPC(savedShip);
+        }
+        
+        log(`Created civilian fleet with ${civilianShips.length} ships`, 'info');
+      }
+      
+      const venus = celestialBodies.find(body => body.name === 'Venus');
+      
+      if (venus) {
+        // Additional civilian fleet near Venus
+        const { fleet: civilianFleet2, ships: civilianShips2 } = this.npcManager.createNPCFleet(
+          'civilian',
+          300,
+          'Venus Exploration',
+          venus.id
+        );
+        
+        const savedCivilianFleet2 = await storage.createNpcFleet(civilianFleet2);
+        this.npcManager.registerFleet(savedCivilianFleet2);
+        
+        for (const ship of civilianShips2) {
+          const savedShip = await storage.createNpcShip(ship);
+          this.npcManager.registerNPC(savedShip);
+        }
+        
+        log(`Created Venus civilian fleet with ${civilianShips2.length} ships`, 'info');
+      }
+      
+      // Asteroid belt mining fleet - increased count
+      if (jupiter) {
+        // Mining fleet in asteroid belt
+        const { fleet: miningFleet, ships: miningShips } = this.npcManager.createNPCFleet(
+          'mining',
+          300, // Increased from 178
+          'Asteroid Belt',
+          jupiter.id // Just as a reference point
+        );
+        
+        const savedMiningFleet = await storage.createNpcFleet(miningFleet);
+        this.npcManager.registerFleet(savedMiningFleet);
+        
+        for (const ship of miningShips) {
+          const savedShip = await storage.createNpcShip(ship);
+          this.npcManager.registerNPC(savedShip);
+        }
+        
+        log(`Created mining fleet with ${miningShips.length} ships`, 'info');
+      }
+      
+      // Add a second mining fleet near Saturn's rings if Saturn exists
+      if (saturn) {
+        const { fleet: miningFleet2, ships: miningShips2 } = this.npcManager.createNPCFleet(
+          'mining',
+          250,
+          'Saturn Ring Mining',
+          saturn.id
+        );
+        
+        const savedMiningFleet2 = await storage.createNpcFleet(miningFleet2);
+        this.npcManager.registerFleet(savedMiningFleet2);
+        
+        for (const ship of miningShips2) {
+          const savedShip = await storage.createNpcShip(ship);
+          this.npcManager.registerNPC(savedShip);
+        }
+        
+        log(`Created Saturn mining fleet with ${miningShips2.length} ships`, 'info');
+      }
+    } catch (error) {
+      log(`Error creating default NPCs: ${error}`, 'error');
       throw error;
     }
   }

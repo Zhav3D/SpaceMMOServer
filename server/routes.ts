@@ -1230,31 +1230,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (result) {
         // Reinitialize the server with default state
         if (serverInstance) {
-          // Reset celestial bodies
-          if (serverInstance.celestialManager) {
-            await serverInstance.celestialManager.initialize();
-          }
-          
-          // Since we can't access private methods, we'll have to reinitialize the game world
-          // via a different approach
-          console.log('Reinitializing game world after reset...');
-          
-          // We have to recreate server instance if possible
-          if (serverInstance) {
-            // First stop the current instance
-            // NOTE: We're using shutdown but keeping it as non-awaited
-            // so the response can be sent before the server shuts down
+          try {
+            // Reset celestial bodies
+            if (serverInstance.celestialManager) {
+              await serverInstance.celestialManager.initialize();
+            }
+            
+            // Get celestial bodies for NPC initialization
+            const celestialBodies = await storage.getAllCelestialBodies();
+            
+            // Create default NPCs
+            if (celestialBodies.length > 0) {
+              log('Reinitializing NPCs after world reset...', 'info');
+              await serverInstance.createDefaultNPCs(celestialBodies);
+            } else {
+              log('Cannot create default NPCs - no celestial bodies found', 'warn');
+            }
+            
+            // Since we've modified our state significantly, schedule a restart
+            // to ensure everything is properly initialized
+            console.log('Scheduling server restart after world reset...');
+            
             setTimeout(() => {
               if (serverInstance) {
                 serverInstance.shutdown();
+                
+                // In a production environment, we would use a process manager
+                // to restart the server. For now, we'll just restart the server
+                // in this process after a brief delay
+                setTimeout(async () => {
+                  try {
+                    console.log('Restarting server after world reset...');
+                    const udpPort = parseInt(process.env.UDP_PORT || '7777', 10);
+                    const httpPort = 5000;
+                    
+                    serverInstance = new GameServer(udpPort, httpPort);
+                    await serverInstance.start();
+                  } catch (err) {
+                    console.error('Failed to restart server:', err);
+                  }
+                }, 1000);
               }
-            }, 1000);
+            }, 2000);
+          } catch (err) {
+            log(`Error during server reinitialization: ${err}`, 'error');
           }
         }
         
         const response: ApiResponse<{ message: string }> = {
           success: true,
-          data: { message: 'World state reset successfully' },
+          data: { message: 'World state reset successfully. Server will restart shortly.' },
         };
         
         res.json(response);
