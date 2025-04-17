@@ -128,14 +128,39 @@ export default function Npcs() {
     }
   };
   
-  // This effect will refetch fleets data when deleteFleetMutation completes
+  // This effect will refetch fleets data when mutations complete
   useEffect(() => {
     if (deleteFleetMutation.isSuccess) {
-      // Force refetch with fresh data
+      // After deleting a fleet, we need to refetch data to update the UI
       refetch();
+      
+      // Invalidate related queries that might show NPCs
+      queryClient.invalidateQueries({ queryKey: ['/api/npc/fleets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/aoi'] });
+      
+      // Log for debugging
       console.log("Fleet deleted successfully, refreshing data");
+      
+      // Reset success state
+      setTimeout(() => {
+        deleteFleetMutation.reset();
+      }, 500);
     }
-  }, [deleteFleetMutation.isSuccess, refetch]);
+  }, [deleteFleetMutation.isSuccess, refetch, queryClient]);
+  
+  // Also refetch when spawn mutation completes
+  useEffect(() => {
+    if (spawnFleetMutation.isSuccess) {
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['/api/npc/fleets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/aoi'] });
+      
+      // Reset success state
+      setTimeout(() => {
+        spawnFleetMutation.reset();
+      }, 500);
+    }
+  }, [spawnFleetMutation.isSuccess, refetch, queryClient]);
 
   const getBadgeColorForType = (type: string) => {
     switch (type) {

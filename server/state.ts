@@ -337,43 +337,230 @@ export class GameStateManager {
     return simulatedPlayers;
   }
   
-  // Update simulated players (move them around)
+  // Update simulated players to behave like real players
   updateSimulatedPlayers(deltaTime: number): void {
+    // Get all celestial bodies as potential targets
+    const celestialBodies = Array.from(this.npcManager.celestialBodies.values());
+    
     for (const [playerId, player] of this.simulatedPlayers.entries()) {
       // Update position based on velocity
       player.positionX += player.velocityX * deltaTime;
       player.positionY += player.velocityY * deltaTime;
       player.positionZ += player.velocityZ * deltaTime;
       
-      // Add some random movement changes occasionally
-      if (Math.random() < 0.05) {
-        // Change velocity a bit
-        const changeAmount = 20;
-        player.velocityX += (Math.random() - 0.5) * changeAmount;
-        player.velocityY += (Math.random() - 0.5) * changeAmount;
-        player.velocityZ += (Math.random() - 0.5) * changeAmount;
+      // Determine player behavior based on a pseudo AI state machine
+      const playerState = player.aiState || 'exploring';
+      const targetBody = player.targetBodyId ? 
+        this.npcManager.celestialBodies.get(player.targetBodyId) : null;
+      
+      // Occasionally change behavior (state transitions)
+      if (Math.random() < 0.01) { // 1% chance per update
+        // Choose a new behavior
+        const states = ['exploring', 'orbiting', 'traveling', 'mining', 'combat'];
+        const weights = [0.3, 0.3, 0.2, 0.1, 0.1]; // Probability weights
         
-        // Change rotation a bit
-        player.rotationX += (Math.random() - 0.5) * 0.1;
-        player.rotationY += (Math.random() - 0.5) * 0.1;
-        player.rotationZ += (Math.random() - 0.5) * 0.1;
-        player.rotationW += (Math.random() - 0.5) * 0.1;
+        // Weighted random selection of a state
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+        let randomValue = Math.random() * totalWeight;
+        let selectedIndex = 0;
         
-        // Normalize the quaternion
-        const length = Math.sqrt(
-          player.rotationX * player.rotationX + 
-          player.rotationY * player.rotationY + 
-          player.rotationZ * player.rotationZ + 
-          player.rotationW * player.rotationW
-        );
-        player.rotationX /= length;
-        player.rotationY /= length;
-        player.rotationZ /= length;
-        player.rotationW /= length;
+        for (let i = 0; i < weights.length; i++) {
+          randomValue -= weights[i];
+          if (randomValue <= 0) {
+            selectedIndex = i;
+            break;
+          }
+        }
+        
+        player.aiState = states[selectedIndex];
+        
+        // If transitioning to orbiting or traveling, choose a random celestial body
+        if (['orbiting', 'traveling', 'mining'].includes(player.aiState) && celestialBodies.length > 0) {
+          const randomBodyIndex = Math.floor(Math.random() * celestialBodies.length);
+          player.targetBodyId = celestialBodies[randomBodyIndex].id;
+        }
+      }
+      
+      // Execute behavior based on current state
+      switch (playerState) {
+        case 'exploring':
+          // Random gentle movements
+          if (Math.random() < 0.1) {
+            const changeAmount = 10;
+            player.velocityX += (Math.random() - 0.5) * changeAmount;
+            player.velocityY += (Math.random() - 0.5) * changeAmount;
+            player.velocityZ += (Math.random() - 0.5) * changeAmount;
+            
+            // Apply drag to keep speed reasonable
+            const dragFactor = 0.98;
+            player.velocityX *= dragFactor;
+            player.velocityY *= dragFactor;
+            player.velocityZ *= dragFactor;
+          }
+          break;
+          
+        case 'orbiting':
+          if (targetBody) {
+            // Calculate vector to celestial body
+            const dx = targetBody.currentPositionX - player.positionX;
+            const dy = targetBody.currentPositionY - player.positionY;
+            const dz = targetBody.currentPositionZ - player.positionZ;
+            const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            
+            // Orbital parameters
+            const orbitRadius = targetBody.radius * 2; // Orbit at twice the body's radius
+            
+            if (distance > orbitRadius * 1.2) {
+              // Too far - move toward the body
+              const moveSpeed = 200;
+              player.velocityX = (dx / distance) * moveSpeed;
+              player.velocityY = (dy / distance) * moveSpeed;
+              player.velocityZ = (dz / distance) * moveSpeed;
+            }
+            else if (distance < orbitRadius * 0.8) {
+              // Too close - move away from the body
+              const moveSpeed = 150;
+              player.velocityX = -(dx / distance) * moveSpeed;
+              player.velocityY = -(dy / distance) * moveSpeed;
+              player.velocityZ = -(dz / distance) * moveSpeed;
+            }
+            else {
+              // In orbital range - circle the body
+              // Cross product for perpendicular direction
+              const orbitalSpeed = 100 + Math.random() * 50;
+              
+              // If we're not already moving fast enough, adjust velocity
+              const currentSpeed = Math.sqrt(
+                player.velocityX * player.velocityX +
+                player.velocityY * player.velocityY +
+                player.velocityZ * player.velocityZ
+              );
+              
+              if (currentSpeed < orbitalSpeed * 0.8) {
+                // Create orbital velocity (cross product with up vector for simplicity)
+                player.velocityX = -dy * orbitalSpeed / distance;
+                player.velocityY = dx * orbitalSpeed / distance;
+                player.velocityZ = player.velocityZ * 0.95; // Reduce vertical velocity
+              }
+            }
+          }
+          break;
+          
+        case 'traveling':
+          if (targetBody) {
+            // Calculate vector to celestial body
+            const dx = targetBody.currentPositionX - player.positionX;
+            const dy = targetBody.currentPositionY - player.positionY;
+            const dz = targetBody.currentPositionZ - player.positionZ;
+            const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            
+            // Direct travel toward target
+            const travelSpeed = 400 + Math.random() * 200;
+            player.velocityX = (dx / distance) * travelSpeed;
+            player.velocityY = (dy / distance) * travelSpeed;
+            player.velocityZ = (dz / distance) * travelSpeed;
+            
+            // If we're close enough, transition to orbiting
+            if (distance < targetBody.radius * 5) {
+              player.aiState = 'orbiting';
+            }
+          }
+          break;
+          
+        case 'mining':
+          if (targetBody && targetBody.type === 'asteroid') {
+            // Similar to orbiting but stay closer
+            const dx = targetBody.currentPositionX - player.positionX;
+            const dy = targetBody.currentPositionY - player.positionY;
+            const dz = targetBody.currentPositionZ - player.positionZ;
+            const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            
+            const miningDistance = targetBody.radius * 1.2;
+            
+            if (distance > miningDistance * 1.2) {
+              // Move closer
+              const moveSpeed = 100;
+              player.velocityX = (dx / distance) * moveSpeed;
+              player.velocityY = (dy / distance) * moveSpeed;
+              player.velocityZ = (dz / distance) * moveSpeed;
+            }
+            else {
+              // Hold position with minor adjustments
+              player.velocityX *= 0.9;
+              player.velocityY *= 0.9;
+              player.velocityZ *= 0.9;
+              
+              // Add small random adjustments to simulate mining activity
+              player.velocityX += (Math.random() - 0.5) * 5;
+              player.velocityY += (Math.random() - 0.5) * 5;
+              player.velocityZ += (Math.random() - 0.5) * 5;
+            }
+          }
+          break;
+          
+        case 'combat':
+          // Find a nearby player or NPC to engage
+          const nearbyPlayers = Array.from(this.playerStates.values())
+            .filter(otherPlayer => otherPlayer.clientId !== player.clientId);
+            
+          if (nearbyPlayers.length > 0) {
+            // Choose a random player to engage
+            const targetIndex = Math.floor(Math.random() * nearbyPlayers.length);
+            const targetPlayer = nearbyPlayers[targetIndex];
+            
+            // Move toward the target
+            const dx = targetPlayer.positionX - player.positionX;
+            const dy = targetPlayer.positionY - player.positionY;
+            const dz = targetPlayer.positionZ - player.positionZ;
+            const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            
+            // Engage at medium range
+            const combatSpeed = 250 + Math.random() * 100;
+            player.velocityX = (dx / distance) * combatSpeed;
+            player.velocityY = (dy / distance) * combatSpeed;
+            player.velocityZ = (dz / distance) * combatSpeed;
+            
+            // Add some evasive maneuvers
+            player.velocityX += (Math.random() - 0.5) * 50;
+            player.velocityY += (Math.random() - 0.5) * 50;
+            player.velocityZ += (Math.random() - 0.5) * 30;
+          }
+          else {
+            // No targets, revert to exploring
+            player.aiState = 'exploring';
+          }
+          break;
+      }
+      
+      // Update rotation to face the direction of travel
+      if (Math.abs(player.velocityX) > 0.1 || Math.abs(player.velocityY) > 0.1) {
+        // Calculate the heading angle based on velocity
+        const heading = Math.atan2(player.velocityY, player.velocityX);
+        
+        // Convert heading to quaternion (simplified - just rotating around Z axis)
+        player.rotationX = 0;
+        player.rotationY = 0;
+        player.rotationZ = Math.sin(heading / 2);
+        player.rotationW = Math.cos(heading / 2);
+      }
+      
+      // Apply velocity limits
+      const maxSpeed = 1000;
+      const currentSpeed = Math.sqrt(
+        player.velocityX * player.velocityX +
+        player.velocityY * player.velocityY +
+        player.velocityZ * player.velocityZ
+      );
+      
+      if (currentSpeed > maxSpeed) {
+        const reduction = maxSpeed / currentSpeed;
+        player.velocityX *= reduction;
+        player.velocityY *= reduction;
+        player.velocityZ *= reduction;
       }
       
       // Boundary check to keep players within a reasonable area
-      const boundaryRadius = 10000;
+      const boundaryRadius = 2000000; // Scaled up to match celestial bodies
       const distanceFromCenter = Math.sqrt(
         player.positionX * player.positionX + 
         player.positionY * player.positionY + 
@@ -381,10 +568,18 @@ export class GameStateManager {
       );
       
       if (distanceFromCenter > boundaryRadius) {
-        // If out of bounds, reverse direction
-        player.velocityX = -player.velocityX;
-        player.velocityY = -player.velocityY;
-        player.velocityZ = -player.velocityZ;
+        // If out of bounds, reverse direction and head back inward
+        player.velocityX = -player.velocityX * 0.5;
+        player.velocityY = -player.velocityY * 0.5;
+        player.velocityZ = -player.velocityZ * 0.5;
+        player.aiState = 'traveling';
+        
+        // Pick a central body to target
+        if (celestialBodies.length > 0) {
+          // Find the Sun or central body
+          const centralBody = celestialBodies.find(body => body.name === 'Sun') || celestialBodies[0];
+          player.targetBodyId = centralBody.id;
+        }
       }
       
       // Update in AOI system

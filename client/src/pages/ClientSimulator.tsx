@@ -804,10 +804,16 @@ export default function ClientSimulator() {
     }
   }, [areas, selectedArea]);
   
-  // Register with server when Earth is found and area is selected
+  // Register with server when Earth is found and area is selected,
+  // but only if user hasn't manually registered
   useEffect(() => {
     if (earth && selectedArea && !isRegistered) {
-      registerWithServer();
+      // We'll wait a bit before auto-registering to give user time to decide
+      const autoRegisterTimeout = setTimeout(() => {
+        registerWithServer();
+      }, 2000);
+      
+      return () => clearTimeout(autoRegisterTimeout);
     }
   }, [earth, selectedArea, isRegistered]);
   
