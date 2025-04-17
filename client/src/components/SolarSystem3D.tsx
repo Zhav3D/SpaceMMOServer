@@ -243,10 +243,12 @@ export default function SolarSystem3D({
       switch (body.type) {
         case 'star':
           geometry = new THREE.SphereGeometry(scaledRadius * 2, 32, 32);
-          material = new THREE.MeshBasicMaterial({ 
+          // Use MeshPhongMaterial for star since it supports emissive properties
+          material = new THREE.MeshPhongMaterial({ 
             color: body.color || 0xffcc00,
             emissive: body.color || 0xffcc00,
-            emissiveIntensity: 1.0
+            emissiveIntensity: 1.0,
+            shininess: 100
           });
           
           // Add glow effect for star

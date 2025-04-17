@@ -184,25 +184,36 @@ function SimulationSettings() {
     }
   });
   
-  // Update simulation speed
+  // Update simulation speed with extensive debugging
   const updateSimulationSpeed = (newSpeed: number) => {
     setLocalSpeed(newSpeed);
+    console.log(`Attempting to update simulation speed to ${newSpeed}x using dedicated endpoint`);
+    
+    const url = '/api/celestial/simulation/speed';
+    const payload = { speed: newSpeed };
+    console.log('Request URL:', url);
+    console.log('Request payload:', payload);
     
     // Send the update to the server using the new dedicated endpoint
-    fetch('/api/celestial/simulation/speed', {
+    fetch(url, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ speed: newSpeed }),
+      body: JSON.stringify(payload),
     })
     .then(response => {
+      console.log('Response status:', response.status);
+      console.log('Response headers:', [...response.headers.entries()]);
+      
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
       }
       return response.json();
     })
     .then(data => {
+      console.log('Response data:', data);
+      
       if (data.success) {
         toast({
           title: "Speed Updated",
