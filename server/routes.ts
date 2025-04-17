@@ -510,6 +510,371 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Advanced NPC navigation endpoints
+  
+  // Get all ships in a fleet (will be used for selecting ships for navigation)
+  app.get('/api/npc/fleet/:fleetId/ships', async (req: Request, res: Response) => {
+    try {
+      const { fleetId } = req.params;
+      
+      if (!fleetId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing fleet ID'
+        });
+      }
+      
+      // Get ships from storage
+      const ships = await storage.getNpcShipsByFleet(fleetId);
+      
+      if (!ships || ships.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: `No ships found for fleet ID ${fleetId}`
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: ships
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: `Failed to get fleet ships: ${error}`
+      });
+    }
+  });
+  
+  // Set waypoints for a specific NPC ship
+  app.post('/api/npc/ship/:npcId/waypoints', async (req: Request, res: Response) => {
+    try {
+      const npcId = parseInt(req.params.npcId, 10);
+      const waypoints = req.body.waypoints;
+      
+      if (isNaN(npcId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid NPC ID'
+        });
+      }
+      
+      if (!Array.isArray(waypoints) || waypoints.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid waypoints format or empty waypoints array'
+        });
+      }
+      
+      // Validate waypoint format
+      for (const waypoint of waypoints) {
+        if (!waypoint.position || 
+            typeof waypoint.position.x !== 'number' ||
+            typeof waypoint.position.y !== 'number' ||
+            typeof waypoint.position.z !== 'number' ||
+            typeof waypoint.radius !== 'number') {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid waypoint format. Each waypoint must have position (x,y,z) and radius.'
+          });
+        }
+      }
+      
+      if (!serverInstance || !serverInstance.npcManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'NPC manager not initialized'
+        });
+      }
+      
+      // Convert waypoint positions to Vector3 objects
+      const formattedWaypoints = waypoints.map(wp => ({
+        position: new Vector3(wp.position.x, wp.position.y, wp.position.z),
+        radius: wp.radius,
+        maxSpeed: wp.maxSpeed,
+        waitTime: wp.waitTime,
+        isOptional: wp.isOptional
+      }));
+      
+      const success = serverInstance.npcManager.setWaypoints(npcId, formattedWaypoints);
+      
+      if (success) {
+        // Update the NPC in storage to reflect its new navigation state
+        const npc = await storage.getNpcShip(npcId);
+        if (npc) {
+          npc.navigationState = 'waypoint';
+          npc.aiState = 'waypoint_following';
+          npc.waypointsJson = JSON.stringify(waypoints);
+          await storage.updateNpcShip(npcId, npc);
+        }
+        
+        res.json({
+          success: true,
+          data: {
+            message: 'Waypoints set successfully',
+            npcId,
+            waypointCount: formattedWaypoints.length
+          }
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: 'NPC not found or waypoints could not be set'
+        });
+      }
+    } catch (error) {
+      console.error('Error setting waypoints:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to set waypoints: ${error}`
+      });
+    }
+  });
+  
+  // Get waypoints for a specific NPC
+  app.get('/api/npc/ship/:npcId/waypoints', async (req: Request, res: Response) => {
+    try {
+      const npcId = parseInt(req.params.npcId, 10);
+      
+      if (isNaN(npcId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid NPC ID'
+        });
+      }
+      
+      if (!serverInstance || !serverInstance.npcManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'NPC manager not initialized'
+        });
+      }
+      
+      const waypoints = serverInstance.npcManager.getWaypoints(npcId);
+      
+      if (waypoints) {
+        // Format waypoints for API response
+        const formattedWaypoints = waypoints.map(wp => ({
+          position: {
+            x: wp.position.x,
+            y: wp.position.y,
+            z: wp.position.z
+          },
+          radius: wp.radius,
+          maxSpeed: wp.maxSpeed,
+          waitTime: wp.waitTime,
+          isOptional: wp.isOptional
+        }));
+        
+        res.json({
+          success: true,
+          data: {
+            npcId,
+            waypoints: formattedWaypoints,
+            navigationState: 'waypoint'
+          }
+        });
+      } else {
+        // Still return success but with empty array
+        res.json({
+          success: true,
+          data: {
+            npcId,
+            waypoints: [],
+            navigationState: 'none'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error getting waypoints:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to get waypoints: ${error}`
+      });
+    }
+  });
+  
+  // Clear waypoints for a specific NPC
+  app.delete('/api/npc/ship/:npcId/waypoints', async (req: Request, res: Response) => {
+    try {
+      const npcId = parseInt(req.params.npcId, 10);
+      
+      if (isNaN(npcId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid NPC ID'
+        });
+      }
+      
+      if (!serverInstance || !serverInstance.npcManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'NPC manager not initialized'
+        });
+      }
+      
+      // Clear waypoints by setting an empty array
+      const success = serverInstance.npcManager.setWaypoints(npcId, []);
+      
+      if (success) {
+        // Update the NPC in storage
+        const npc = await storage.getNpcShip(npcId);
+        if (npc) {
+          npc.navigationState = 'none';
+          npc.aiState = 'patrolling'; // Reset to default behavior
+          npc.waypointsJson = null;
+          await storage.updateNpcShip(npcId, npc);
+        }
+        
+        res.json({
+          success: true,
+          data: {
+            message: 'Waypoints cleared successfully',
+            npcId
+          }
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: 'NPC not found'
+        });
+      }
+    } catch (error) {
+      console.error('Error clearing waypoints:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to clear waypoints: ${error}`
+      });
+    }
+  });
+  
+  // Set fleet formation with a leader
+  app.post('/api/npc/fleet/:fleetId/formation', async (req: Request, res: Response) => {
+    try {
+      const { fleetId } = req.params;
+      const { leaderNpcId } = req.body;
+      
+      if (!fleetId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing fleet ID'
+        });
+      }
+      
+      const npcId = parseInt(leaderNpcId, 10);
+      if (isNaN(npcId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid leader NPC ID'
+        });
+      }
+      
+      if (!serverInstance || !serverInstance.npcManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'NPC manager not initialized'
+        });
+      }
+      
+      const success = serverInstance.npcManager.setFleetFormation(fleetId, npcId);
+      
+      if (success) {
+        // Update all fleet NPCs in storage with their new navigation states
+        const ships = await storage.getNpcShipsByFleet(fleetId);
+        for (const ship of ships) {
+          if (ship.id === npcId) {
+            // Leader
+            ship.navigationState = 'formation';
+            ship.formationPosition = null;
+          } else {
+            // Followers
+            ship.navigationState = 'formation';
+            ship.aiState = 'formation_keeping';
+          }
+          await storage.updateNpcShip(ship.id, ship);
+        }
+        
+        res.json({
+          success: true,
+          data: {
+            message: 'Fleet formation set successfully',
+            fleetId,
+            leaderNpcId: npcId
+          }
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: 'Fleet or leader NPC not found'
+        });
+      }
+    } catch (error) {
+      console.error('Error setting fleet formation:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to set fleet formation: ${error}`
+      });
+    }
+  });
+  
+  // Clear fleet formation (reset to individual behavior)
+  app.delete('/api/npc/fleet/:fleetId/formation', async (req: Request, res: Response) => {
+    try {
+      const { fleetId } = req.params;
+      
+      if (!fleetId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing fleet ID'
+        });
+      }
+      
+      if (!serverInstance || !serverInstance.npcManager) {
+        return res.status(500).json({
+          success: false,
+          error: 'NPC manager not initialized'
+        });
+      }
+      
+      // Get all ships in the fleet
+      const ships = await storage.getNpcShipsByFleet(fleetId);
+      
+      if (!ships || ships.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: `No ships found for fleet ID ${fleetId}`
+        });
+      }
+      
+      // Reset all ships to patrolling behavior
+      let successCount = 0;
+      for (const ship of ships) {
+        if (ship.navigationState === 'formation') {
+          ship.navigationState = 'none';
+          ship.aiState = 'patrolling';
+          ship.formationPosition = null;
+          await storage.updateNpcShip(ship.id, ship);
+          successCount++;
+        }
+      }
+      
+      res.json({
+        success: true,
+        data: {
+          message: 'Fleet formation cleared successfully',
+          fleetId,
+          shipsUpdated: successCount
+        }
+      });
+    } catch (error) {
+      console.error('Error clearing fleet formation:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to clear fleet formation: ${error}`
+      });
+    }
+  });
+  
   // Players API
   app.get('/api/players', async (req: Request, res: Response) => {
     try {
@@ -1519,6 +1884,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       { path: '/api/npc/fleets', method: 'GET', description: 'Get all NPC fleets', group: 'NPCs & Fleets' },
       { path: '/api/npc/fleets', method: 'POST', description: 'Create a new NPC fleet', group: 'NPCs & Fleets' },
       { path: '/api/npc/fleets/:fleetId', method: 'DELETE', description: 'Delete an NPC fleet', group: 'NPCs & Fleets' },
+      { path: '/api/npc/fleet/:fleetId/ships', method: 'GET', description: 'Get all ships in a fleet', group: 'NPCs & Fleets' },
+      { path: '/api/npc/ship/:npcId/waypoints', method: 'GET', description: 'Get waypoints for a specific NPC ship', group: 'NPCs & Fleets' },
+      { path: '/api/npc/ship/:npcId/waypoints', method: 'POST', description: 'Set waypoints for a specific NPC ship', group: 'NPCs & Fleets' },
+      { path: '/api/npc/ship/:npcId/waypoints', method: 'DELETE', description: 'Clear waypoints for a specific NPC ship', group: 'NPCs & Fleets' },
+      { path: '/api/npc/fleet/:fleetId/formation', method: 'POST', description: 'Set fleet formation with a leader', group: 'NPCs & Fleets' },
+      { path: '/api/npc/fleet/:fleetId/formation', method: 'DELETE', description: 'Clear fleet formation', group: 'NPCs & Fleets' },
       
       // Players
       { path: '/api/players', method: 'GET', description: 'Get all connected players', group: 'Players' },

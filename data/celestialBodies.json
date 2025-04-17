@@ -28,9 +28,9 @@
     "parentBodyId": 1,
     "color": "#b5b5b5",
     "id": 2,
-    "currentPositionX": -134992986.96243528,
-    "currentPositionY": -683546087.4363761,
-    "currentPositionZ": -43447933.44253702
+    "currentPositionX": 75878744.98709375,
+    "currentPositionY": 452842549.1032806,
+    "currentPositionZ": 30027783.159231335
   },
   {
     "name": "Venus",
@@ -46,9 +46,9 @@
     "parentBodyId": 1,
     "color": "#e6e6e6",
     "id": 3,
-    "currentPositionX": -1071448255.6114957,
-    "currentPositionY": -98978738.43311173,
-    "currentPositionZ": 60491722.43656385
+    "currentPositionX": -269251173.79236805,
+    "currentPositionY": -1052248202.9344761,
+    "currentPositionZ": 1161470.2538634986
   },
   {
     "name": "Earth",
@@ -64,9 +64,9 @@
     "parentBodyId": 1,
     "color": "#3498db",
     "id": 4,
-    "currentPositionX": -340665802.89989424,
-    "currentPositionY": 1430994173.7406507,
-    "currentPositionZ": 1166.6858524976135
+    "currentPositionX": -1253702379.1926475,
+    "currentPositionY": 782985799.0636834,
+    "currentPositionZ": 456.4900168223226
   },
   {
     "name": "Moon",
@@ -82,9 +82,9 @@
     "parentBodyId": 4,
     "color": "#d0d0d0",
     "id": 5,
-    "currentPositionX": -35842448.803845674,
-    "currentPositionY": -16179617.005298335,
-    "currentPositionZ": 3478257.676055139
+    "currentPositionX": -34292134.90963258,
+    "currentPositionY": -19596602.981379632,
+    "currentPositionZ": 3540844.8210454783
   },
   {
     "name": "Mars",
@@ -100,9 +100,9 @@
     "parentBodyId": 1,
     "color": "#e74c3c",
     "id": 6,
-    "currentPositionX": 2081797521.3105762,
-    "currentPositionY": 21134683.27277267,
-    "currentPositionZ": -50732336.19470958
+    "currentPositionX": 1894880853.5153823,
+    "currentPositionY": 983308412.9629012,
+    "currentPositionZ": -25977877.582312375
   },
   {
     "name": "Phobos",
@@ -118,9 +118,9 @@
     "parentBodyId": 6,
     "color": "#8B4513",
     "id": 7,
-    "currentPositionX": 1302695.7359199645,
-    "currentPositionY": -581136.3896594581,
-    "currentPositionZ": -17850.099734840824
+    "currentPositionX": -550742.2990555681,
+    "currentPositionY": -1286763.0112519062,
+    "currentPositionZ": -20421.270829984598
   },
   {
     "name": "Jupiter",
@@ -136,9 +136,9 @@
     "parentBodyId": 1,
     "color": "#f39c12",
     "id": 8,
-    "currentPositionX": 5967451650.634649,
-    "currentPositionY": 4425150750.708057,
-    "currentPositionZ": -151755973.29138947
+    "currentPositionX": 5652401718.680733,
+    "currentPositionY": 4836564353.350365,
+    "currentPositionZ": -146408709.79435542
   },
   {
     "name": "Europa",
@@ -154,9 +154,9 @@
     "parentBodyId": 8,
     "color": "#f5f5dc",
     "id": 9,
-    "currentPositionX": 30307289.21596071,
-    "currentPositionY": 60481616.364288956,
-    "currentPositionZ": -341779.41546657356
+    "currentPositionX": -20086911.709816433,
+    "currentPositionY": 64270446.94701883,
+    "currentPositionZ": 57316.75709079634
   },
   {
     "name": "Saturn",
@@ -172,9 +172,9 @@
     "parentBodyId": 1,
     "color": "#f1c40f",
     "id": 10,
-    "currentPositionX": 9637785668.577847,
-    "currentPositionY": 9811959731.808762,
-    "currentPositionZ": -554015457.9781923
+    "currentPositionX": 9352935563.499119,
+    "currentPositionY": 10063668694.762316,
+    "currentPositionZ": -547077601.2719882
   },
   {
     "name": "Titan",
@@ -190,9 +190,9 @@
     "parentBodyId": 10,
     "color": "#E49B0F",
     "id": 11,
-    "currentPositionX": 113879512.35610862,
-    "currentPositionY": 53213299.95596786,
-    "currentPositionZ": -40210.80414506142
+    "currentPositionX": 103694241.59394957,
+    "currentPositionY": 71025814.82841283,
+    "currentPositionZ": 84555.71911751715
   },
   {
     "name": "Alpha Station",
@@ -208,8 +208,8 @@
     "parentBodyId": 4,
     "color": "#ffffff",
     "id": 12,
-    "currentPositionX": 565756.8789691486,
-    "currentPositionY": 843242.0314574991,
-    "currentPositionZ": 13305.588363678542
+    "currentPositionX": 745057.4707932518,
+    "currentPositionY": -689936.9702026679,
+    "currentPositionZ": -10886.574648719861
   }
 ]
