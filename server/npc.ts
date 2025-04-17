@@ -115,8 +115,9 @@ export function createNPC(
       break;
   }
   
-  return {
-    id: 0, // Will be set by database
+  // Create ship with no ID (will be set by database)
+  const ship: Omit<NpcShip, "id"> & { id: number } = {
+    id: 0,
     type,
     status,
     positionX: position.x,
@@ -134,6 +135,8 @@ export function createNPC(
     aiState,
     targetId: null,
   };
+  
+  return ship;
 }
 
 // Utility function to create a fleet of NPCs

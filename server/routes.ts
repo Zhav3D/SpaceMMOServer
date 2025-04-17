@@ -1226,6 +1226,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/world/reset', async (req: Request, res: Response) => {
     try {
+      // First do a direct SQL query to clean up any lingering data
+      try {
+        // Use the db from server/db.ts to perform a direct database reset
+        await db.transaction(async (tx) => {
+          // Delete all data from tables in proper order
+          await tx.delete(npcShips);
+          await tx.delete(npcFleets);
+          await tx.delete(celestialBodies);
+          await tx.delete(areasOfInterest);
+          await tx.delete(serverLogs);
+          await tx.delete(serverStats);
+          
+          // Reset all sequences to 1
+          await tx.execute(sql`
+            SELECT setval('"celestial_bodies_id_seq"', 1, false); 
+            SELECT setval('"npc_ships_id_seq"', 1, false);
+            SELECT setval('"npc_fleets_id_seq"', 1, false);
+            SELECT setval('"areas_of_interest_id_seq"', 1, false);
+            SELECT setval('"server_logs_id_seq"', 1, false);
+            SELECT setval('"server_stats_id_seq"', 1, false);
+            SELECT setval('"missions_id_seq"', 1, false);
+          `);
+        });
+        log('Direct database reset completed successfully', 'info');
+      } catch (dbError) {
+        log(`Error during direct database reset: ${dbError}`, 'error');
+        // Continue with regular reset process
+      }
+      
+      // Now call the storage method for reset
       const result = await storage.resetWorldState();
       
       if (result) {
@@ -1237,15 +1267,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               await serverInstance.celestialManager.initialize();
             }
             
+            // Reset sequences again before creating NPCs
+            await storage.resetSequences();
+            
             // Get celestial bodies for NPC initialization
             const celestialBodies = await storage.getAllCelestialBodies();
-            
-            // In case resetSequences was called elsewhere, wait a moment to ensure
-            // all database operations have settled
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Reset sequences again to be extra sure
-            await storage.resetSequences();
             
             // Create default NPCs
             if (celestialBodies.length > 0) {

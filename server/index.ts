@@ -516,16 +516,9 @@ export class GameServer {
     try {
       log('Creating default NPC fleets...', 'info');
       
-      // First, clear any existing NPCs and fleets
-      const existingNpcShips = await storage.getAllNpcShips();
-      for (const ship of existingNpcShips) {
-        await storage.deleteNpcShip(ship.id);
-      }
-      
-      const existingNpcFleets = await storage.getAllNpcFleets();
-      for (const fleet of existingNpcFleets) {
-        await storage.deleteNpcFleet(fleet.id);
-      }
+      // Don't clear or delete existing NPCs here as that should be done by the reset function
+      // before this method is called. Doing it here can lead to race conditions 
+      // with the sequence generation.
       
       // Reset the sequences to avoid primary key conflicts
       await storage.resetSequences();
