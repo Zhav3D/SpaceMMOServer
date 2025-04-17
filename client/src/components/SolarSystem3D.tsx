@@ -56,8 +56,8 @@ export default function SolarSystem3D({
     
     // Add camera
     const aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
-    const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 10000);
-    camera.position.set(0, 200, 400);
+    const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 100000); // Increased far clipping plane
+    camera.position.set(0, 22, 44); // 9x closer zoom (200/9, 400/9)
     cameraRef.current = camera;
     
     // Add renderer

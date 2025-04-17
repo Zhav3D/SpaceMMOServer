@@ -53,7 +53,7 @@ export default function SolarSystemVisualization({
   const [viewMode, setViewMode] = useState("2d");
   const [scale, setScale] = useState("system");
   const [focusBody, setFocusBody] = useState<string | null>(null);
-  const [zoomLevel, setZoomLevel] = useState<number>(1.0); // Custom zoom level
+  const [zoomLevel, setZoomLevel] = useState<number>(4.0); // Custom zoom level - increased by 4x
   
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !onSelectBody || celestialBodies.length === 0) return;
