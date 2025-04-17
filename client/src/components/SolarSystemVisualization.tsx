@@ -79,7 +79,7 @@ export default function SolarSystemVisualization({
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // For panning
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPos, setLastPanPos] = useState({ x: 0, y: 0 });
-  const starsRef = useRef<Array<{ x: number, y: number, size: number, opacity: number }> | null>(null);
+  // No starsRef needed since we've removed stars from the background
   
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !onSelectBody || celestialBodies.length === 0) return;
@@ -169,25 +169,7 @@ export default function SolarSystemVisualization({
     }
   }, [celestialBodies, scale, onSelectBody, zoomLevel, panOffset]);
   
-  // Create static stars once when component mounts
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    
-    const canvas = canvasRef.current;
-    const numStars = 500;
-    const stars = [];
-    
-    for (let i = 0; i < numStars; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 1.5,
-        opacity: Math.random() * 0.8 + 0.2
-      });
-    }
-    
-    starsRef.current = stars;
-  }, []);
+  // No stars as requested
   
   const renderCanvas = useCallback(() => {
     if (!canvasRef.current || celestialBodies.length === 0) return;
@@ -200,17 +182,7 @@ export default function SolarSystemVisualization({
     ctx.fillStyle = "#111827";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw the static stars
-    if (starsRef.current) {
-      ctx.fillStyle = "#ffffff";
-      starsRef.current.forEach(star => {
-        ctx.globalAlpha = star.opacity;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1.0;
-    }
+    // No stars in the background as requested
     
     // Set up scale factors based on selected scale and zoom level
     let scaleFactor = 1;
@@ -361,8 +333,9 @@ export default function SolarSystemVisualization({
     // Draw NPC and player entities if toggle is on
     if (showEntities) {
       // Draw NPC fleets from API data
-      if (npcData?.success && npcData.data) {
-        const fleets = npcData.data;
+      if (npcData) {
+        // Handle both direct data and API response formats
+        const fleets = npcData.data ? npcData.data : (Array.isArray(npcData) ? npcData : []);
         
         fleets.forEach(fleet => {
           // Find the celestial body this fleet is near
@@ -448,8 +421,11 @@ export default function SolarSystemVisualization({
       }
       
       // Draw simulated players from API data
-      if (simulatedPlayers?.success && simulatedPlayers.data && simulatedPlayers.data.length > 0) {
-        const players = simulatedPlayers.data;
+      if (simulatedPlayers) {
+        // Handle both direct data and API response formats
+        const players = simulatedPlayers.data ? 
+          (simulatedPlayers.data.players || simulatedPlayers.data) : 
+          (Array.isArray(simulatedPlayers) ? simulatedPlayers : []);
         
         players.forEach(player => {
           // Find nearby celestial body
