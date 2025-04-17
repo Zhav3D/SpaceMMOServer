@@ -53,6 +53,9 @@ export class CelestialManager {
       if (bodies.length === 0) {
         await this.createDefaultSolarSystem();
       }
+      
+      // Load frozen mode setting
+      await this.loadFrozenModeSetting();
     } catch (error) {
       console.error('Failed to initialize celestial bodies:', error);
     }

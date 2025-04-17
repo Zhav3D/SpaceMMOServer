@@ -59,6 +59,15 @@ export default function ServerSettings() {
   // Fetch frozen solar system state
   const { data: frozenSolarData, isLoading: isLoadingFrozen } = useQuery({
     queryKey: ['/api/celestial/frozen'],
+    // Don't fail if the endpoint returns an error
+    retry: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    onError: (error) => {
+      console.error("Error fetching frozen state:", error);
+      // Default to unfrozen if there's an error
+      setFrozenSolarSystem(false);
+    }
   });
 
   // Update settings with the fetched values when available

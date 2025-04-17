@@ -1101,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Frozen solar system toggle API
-  app.get('/api/celestial/frozen', async (req: Request, res: Response) => {
+  app.get('/api/celestial/frozen', (req: Request, res: Response) => {
     try {
       if (!serverInstance || !serverInstance.celestialManager) {
         return res.status(500).json({
