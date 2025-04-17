@@ -192,6 +192,48 @@ export interface BinarySerializer {
   deserializeMessage(buffer: Buffer): any;
 }
 
+// Mission system types
+export enum MissionType {
+  COMBAT = 'combat',
+  TRADE = 'trade', 
+  MINING = 'mining',
+  ESCORT = 'escort',
+  EXPLORATION = 'exploration',
+  DELIVERY = 'delivery',
+  RESCUE = 'rescue',
+  PATROL = 'patrol'
+}
+
+export enum MissionStatus {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  EXPIRED = 'expired',
+  ABANDONED = 'abandoned'
+}
+
+export interface MissionState {
+  missionId: string;
+  name: string;
+  description: string;
+  type: MissionType;
+  status: MissionStatus;
+  reward: number;
+  difficulty: number;
+  startLocationId: number;
+  endLocationId: number; 
+  assignedFleetId?: string;
+  progressValue: number;
+  progressTarget: number;
+  startTime: number;
+  expiryTime: number;
+  completeTime?: number;
+}
+
+export interface ServerMissionUpdateMessage extends MessageHeader {
+  missions: MissionState[];
+}
+
 // Server settings interface
 export interface ServerSettings {
   maxPlayers: number;

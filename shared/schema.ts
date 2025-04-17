@@ -87,6 +87,33 @@ export const insertNpcFleetSchema = createInsertSchema(npcFleets).omit({
 export type InsertNpcFleet = z.infer<typeof insertNpcFleetSchema>;
 export type NpcFleet = typeof npcFleets.$inferSelect;
 
+// Mission system
+export const missions = pgTable("missions", {
+  id: serial("id").primaryKey(),
+  missionId: text("mission_id").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  type: text("type").notNull(), // combat, trade, mining, escort, exploration
+  status: text("status").notNull(), // active, completed, failed
+  reward: integer("reward").notNull(),
+  difficulty: integer("difficulty").notNull(), // 1-5 scale
+  startLocationId: integer("start_location_id").notNull(), // celestial body ID
+  endLocationId: integer("end_location_id").notNull(), // celestial body ID
+  assignedFleetId: text("assigned_fleet_id"),
+  progressValue: integer("progress_value").default(0), // percentage, items, etc.
+  progressTarget: integer("progress_target").notNull(), // needed for completion
+  startTime: real("start_time").notNull(),
+  expiryTime: real("expiry_time").notNull(),
+  completeTime: real("complete_time"),
+});
+
+export const insertMissionSchema = createInsertSchema(missions).omit({
+  id: true,
+});
+
+export type InsertMission = z.infer<typeof insertMissionSchema>;
+export type Mission = typeof missions.$inferSelect;
+
 // Players (connected clients)
 export const players = pgTable("players", {
   id: serial("id").primaryKey(),
