@@ -1,0 +1,47 @@
+import { Link, useLocation } from "wouter";
+
+interface NavItem {
+  name: string;
+  path: string;
+  icon: string;
+}
+
+export default function Sidebar() {
+  const [location] = useLocation();
+  
+  const navItems: NavItem[] = [
+    { name: "Dashboard", path: "/", icon: "dashboard" },
+    { name: "Solar System", path: "/solar-system", icon: "public" },
+    { name: "Players", path: "/players", icon: "person" },
+    { name: "NPCs", path: "/npcs", icon: "smart_toy" },
+    { name: "State Replication", path: "/state-replication", icon: "sync" },
+    { name: "Sanity Checks", path: "/sanity-checks", icon: "verified" },
+    { name: "Performance", path: "/performance", icon: "speed" },
+    { name: "Logs", path: "/logs", icon: "article" },
+    { name: "API Config", path: "/api-config", icon: "api" },
+  ];
+  
+  return (
+    <aside className="w-56 bg-background-dark border-r border-gray-800 flex-shrink-0 hidden md:block overflow-y-auto">
+      <nav className="p-3">
+        <div className="space-y-1">
+          {navItems.map((item) => (
+            <Link key={item.path} href={item.path}>
+              <a 
+                className={`
+                  flex items-center space-x-3 px-3 py-2 rounded-md text-sm
+                  ${location === item.path 
+                    ? 'bg-primary/10 text-primary font-medium' 
+                    : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-100'}
+                `}
+              >
+                <span className="material-icons text-[20px]">{item.icon}</span>
+                <span>{item.name}</span>
+              </a>
+            </Link>
+          ))}
+        </div>
+      </nav>
+    </aside>
+  );
+}
