@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { useServerContext } from "@/contexts/ServerContext";
+import { useServerContext } from "../contexts/ServerContext";
 import { Badge } from "@/components/ui/badge";
 
 export default function Header() {

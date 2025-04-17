@@ -30,7 +30,7 @@ export default function NpcFleetStatus({
   isLoading = false,
 }: NpcFleetStatusProps) {
   // Helper to get appropriate badge color based on fleet status
-  const getStatusColor = (status: NpcFleet['status']): string => {
+  const getStatusColor = (status: NpcFleet['status']): 'destructive' | 'warning' | 'secondary' | 'outline' => {
     switch (status) {
       case 'hostile': return 'destructive';
       case 'en-route': return 'warning';
