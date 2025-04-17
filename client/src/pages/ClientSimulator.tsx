@@ -621,17 +621,24 @@ export default function ClientSimulator() {
     // Find the selected area
     const area = areas.find(a => a.areaId === areaId);
     if (area) {
-      // Move client to the area's center
-      setClient(prev => ({
-        ...prev,
-        position: {
-          x: area.center.x,
-          y: area.center.y,
-          z: area.center.z,
-        },
-        velocity: { x: 0, y: 0, z: 0 },
-        areaId: areaId,
-      }));
+      // Move client to the area's center if available, or use default position
+      setClient(prev => {
+        // Check if area has center property with coordinates
+        const centerX = area.center?.x || 0;
+        const centerY = area.center?.y || 0;
+        const centerZ = area.center?.z || 0;
+        
+        return {
+          ...prev,
+          position: {
+            x: centerX,
+            y: centerY,
+            z: centerZ,
+          },
+          velocity: { x: 0, y: 0, z: 0 },
+          areaId: areaId,
+        };
+      });
     }
   };
   
