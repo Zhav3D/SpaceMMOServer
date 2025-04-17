@@ -1277,8 +1277,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               await serverInstance.celestialManager.initialize();
             }
             
-            // Reset sequences again before creating NPCs
-            await storage.resetSequences();
+            // We already reset sequences in the server reset, so no need to call again
+            // Removing this call to avoid race conditions
             
             // Get celestial bodies for NPC initialization
             const celestialBodies = await storage.getAllCelestialBodies();

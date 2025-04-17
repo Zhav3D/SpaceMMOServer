@@ -521,8 +521,8 @@ export class GameServer {
       // before this method is called. Doing it here can lead to race conditions 
       // with the sequence generation.
       
-      // Reset the sequences to avoid primary key conflicts
-      await storage.resetSequences();
+      // We'll skip sequence reset here since it's already done in resetWorldState()
+      // and doing it again can cause race conditions
 
       let totalShips = 0;
       let totalFleets = 0;

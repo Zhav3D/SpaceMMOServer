@@ -501,19 +501,18 @@ export class DatabaseStorage implements IStorage {
       const [maxServerLogId] = await db.select({maxId: sql`MAX(id)`}).from(serverLogs);
       const [maxServerStatId] = await db.select({maxId: sql`MAX(id)`}).from(serverStats);
       
-      // Set each sequence to start from the next value after the maximum
-      await db.execute(sql`
-        SELECT setval('"celestial_bodies_id_seq"', COALESCE(${maxCelestialBodyId?.maxId || 0}, 0) + 1, false);
-        SELECT setval('"npc_ships_id_seq"', COALESCE(${maxNpcShipId?.maxId || 0}, 0) + 1, false);
-        SELECT setval('"npc_fleets_id_seq"', COALESCE(${maxNpcFleetId?.maxId || 0}, 0) + 1, false);
-        SELECT setval('"areas_of_interest_id_seq"', COALESCE(${maxAreaOfInterestId?.maxId || 0}, 0) + 1, false);
-        SELECT setval('"server_logs_id_seq"', COALESCE(${maxServerLogId?.maxId || 0}, 0) + 1, false);
-        SELECT setval('"server_stats_id_seq"', COALESCE(${maxServerStatId?.maxId || 0}, 0) + 1, false);
-        SELECT setval('"server_settings_id_seq"', 1, false);
-        SELECT setval('"players_id_seq"', 1, false);
-        SELECT setval('"users_id_seq"', 1, false);
-        SELECT setval('"missions_id_seq"', 1, false);
-      `);
+      // Execute each setval individually to avoid the multiple commands error
+      await db.execute(sql`SELECT setval('"celestial_bodies_id_seq"', COALESCE(${maxCelestialBodyId?.maxId || 0}, 0) + 1, false)`);
+      await db.execute(sql`SELECT setval('"npc_ships_id_seq"', COALESCE(${maxNpcShipId?.maxId || 0}, 0) + 1, false)`);
+      await db.execute(sql`SELECT setval('"npc_fleets_id_seq"', COALESCE(${maxNpcFleetId?.maxId || 0}, 0) + 1, false)`);
+      await db.execute(sql`SELECT setval('"areas_of_interest_id_seq"', COALESCE(${maxAreaOfInterestId?.maxId || 0}, 0) + 1, false)`);
+      await db.execute(sql`SELECT setval('"server_logs_id_seq"', COALESCE(${maxServerLogId?.maxId || 0}, 0) + 1, false)`);
+      await db.execute(sql`SELECT setval('"server_stats_id_seq"', COALESCE(${maxServerStatId?.maxId || 0}, 0) + 1, false)`);
+      await db.execute(sql`SELECT setval('"server_settings_id_seq"', 1, false)`);
+      await db.execute(sql`SELECT setval('"players_id_seq"', 1, false)`);
+      await db.execute(sql`SELECT setval('"users_id_seq"', 1, false)`);
+      await db.execute(sql`SELECT setval('"missions_id_seq"', 1, false)`);
+      
       console.log('Database sequences reset based on max IDs');
       return true;
     } catch (error) {
@@ -900,16 +899,14 @@ export class DatabaseStorage implements IStorage {
         
         // Keep players and settings
         
-        // Reset all sequences using setval 
-        await tx.execute(sql`
-          SELECT setval('"celestial_bodies_id_seq"', 1, false); 
-          SELECT setval('"npc_ships_id_seq"', 1, false);
-          SELECT setval('"npc_fleets_id_seq"', 1, false);
-          SELECT setval('"areas_of_interest_id_seq"', 1, false);
-          SELECT setval('"server_logs_id_seq"', 1, false);
-          SELECT setval('"server_stats_id_seq"', 1, false);
-          SELECT setval('"missions_id_seq"', 1, false);
-        `);
+        // Reset all sequences using setval - one by one to avoid the multiple commands error
+        await tx.execute(sql`SELECT setval('"celestial_bodies_id_seq"', 1, false)`);
+        await tx.execute(sql`SELECT setval('"npc_ships_id_seq"', 1, false)`);
+        await tx.execute(sql`SELECT setval('"npc_fleets_id_seq"', 1, false)`);
+        await tx.execute(sql`SELECT setval('"areas_of_interest_id_seq"', 1, false)`);
+        await tx.execute(sql`SELECT setval('"server_logs_id_seq"', 1, false)`);
+        await tx.execute(sql`SELECT setval('"server_stats_id_seq"', 1, false)`);
+        await tx.execute(sql`SELECT setval('"missions_id_seq"', 1, false)`);
         
         console.log('Database tables cleared and sequences reset');
       });
