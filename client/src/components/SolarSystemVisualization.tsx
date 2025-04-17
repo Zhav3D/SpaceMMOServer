@@ -65,7 +65,10 @@ export default function SolarSystemVisualization({
   celestialBodies,
   isLoading = false,
   onSelectBody,
-  entities = []
+  entities = [],
+  npcData,
+  simulatedPlayers,
+  fullSize = false
 }: SolarSystemVisualizationProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [viewMode, setViewMode] = useState("2d");
@@ -338,123 +341,126 @@ export default function SolarSystemVisualization({
     
     // Draw NPC and player entities if toggle is on
     if (showEntities) {
-      // Since we don't have actual entity position data yet from the API,
-      // we'll place entities in a logical way around celestial bodies
-      
-      // Find celestial bodies with fleet or player presence
-      const earthBody = celestialBodies.find(body => body.name === 'Earth');
-      const marsBody = celestialBodies.find(body => body.name === 'Mars');
-      const jupiterBody = celestialBodies.find(body => body.name === 'Jupiter');
-      const saturnBody = celestialBodies.find(body => body.name === 'Saturn');
-      
-      // Distributed fleet positions
-      if (earthBody) {
-        // Earth orbit fleets - place in orbit around Earth
-        const earthX = centerX + (earthBody.currentPositionX || 0) * scaleFactor;
-        const earthY = centerY + (earthBody.currentPositionY || 0) * scaleFactor;
-        const orbitRadius = earthBody.radius * radiusScaleFactor * 5;
+      // Draw NPC fleets from API data
+      if (npcData?.success && npcData.data) {
+        const fleets = npcData.data;
         
-        // Draw simulated players
-        for (let i = 0; i < 5; i++) {
-          const angle = (i / 5) * Math.PI * 2;
-          const x = earthX + Math.cos(angle) * orbitRadius;
-          const y = earthY + Math.sin(angle) * orbitRadius;
+        fleets.forEach(fleet => {
+          // Find the celestial body this fleet is near
+          const nearestBodyId = fleet.nearestCelestialBodyId;
+          const nearbyBody = celestialBodies.find(body => body.id === nearestBodyId);
+          
+          if (!nearbyBody) return; // Skip if no nearby body found
+          
+          const bodyX = centerX + (nearbyBody.currentPositionX || 0) * scaleFactor;
+          const bodyY = centerY + (nearbyBody.currentPositionY || 0) * scaleFactor;
+          
+          // Calculate different orbit radius based on fleet type
+          const orbitRadius = nearbyBody.radius * radiusScaleFactor * 
+            (fleet.type === 'enemy' ? 4 : 
+             fleet.type === 'transport' ? 5 :
+             fleet.type === 'mining' ? 6 : 3);
+          
+          // Different colors based on fleet type
+          const fleetColor = 
+            fleet.type === 'enemy' ? '#FF5722' : 
+            fleet.type === 'transport' ? '#FF9800' :
+            fleet.type === 'mining' ? '#8BC34A' : 
+            '#03A9F4'; // civilian
+          
+          // Calculate different positions for each type of fleet
+          const fleetSize = Math.min(9, fleet.count || 5);
+          const baseAngle = Math.random() * Math.PI * 2; // Randomize position around the body
+          
+          if (fleet.type === 'enemy') {
+            // Enemy ships in a grid formation
+            const gridSize = Math.ceil(Math.sqrt(fleetSize));
+            for (let i = 0; i < fleetSize; i++) {
+              const row = Math.floor(i / gridSize);
+              const col = i % gridSize;
+              const x = bodyX + Math.cos(baseAngle) * orbitRadius + (col - gridSize/2) * 8;
+              const y = bodyY + Math.sin(baseAngle) * orbitRadius + (row - gridSize/2) * 8;
+              
+              ctx.fillStyle = fleetColor;
+              ctx.beginPath();
+              ctx.arc(x, y, 4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else if (fleet.type === 'transport') {
+            // Transport ships in a line formation
+            for (let i = 0; i < fleetSize; i++) {
+              const angle = baseAngle + (i / fleetSize) * (Math.PI / 4); // Spread in an arc
+              const x = bodyX + Math.cos(angle) * orbitRadius;
+              const y = bodyY + Math.sin(angle) * orbitRadius;
+              
+              ctx.fillStyle = fleetColor;
+              ctx.beginPath();
+              ctx.arc(x, y, 5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else if (fleet.type === 'mining') {
+            // Mining ships in a cluster
+            for (let i = 0; i < fleetSize; i++) {
+              const angle = baseAngle + (i / fleetSize) * (Math.PI / 2);
+              const distance = orbitRadius * (0.9 + Math.random() * 0.2);
+              const x = bodyX + Math.cos(angle) * distance;
+              const y = bodyY + Math.sin(angle) * distance;
+              
+              ctx.fillStyle = fleetColor;
+              ctx.beginPath();
+              ctx.arc(x, y, 4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else {
+            // Civilian ships in orbit
+            for (let i = 0; i < fleetSize; i++) {
+              const angle = baseAngle + (i / fleetSize) * Math.PI * 2; // Full circle
+              const distance = orbitRadius * (0.9 + Math.random() * 0.3);
+              const x = bodyX + Math.cos(angle) * distance;
+              const y = bodyY + Math.sin(angle) * distance;
+              
+              ctx.fillStyle = fleetColor;
+              ctx.beginPath();
+              ctx.arc(x, y, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        });
+      }
+      
+      // Draw simulated players from API data
+      if (simulatedPlayers?.success && simulatedPlayers.data && simulatedPlayers.data.length > 0) {
+        const players = simulatedPlayers.data;
+        
+        players.forEach(player => {
+          // Find nearby celestial body
+          const nearestBodyId = player.nearestCelestialBodyId;
+          const nearbyBody = celestialBodies.find(body => body.id === nearestBodyId);
+          
+          if (!nearbyBody) return;
+          
+          const bodyX = centerX + (nearbyBody.currentPositionX || 0) * scaleFactor;
+          const bodyY = centerY + (nearbyBody.currentPositionY || 0) * scaleFactor;
+          
+          // Calculate position relative to the body
+          const posX = player.positionX || 0;
+          const posY = player.positionY || 0;
+          const displayX = bodyX + posX * scaleFactor * 0.5; // Scale down a bit
+          const displayY = bodyY + posY * scaleFactor * 0.5;
           
           // Draw player
           ctx.fillStyle = '#4CAF50';
           ctx.beginPath();
-          ctx.arc(x, y, 6, 0, Math.PI * 2);
+          ctx.arc(displayX, displayY, 6, 0, Math.PI * 2);
           ctx.fill();
           
           // Draw halo
           ctx.strokeStyle = '#4CAF50';
           ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.arc(x, y, 8, 0, Math.PI * 2);
+          ctx.arc(displayX, displayY, 8, 0, Math.PI * 2);
           ctx.stroke();
-        }
-        
-        // Draw enemy fleet
-        const enemyAngle = Math.PI * 0.25;
-        const enemyX = earthX + Math.cos(enemyAngle) * orbitRadius * 1.2;
-        const enemyY = earthY + Math.sin(enemyAngle) * orbitRadius * 1.2;
-        
-        // Draw enemy ships in a formation
-        for (let i = 0; i < 3; i++) {
-          for (let j = 0; j < 3; j++) {
-            const x = enemyX + (i - 1) * 5;
-            const y = enemyY + (j - 1) * 5;
-            
-            ctx.fillStyle = '#FF5722';
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-      }
-      
-      // Draw transports between planets
-      if (marsBody && earthBody) {
-        const earthX = centerX + (earthBody.currentPositionX || 0) * scaleFactor;
-        const earthY = centerY + (earthBody.currentPositionY || 0) * scaleFactor;
-        const marsX = centerX + (marsBody.currentPositionX || 0) * scaleFactor;
-        const marsY = centerY + (marsBody.currentPositionY || 0) * scaleFactor;
-        
-        // Calculate midpoint with offset
-        const midX = (earthX + marsX) / 2;
-        const midY = (earthY + marsY) / 2 - 20;
-        
-        // Draw transport ships
-        for (let i = 0; i < 3; i++) {
-          const lerpFactor = 0.3 + (i * 0.2);
-          const x = earthX + (marsX - earthX) * lerpFactor;
-          const y = earthY + (marsY - earthY) * lerpFactor;
-          
-          ctx.fillStyle = '#FF9800';
-          ctx.beginPath();
-          ctx.arc(x, y, 5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      
-      // Draw mining operations near Jupiter
-      if (jupiterBody) {
-        const jupiterX = centerX + (jupiterBody.currentPositionX || 0) * scaleFactor;
-        const jupiterY = centerY + (jupiterBody.currentPositionY || 0) * scaleFactor;
-        const orbitRadius = jupiterBody.radius * radiusScaleFactor * 6;
-        
-        // Draw mining ships in a cluster
-        for (let i = 0; i < 5; i++) {
-          const angle = Math.PI * 0.6 + (i / 10);
-          const distance = orbitRadius * (0.9 + Math.random() * 0.2);
-          const x = jupiterX + Math.cos(angle) * distance;
-          const y = jupiterY + Math.sin(angle) * distance;
-          
-          ctx.fillStyle = '#8BC34A';
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      
-      // Draw civilian ships near Saturn
-      if (saturnBody) {
-        const saturnX = centerX + (saturnBody.currentPositionX || 0) * scaleFactor;
-        const saturnY = centerY + (saturnBody.currentPositionY || 0) * scaleFactor;
-        const orbitRadius = saturnBody.radius * radiusScaleFactor * 4;
-        
-        // Draw civilian ships
-        for (let i = 0; i < 7; i++) {
-          const angle = (i / 7) * Math.PI * 2;
-          const distance = orbitRadius * (0.9 + Math.random() * 0.3);
-          const x = saturnX + Math.cos(angle) * distance;
-          const y = saturnY + Math.sin(angle) * distance;
-          
-          ctx.fillStyle = '#03A9F4';
-          ctx.beginPath();
-          ctx.arc(x, y, 3, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        });
       }
       
       // Draw entity legend
@@ -513,7 +519,7 @@ export default function SolarSystemVisualization({
       ctx.fillStyle = 'white';
       ctx.fillText('Civilian Ships', legendX + 25, legendY + 4);
     }
-  }, [celestialBodies, scale, focusBody, zoomLevel, showEntities, entities, panOffset]);
+  }, [celestialBodies, scale, focusBody, zoomLevel, showEntities, entities, npcData, simulatedPlayers, panOffset]);
 
   // Setup animation loop
   useEffect(() => {
