@@ -849,5 +849,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Missions API
+  app.get('/api/missions', (req: Request, res: Response) => {
+    if (!serverInstance || !serverInstance.missionManager) {
+      return res.status(503).json({
+        success: false,
+        error: 'Mission system not initialized'
+      });
+    }
+    
+    try {
+      // Get mission data from mission manager
+      const activeMissions = serverInstance.missionManager.getAllActiveMissions();
+      const completedMissions = serverInstance.missionManager.getAllCompletedMissions();
+      const failedMissions = serverInstance.missionManager.getAllFailedMissions();
+      
+      // Convert to mission state for transmission
+      const activeStates = activeMissions.map(m => serverInstance.missionManager.missionToState(m));
+      const completedStates = completedMissions.map(m => serverInstance.missionManager.missionToState(m));
+      const failedStates = failedMissions.map(m => serverInstance.missionManager.missionToState(m));
+      
+      const response: ApiResponse<any> = {
+        success: true,
+        data: {
+          active: activeStates,
+          completed: completedStates,
+          failed: failedStates
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to fetch missions: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+  
   return httpServer;
 }

@@ -8,6 +8,7 @@ import SolarSystem from "@/pages/SolarSystem";
 import CelestialManagement from "@/pages/CelestialManagement";
 import Players from "@/pages/Players";
 import Npcs from "@/pages/Npcs";
+import Missions from "@/pages/Missions";
 import Performance from "@/pages/Performance";
 import StateReplication from "@/pages/StateReplication";
 import SanityChecks from "@/pages/SanityChecks";
@@ -31,6 +32,7 @@ function Router() {
             <Route path="/celestial-management" component={CelestialManagement} />
             <Route path="/players" component={Players} />
             <Route path="/npcs" component={Npcs} />
+            <Route path="/missions" component={Missions} />
             <Route path="/performance" component={Performance} />
             <Route path="/state-replication" component={StateReplication} />
             <Route path="/sanity-checks" component={SanityChecks} />
