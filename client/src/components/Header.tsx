@@ -10,9 +10,9 @@ export default function Header() {
     <header className="border-b border-gray-800 bg-background-dark py-3 px-4 flex justify-between items-center">
       <div className="flex items-center">
         <Link href="/">
-          <a className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 text-transparent bg-clip-text">
+          <div className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 text-transparent bg-clip-text cursor-pointer">
             SpaceMMO Server
-          </a>
+          </div>
         </Link>
         
         {serverStatus?.success && (
@@ -34,7 +34,7 @@ export default function Header() {
         
         <Button variant="outline" size="sm" asChild>
           <Link href="/settings">
-            <a>Server Settings</a>
+            <span>Server Settings</span>
           </Link>
         </Button>
       </div>

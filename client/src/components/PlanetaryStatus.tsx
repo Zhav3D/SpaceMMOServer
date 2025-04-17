@@ -97,7 +97,7 @@ export default function PlanetaryStatus({
                         className="text-xs"
                         style={{backgroundColor: `${planet.color}20`, color: planet.color || 'inherit'}}
                       >
-                        {planet.orbitalPeriod.toFixed(1)} days
+                        {(planet.orbitalPeriod || 0).toFixed(1)} days
                       </Badge>
                     </div>
                     
@@ -113,8 +113,8 @@ export default function PlanetaryStatus({
                       />
                       
                       <div className="flex justify-between text-xs mt-2">
-                        <span>Eccentricity: {planet.eccentricity.toFixed(3)}</span>
-                        <span>Semi-Major Axis: {formatScientific(planet.semiMajorAxis / 1000)} km</span>
+                        <span>Eccentricity: {(planet.eccentricity || 0).toFixed(3)}</span>
+                        <span>Semi-Major Axis: {formatScientific((planet.semiMajorAxis || 0) / 1000)} km</span>
                       </div>
                     </div>
                   </div>

@@ -5,6 +5,7 @@ interface ServerContextProps {
   serverStatus: any;
   isLoading: boolean;
   refetchStatus: () => void;
+  refreshServerStatus: () => void; // Added for backward compatibility
 }
 
 const ServerContext = createContext<ServerContextProps | undefined>(undefined);
@@ -19,11 +20,15 @@ export function ServerProvider({ children }: { children: ReactNode }) {
     refetchInterval: 10000, // Refetch every 10 seconds
   });
 
+  // Provide both names for the refetch function for compatibility
+  const refreshServerStatus = () => refetchStatus();
+
   return (
     <ServerContext.Provider value={{
       serverStatus,
       isLoading,
-      refetchStatus
+      refetchStatus,
+      refreshServerStatus
     }}>
       {children}
     </ServerContext.Provider>

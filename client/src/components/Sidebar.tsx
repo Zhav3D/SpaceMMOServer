@@ -27,9 +27,9 @@ export default function Sidebar() {
         <div className="space-y-1">
           {navItems.map((item) => (
             <Link key={item.path} href={item.path}>
-              <a 
+              <div 
                 className={`
-                  flex items-center space-x-3 px-3 py-2 rounded-md text-sm
+                  flex items-center space-x-3 px-3 py-2 rounded-md text-sm cursor-pointer
                   ${location === item.path 
                     ? 'bg-primary/10 text-primary font-medium' 
                     : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-100'}
@@ -37,7 +37,7 @@ export default function Sidebar() {
               >
                 <span className="material-icons text-[20px]">{item.icon}</span>
                 <span>{item.name}</span>
-              </a>
+              </div>
             </Link>
           ))}
         </div>
