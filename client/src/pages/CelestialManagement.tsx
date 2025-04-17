@@ -240,7 +240,7 @@ function SimulationSettings() {
         <label className="text-sm font-medium">
           Simulation Speed: {simulationSpeed}x
         </label>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button 
             className="px-3 py-1 rounded bg-primary/10 hover:bg-primary/20 transition-colors"
             onClick={() => updateSimulationSpeed(0.1)}
@@ -276,6 +276,18 @@ function SimulationSettings() {
             onClick={() => updateSimulationSpeed(10)}
           >
             10x
+          </button>
+          <button 
+            className="px-3 py-1 rounded bg-primary/10 hover:bg-primary/20 transition-colors"
+            onClick={() => updateSimulationSpeed(100)}
+          >
+            100x
+          </button>
+          <button 
+            className="px-3 py-1 rounded bg-primary/10 hover:bg-primary/20 transition-colors"
+            onClick={() => updateSimulationSpeed(1000)}
+          >
+            1000x
           </button>
         </div>
       </div>
