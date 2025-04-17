@@ -16,6 +16,7 @@ export default function Sidebar() {
     { name: "Players", path: "/players", icon: "person" },
     { name: "NPCs", path: "/npcs", icon: "smart_toy" },
     { name: "Missions", path: "/missions", icon: "assignment" },
+    { name: "Client Simulator", path: "/client-simulator", icon: "gamepad" },
     { name: "State Replication", path: "/state-replication", icon: "sync" },
     { name: "Sanity Checks", path: "/sanity-checks", icon: "verified" },
     { name: "Performance", path: "/performance", icon: "speed" },

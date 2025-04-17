@@ -15,6 +15,7 @@ import SanityChecks from "@/pages/SanityChecks";
 import Logs from "@/pages/Logs";
 import ServerSettings from "@/pages/ServerSettings";
 import ApiConfig from "@/pages/ApiConfig";
+import ClientSimulator from "@/pages/ClientSimulator";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import { ServerProvider } from "@/contexts/ServerContext";
@@ -39,6 +40,7 @@ function Router() {
             <Route path="/logs" component={Logs} />
             <Route path="/settings" component={ServerSettings} />
             <Route path="/api-config" component={ApiConfig} />
+            <Route path="/client-simulator" component={ClientSimulator} />
             <Route component={NotFound} />
           </Switch>
         </main>
