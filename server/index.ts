@@ -419,121 +419,110 @@ export class GameServer {
   // Initialize areas of interest
   private async initializeAOI(): Promise<void> {
     try {
-      // Get existing areas from storage - but force creation of new ones after reset
+      // Get existing areas from storage
       const areas = await storage.getAllAreasOfInterest();
       
-      // Always recreate default areas after a world reset
-      if (true) {
-        // Create default areas
-        log('Creating default areas of interest...', 'info');
-        
-        // Earth orbit
-        const earthOrbit = await storage.createAreaOfInterest({
-          name: 'Earth Orbit (Alpha Sector)',
-          centerX: 0,
-          centerY: 0,
-          centerZ: 0,
-          radius: this.settings.aoiRadius,
-          nearestCelestialBodyId: 3, // Earth
-          playerCount: 0,
-          npcCount: 0,
-          updateFrequency: 60,
-          latency: 0,
-          load: 0,
-          capacityLimit: this.settings.aoiMaxEntities,
-        });
-        
-        this.aoiManager.createArea(
-          `aoi-${earthOrbit.id}`,
-          earthOrbit.name,
-          new Vector3(earthOrbit.centerX, earthOrbit.centerY, earthOrbit.centerZ),
-          earthOrbit.radius,
-          earthOrbit.capacityLimit
-        );
-        
-        // Mars colony
-        const marsColony = await storage.createAreaOfInterest({
-          name: 'Mars Colony (Beta Sector)',
-          centerX: 200000000,
-          centerY: 0,
-          centerZ: 0,
-          radius: this.settings.aoiRadius,
-          nearestCelestialBodyId: 4, // Mars
-          playerCount: 0,
-          npcCount: 0,
-          updateFrequency: 40,
-          latency: 0,
-          load: 0,
-          capacityLimit: this.settings.aoiMaxEntities,
-        });
-        
-        this.aoiManager.createArea(
-          `aoi-${marsColony.id}`,
-          marsColony.name,
-          new Vector3(marsColony.centerX, marsColony.centerY, marsColony.centerZ),
-          marsColony.radius,
-          marsColony.capacityLimit
-        );
-        
-        // Jupiter mining belt
-        const jupiterMining = await storage.createAreaOfInterest({
-          name: 'Jupiter Mining Belt (Gamma Sector)',
-          centerX: 600000000,
-          centerY: 0,
-          centerZ: 0,
-          radius: this.settings.aoiRadius,
-          nearestCelestialBodyId: 5, // Jupiter
-          playerCount: 0,
-          npcCount: 0,
-          updateFrequency: 30,
-          latency: 0,
-          load: 0,
-          capacityLimit: this.settings.aoiMaxEntities,
-        });
-        
-        this.aoiManager.createArea(
-          `aoi-${jupiterMining.id}`,
-          jupiterMining.name,
-          new Vector3(jupiterMining.centerX, jupiterMining.centerY, jupiterMining.centerZ),
-          jupiterMining.radius,
-          jupiterMining.capacityLimit
-        );
-        
-        // Saturn rings
-        const saturnRings = await storage.createAreaOfInterest({
-          name: 'Saturn Rings (Delta Sector)',
-          centerX: 1200000000,
-          centerY: 0,
-          centerZ: 0,
-          radius: this.settings.aoiRadius,
-          nearestCelestialBodyId: 6, // Saturn
-          playerCount: 0,
-          npcCount: 0,
-          updateFrequency: 60,
-          latency: 0,
-          load: 0,
-          capacityLimit: this.settings.aoiMaxEntities,
-        });
-        
-        this.aoiManager.createArea(
-          `aoi-${saturnRings.id}`,
-          saturnRings.name,
-          new Vector3(saturnRings.centerX, saturnRings.centerY, saturnRings.centerZ),
-          saturnRings.radius,
-          saturnRings.capacityLimit
-        );
-      } else {
-        // Register existing areas
-        for (const area of areas) {
-          this.aoiManager.createArea(
-            `aoi-${area.id}`,
-            area.name,
-            new Vector3(area.centerX, area.centerY, area.centerZ),
-            area.radius,
-            area.capacityLimit
-          );
-        }
-      }
+      // Clear existing areas from storage first
+      await storage.clearAllAreasOfInterest();
+      
+      // Create default areas
+      log('Creating default areas of interest...', 'info');
+      
+      // Earth orbit
+      const earthOrbit = await storage.createAreaOfInterest({
+        name: 'Earth Orbit (Alpha Sector)',
+        centerX: 0,
+        centerY: 0,
+        centerZ: 0,
+        radius: this.settings.aoiRadius,
+        nearestCelestialBodyId: 3, // Earth
+        playerCount: 0,
+        npcCount: 0,
+        updateFrequency: 60,
+        latency: 0,
+        load: 0,
+        capacityLimit: this.settings.aoiMaxEntities,
+      });
+      
+      this.aoiManager.createArea(
+        `aoi-${earthOrbit.id}`,
+        earthOrbit.name,
+        new Vector3(earthOrbit.centerX, earthOrbit.centerY, earthOrbit.centerZ),
+        earthOrbit.radius,
+        earthOrbit.capacityLimit
+      );
+      
+      // Mars colony
+      const marsColony = await storage.createAreaOfInterest({
+        name: 'Mars Colony (Beta Sector)',
+        centerX: 200000000,
+        centerY: 0,
+        centerZ: 0,
+        radius: this.settings.aoiRadius,
+        nearestCelestialBodyId: 4, // Mars
+        playerCount: 0,
+        npcCount: 0,
+        updateFrequency: 40,
+        latency: 0,
+        load: 0,
+        capacityLimit: this.settings.aoiMaxEntities,
+      });
+      
+      this.aoiManager.createArea(
+        `aoi-${marsColony.id}`,
+        marsColony.name,
+        new Vector3(marsColony.centerX, marsColony.centerY, marsColony.centerZ),
+        marsColony.radius,
+        marsColony.capacityLimit
+      );
+      
+      // Jupiter mining belt
+      const jupiterMining = await storage.createAreaOfInterest({
+        name: 'Jupiter Mining Belt (Gamma Sector)',
+        centerX: 600000000,
+        centerY: 0,
+        centerZ: 0,
+        radius: this.settings.aoiRadius,
+        nearestCelestialBodyId: 5, // Jupiter
+        playerCount: 0,
+        npcCount: 0,
+        updateFrequency: 30,
+        latency: 0,
+        load: 0,
+        capacityLimit: this.settings.aoiMaxEntities,
+      });
+      
+      this.aoiManager.createArea(
+        `aoi-${jupiterMining.id}`,
+        jupiterMining.name,
+        new Vector3(jupiterMining.centerX, jupiterMining.centerY, jupiterMining.centerZ),
+        jupiterMining.radius,
+        jupiterMining.capacityLimit
+      );
+      
+      // Saturn rings
+      const saturnRings = await storage.createAreaOfInterest({
+        name: 'Saturn Rings (Delta Sector)',
+        centerX: 1200000000,
+        centerY: 0,
+        centerZ: 0,
+        radius: this.settings.aoiRadius,
+        nearestCelestialBodyId: 6, // Saturn
+        playerCount: 0,
+        npcCount: 0,
+        updateFrequency: 60,
+        latency: 0,
+        load: 0,
+        capacityLimit: this.settings.aoiMaxEntities,
+      });
+      
+      this.aoiManager.createArea(
+        `aoi-${saturnRings.id}`,
+        saturnRings.name,
+        new Vector3(saturnRings.centerX, saturnRings.centerY, saturnRings.centerZ),
+        saturnRings.radius,
+        saturnRings.capacityLimit
+      );
       
       log(`Initialized ${this.aoiManager.getAllAreas().length} areas of interest`, 'info');
     } catch (error) {

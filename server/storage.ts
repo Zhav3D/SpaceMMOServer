@@ -72,6 +72,7 @@ export interface IStorage {
   createAreaOfInterest(area: InsertAreaOfInterest): Promise<AreaOfInterestRecord>;
   updateAreaOfInterest(id: number, area: Partial<AreaOfInterestRecord>): Promise<AreaOfInterestRecord | undefined>;
   deleteAreaOfInterest(id: number): Promise<boolean>;
+  clearAllAreasOfInterest(): Promise<void>;
   
   // Server Logs
   createServerLog(log: InsertServerLog): Promise<ServerLog>;
@@ -421,6 +422,10 @@ export class MemStorage implements IStorage {
   
   async deleteAreaOfInterest(id: number): Promise<boolean> {
     return this.areasOfInterest.delete(id);
+  }
+  
+  async clearAllAreasOfInterest(): Promise<void> {
+    this.areasOfInterest.clear();
   }
   
   // Server Log methods
