@@ -3,14 +3,26 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { useQuery } from '@tanstack/react-query';
 
+interface Entity {
+  id: string;
+  position: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  type: 'player' | 'npc';
+}
+
 interface SolarSystem3DProps {
   celestialBodies: any[];
+  entities?: Entity[];
   isLoading?: boolean;
   onSelectBody?: (body: any) => void;
 }
 
 export default function SolarSystem3D({ 
   celestialBodies = [], 
+  entities = [],
   isLoading = false,
   onSelectBody
 }: SolarSystem3DProps) {

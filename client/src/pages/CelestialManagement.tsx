@@ -20,8 +20,58 @@ export default function CelestialManagement() {
     queryKey: ["/api/celestial", lastUpdate],
     refetchInterval: 3000
   });
+
+  // Fetch simulated players and NPCs
+  const { data: playersData } = useQuery({
+    queryKey: ["/api/simulated-players", lastUpdate],
+    refetchInterval: 3000
+  });
+
+  const { data: npcFleetsData } = useQuery({
+    queryKey: ["/api/npc/fleets", lastUpdate],
+    refetchInterval: 3000
+  });
   
   const celestialBodies = celestialData?.data || [];
+  
+  // Prepare entities for visualization with proper error handling
+  const simulatedPlayers = playersData?.data?.players || [];
+  const npcFleets = npcFleetsData?.data || [];
+  const npcShips = Array.isArray(npcFleets) 
+    ? npcFleets.flatMap(fleet => Array.isArray(fleet.ships) ? fleet.ships : [])
+    : [];
+  
+  // Safe entity mapping function
+  const mapEntity = (entity: any, type: 'player' | 'npc') => {
+    if (!entity || typeof entity !== 'object') return null;
+    
+    // Ensure entity has an id and position
+    if (!entity.id || !entity.position) return null;
+    
+    return {
+      id: String(entity.id),
+      position: {
+        x: Number(entity.position.x) || 0,
+        y: Number(entity.position.y) || 0,
+        z: Number(entity.position.z) || 0
+      },
+      type
+    };
+  };
+  
+  // Combine into visualization entities
+  const entities = [
+    ...simulatedPlayers.map(player => mapEntity(player, 'player')),
+    ...npcShips.map(ship => mapEntity(ship, 'npc'))
+  ].filter(Boolean) as {
+    id: string;
+    position: {
+      x: number;
+      y: number;
+      z: number;
+    };
+    type: 'player' | 'npc';
+  }[];
   
   const handleBodyEdit = () => {
     // Trigger refresh on edit
@@ -68,12 +118,14 @@ export default function CelestialManagement() {
             {viewMode === '2d' ? (
               <SolarSystemVisualization 
                 celestialBodies={celestialBodies} 
+                entities={entities}
                 isLoading={isLoading}
                 onSelectBody={handleBodySelect}
               />
             ) : (
               <SolarSystem3D 
                 celestialBodies={celestialBodies} 
+                entities={entities}
                 isLoading={isLoading}
                 onSelectBody={handleBodySelect}
               />
