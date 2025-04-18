@@ -53,9 +53,18 @@ export default function SimpleShipEditor() {
     try {
       const response = await fetch('/api/ship-templates');
       const data = await response.json();
-      setTemplates(data);
+      console.log("Fetched templates:", data);
+      
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setTemplates(data);
+      } else {
+        console.error("Expected array but got:", typeof data, data);
+        setTemplates([]);
+      }
     } catch (error) {
       console.error("Error fetching templates:", error);
+      setTemplates([]);
     } finally {
       setIsLoading(false);
     }
