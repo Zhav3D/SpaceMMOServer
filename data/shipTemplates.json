@@ -226,5 +226,43 @@
     "description": "A standard enemy ship template",
     "templateId": "template-1744990925643-825",
     "id": 12
+  },
+  {
+    "name": "New Enemy Ship",
+    "type": "enemy",
+    "mass": 1000,
+    "maxSpeed": 70,
+    "maxAcceleration": 15,
+    "turnRate": 0.15,
+    "detectionRange": 1500,
+    "signatureRadius": 100,
+    "attackRange": 600,
+    "fleeThreshold": 0.3,
+    "waypointArrivalDistance": 100,
+    "obstacleAvoidanceDistance": 200,
+    "formationKeepingTolerance": 50,
+    "pathfindingUpdateInterval": 5000,
+    "description": "A standard enemy ship template",
+    "templateId": "template-1744991152575-354",
+    "id": 13
+  },
+  {
+    "name": "New Enemy Ship",
+    "type": "enemy",
+    "mass": 1000,
+    "maxSpeed": 70,
+    "maxAcceleration": 15,
+    "turnRate": 0.15,
+    "detectionRange": 1500,
+    "signatureRadius": 100,
+    "attackRange": 600,
+    "fleeThreshold": 0.3,
+    "waypointArrivalDistance": 100,
+    "obstacleAvoidanceDistance": 200,
+    "formationKeepingTolerance": 50,
+    "pathfindingUpdateInterval": 5000,
+    "description": "A standard enemy ship template",
+    "templateId": "template-1745007517259-143",
+    "id": 14
   }
 ]

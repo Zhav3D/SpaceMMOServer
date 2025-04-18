@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -27,21 +26,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Separator } from "@/components/ui/separator";
 import { queryClient } from "@/lib/queryClient";
 import { 
   Ship, 
@@ -54,67 +42,80 @@ import {
   Zap
 } from "lucide-react";
 
-// Define the schema for ship templates
-const ShipTemplateSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  type: z.enum(["enemy", "transport", "civilian", "mining"]),
-  mass: z.number().min(10).max(10000),
-  maxSpeed: z.number().min(10).max(200),
-  maxAcceleration: z.number().min(1).max(50),
-  turnRate: z.number().min(0.01).max(0.5),
-  detectionRange: z.number().min(100).max(5000),
-  signatureRadius: z.number().min(10).max(500),
-  attackRange: z.number().min(0).max(1000),
-  fleeThreshold: z.number().min(0).max(1),
-  waypointArrivalDistance: z.number().min(10).max(500),
-  obstacleAvoidanceDistance: z.number().min(50).max(500),
-  formationKeepingTolerance: z.number().min(10).max(200),
-  pathfindingUpdateInterval: z.number().min(1000).max(10000),
-  description: z.string().optional(),
-});
-
-type ShipTemplate = z.infer<typeof ShipTemplateSchema>;
+// Define a type for ship templates
+interface ShipTemplate {
+  id?: string;
+  name: string;
+  type: "enemy" | "transport" | "civilian" | "mining";
+  description?: string;
+  mass: number;
+  maxSpeed: number;
+  maxAcceleration: number;
+  turnRate: number;
+  detectionRange: number;
+  signatureRadius: number;
+  attackRange: number;
+  fleeThreshold: number;
+  waypointArrivalDistance: number;
+  obstacleAvoidanceDistance: number;
+  formationKeepingTolerance: number;
+  pathfindingUpdateInterval: number;
+}
 
 export default function ShipEditor() {
+  const [templates, setTemplates] = useState<ShipTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
   
-  // Form handling
-  const form = useForm<ShipTemplate>({
-    resolver: zodResolver(ShipTemplateSchema),
-    defaultValues: {
-      name: "",
-      type: "enemy",
-      mass: 1000,
-      maxSpeed: 50,
-      maxAcceleration: 10,
-      turnRate: 0.1,
-      detectionRange: 1000,
-      signatureRadius: 100,
-      attackRange: 500,
-      fleeThreshold: 0.3,
-      waypointArrivalDistance: 100,
-      obstacleAvoidanceDistance: 200,
-      formationKeepingTolerance: 50,
-      pathfindingUpdateInterval: 5000,
-      description: "",
-    },
+  // Current template being edited
+  const [currentTemplate, setCurrentTemplate] = useState<ShipTemplate>({
+    name: "",
+    type: "enemy",
+    description: "",
+    mass: 1000,
+    maxSpeed: 50,
+    maxAcceleration: 10,
+    turnRate: 0.1,
+    detectionRange: 1000,
+    signatureRadius: 100,
+    attackRange: 500,
+    fleeThreshold: 0.3,
+    waypointArrivalDistance: 100,
+    obstacleAvoidanceDistance: 200,
+    formationKeepingTolerance: 50,
+    pathfindingUpdateInterval: 5000
   });
   
-  // Query for fetching ship templates
-  const { data: templates = [], isLoading, refetch } = useQuery<ShipTemplate[]>({
-    queryKey: ['/api/ship-templates'],
-    throwOnError: false
-  });
+  // Fetch templates on component mount
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
   
-  // Mutation for saving ship templates
-  const saveTemplateMutation = useMutation({
-    mutationFn: async (template: ShipTemplate) => {
-      const url = editMode && template.id 
-        ? `/api/ship-templates/${template.id}`
+  // Function to fetch templates
+  const fetchTemplates = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/ship-templates');
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates');
+      }
+      const data = await response.json();
+      setTemplates(data);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Function to save template
+  const saveTemplate = async () => {
+    try {
+      const url = editMode && currentTemplate.id 
+        ? `/api/ship-templates/${currentTemplate.id}`
         : '/api/ship-templates';
         
       const method = editMode ? 'PUT' : 'POST';
@@ -124,26 +125,45 @@ export default function ShipEditor() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(template),
+        body: JSON.stringify(currentTemplate),
       });
       
       if (!response.ok) {
         throw new Error('Failed to save template');
       }
       
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/ship-templates'] });
+      await fetchTemplates();
       setDialogOpen(false);
-      form.reset();
+      
+      // Reset current template
+      setCurrentTemplate({
+        name: "",
+        type: "enemy",
+        description: "",
+        mass: 1000,
+        maxSpeed: 50,
+        maxAcceleration: 10,
+        turnRate: 0.1,
+        detectionRange: 1000,
+        signatureRadius: 100,
+        attackRange: 500,
+        fleeThreshold: 0.3,
+        waypointArrivalDistance: 100,
+        obstacleAvoidanceDistance: 200,
+        formationKeepingTolerance: 50,
+        pathfindingUpdateInterval: 5000
+      });
+    } catch (error) {
+      console.error("Error saving template:", error);
     }
-  });
+  };
   
-  // Mutation for deleting ship templates
-  const deleteTemplateMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/ship-templates/${id}`, {
+  // Function to delete template
+  const deleteTemplate = async () => {
+    if (!templateToDelete) return;
+    
+    try {
+      const response = await fetch(`/api/ship-templates/${templateToDelete}`, {
         method: 'DELETE',
       });
       
@@ -151,41 +171,23 @@ export default function ShipEditor() {
         throw new Error('Failed to delete template');
       }
       
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/ship-templates'] });
+      await fetchTemplates();
       setDeleteDialogOpen(false);
       setTemplateToDelete(null);
-    }
-  });
-  
-  // Handler for ship type change
-  const handleShipTypeChange = (value: string) => {
-    form.setValue('type', value as any);
-    
-    // Adjust default values based on ship type
-    if (value === 'enemy') {
-      form.setValue('attackRange', 500);
-      form.setValue('fleeThreshold', 0.3);
-    } else if (value === 'transport') {
-      form.setValue('maxSpeed', 40);
-      form.setValue('mass', 2000);
-    } else if (value === 'civilian') {
-      form.setValue('fleeThreshold', 0.7);
-      form.setValue('detectionRange', 800);
-    } else if (value === 'mining') {
-      form.setValue('maxSpeed', 30);
-      form.setValue('turnRate', 0.05);
+    } catch (error) {
+      console.error("Error deleting template:", error);
     }
   };
   
   // Handler for creating a new template
   const handleNewTemplate = (type: "enemy" | "transport" | "civilian" | "mining") => {
     setEditMode(false);
-    form.reset({
+    
+    // Set default values based on ship type
+    const template: ShipTemplate = {
       name: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Ship`,
       type,
+      description: `A standard ${type} ship template`,
       mass: type === 'transport' ? 2000 : (type === 'mining' ? 1500 : 1000),
       maxSpeed: type === 'enemy' ? 70 : (type === 'transport' ? 40 : (type === 'mining' ? 30 : 50)),
       maxAcceleration: type === 'enemy' ? 15 : (type === 'mining' ? 8 : 10),
@@ -197,29 +199,25 @@ export default function ShipEditor() {
       waypointArrivalDistance: 100,
       obstacleAvoidanceDistance: 200,
       formationKeepingTolerance: 50,
-      pathfindingUpdateInterval: 5000,
-      description: `A standard ${type} ship template`
-    });
+      pathfindingUpdateInterval: 5000
+    };
+    
+    setCurrentTemplate(template);
     setDialogOpen(true);
   };
   
   // Handler for editing a template
   const handleEditTemplate = (template: ShipTemplate) => {
     setEditMode(true);
-    form.reset(template);
+    setCurrentTemplate(template);
     setDialogOpen(true);
-  };
-  
-  // Handler for form submission
-  const onSubmit = (data: ShipTemplate) => {
-    saveTemplateMutation.mutate(data);
   };
   
   // Handler for duplicating a template
   const handleDuplicateTemplate = (template: ShipTemplate) => {
     setEditMode(false);
-    const { id, ...rest } = template as any;
-    form.reset({
+    const { id, ...rest } = template;
+    setCurrentTemplate({
       ...rest,
       name: `${template.name} (Copy)`,
     });
@@ -242,6 +240,72 @@ export default function ShipEditor() {
     }
   };
   
+  // Handler for input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    // Convert number values
+    if (
+      name === 'mass' || 
+      name === 'maxSpeed' || 
+      name === 'maxAcceleration' || 
+      name === 'turnRate' || 
+      name === 'detectionRange' || 
+      name === 'signatureRadius' || 
+      name === 'attackRange' || 
+      name === 'fleeThreshold' || 
+      name === 'waypointArrivalDistance' || 
+      name === 'obstacleAvoidanceDistance' || 
+      name === 'formationKeepingTolerance' || 
+      name === 'pathfindingUpdateInterval'
+    ) {
+      setCurrentTemplate(prev => ({
+        ...prev,
+        [name]: Number(value)
+      }));
+    } else {
+      setCurrentTemplate(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+  
+  // Handler for select changes
+  const handleSelectChange = (value: string) => {
+    setCurrentTemplate(prev => ({
+      ...prev,
+      type: value as "enemy" | "transport" | "civilian" | "mining"
+    }));
+    
+    // Adjust default values based on ship type
+    if (value === 'enemy') {
+      setCurrentTemplate(prev => ({
+        ...prev,
+        attackRange: 500,
+        fleeThreshold: 0.3
+      }));
+    } else if (value === 'transport') {
+      setCurrentTemplate(prev => ({
+        ...prev,
+        maxSpeed: 40,
+        mass: 2000
+      }));
+    } else if (value === 'civilian') {
+      setCurrentTemplate(prev => ({
+        ...prev,
+        fleeThreshold: 0.7,
+        detectionRange: 800
+      }));
+    } else if (value === 'mining') {
+      setCurrentTemplate(prev => ({
+        ...prev,
+        maxSpeed: 30,
+        turnRate: 0.05
+      }));
+    }
+  };
+  
   return (
     <div className="container py-6 space-y-6 max-w-7xl">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
@@ -253,18 +317,9 @@ export default function ShipEditor() {
         </div>
         
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={() => refetch()}>
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Refresh templates</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button variant="outline" size="icon" onClick={fetchTemplates}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -440,227 +495,247 @@ export default function ShipEditor() {
             </DialogDescription>
           </DialogHeader>
           
-          <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium flex items-center">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Basic Information
-                    </h3>
-                  
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Ship Name</Label>
-                      <Input 
-                        id="name"
-                        placeholder="Enter ship name" 
-                        {...form.register("name")}
-                      />
-                      {form.formState.errors.name && (
-                        <p className="text-sm font-medium text-destructive">
-                          {form.formState.errors.name.message}
-                        </p>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="type">Ship Type</Label>
-                      <Select
-                        onValueChange={handleShipTypeChange}
-                        defaultValue={form.getValues("type")}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select ship type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="enemy">Combat</SelectItem>
-                          <SelectItem value="transport">Transport</SelectItem>
-                          <SelectItem value="civilian">Civilian</SelectItem>
-                          <SelectItem value="mining">Mining</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {form.formState.errors.type && (
-                        <p className="text-sm font-medium text-destructive">
-                          {form.formState.errors.type.message}
-                        </p>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Input 
-                        id="description"
-                        placeholder="Ship description" 
-                        {...form.register("description")}
-                      />
-                    </div>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium flex items-center">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Basic Information
+                  </h3>
+                
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Ship Name</Label>
+                    <Input 
+                      id="name"
+                      name="name"
+                      value={currentTemplate.name}
+                      onChange={handleInputChange}
+                      placeholder="Enter ship name" 
+                    />
                   </div>
                   
-                  <Separator />
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Ship Type</Label>
+                    <select 
+                      id="type"
+                      value={currentTemplate.type}
+                      onChange={(e) => handleSelectChange(e.target.value)}
+                      className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="enemy">Combat</option>
+                      <option value="transport">Transport</option>
+                      <option value="civilian">Civilian</option>
+                      <option value="mining">Mining</option>
+                    </select>
+                  </div>
                   
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium flex items-center">
-                      <Zap className="h-4 w-4 mr-2" />
-                      Performance
-                    </h3>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="mass">Mass (tons)</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {form.watch("mass")}
-                        </span>
-                      </div>
-                      <Input 
-                        id="mass"
-                        type="number"
-                        {...form.register("mass", { valueAsNumber: true })}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="maxSpeed">Max Speed (m/s)</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {form.watch("maxSpeed")}
-                        </span>
-                      </div>
-                      <Input 
-                        id="maxSpeed"
-                        type="number"
-                        {...form.register("maxSpeed", { valueAsNumber: true })}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="turnRate">Turn Rate (rad/s)</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {form.watch("turnRate")}
-                        </span>
-                      </div>
-                      <Input 
-                        id="turnRate"
-                        type="number"
-                        step="0.01"
-                        {...form.register("turnRate", { valueAsNumber: true })}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Input 
+                      id="description"
+                      name="description"
+                      value={currentTemplate.description || ''}
+                      onChange={handleInputChange}
+                      placeholder="Ship description" 
+                    />
                   </div>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium flex items-center">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Sensors & Combat
-                    </h3>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="detectionRange">Detection Range (m)</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {form.watch("detectionRange")}
-                        </span>
-                      </div>
-                      <Input 
-                        id="detectionRange"
-                        type="number"
-                        {...form.register("detectionRange", { valueAsNumber: true })}
-                      />
+                <Separator />
+                
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium flex items-center">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Performance
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="mass">Mass (tons)</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {currentTemplate.mass}
+                      </span>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="attackRange">Attack Range (m)</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {form.watch("attackRange")}
-                        </span>
-                      </div>
-                      <Input 
-                        id="attackRange"
-                        type="number"
-                        {...form.register("attackRange", { valueAsNumber: true })}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="fleeThreshold">Flee Threshold</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {form.watch("fleeThreshold") * 100}%
-                        </span>
-                      </div>
-                      <Input 
-                        id="fleeThreshold"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="1"
-                        {...form.register("fleeThreshold", { valueAsNumber: true })}
-                      />
-                    </div>
+                    <Input 
+                      id="mass"
+                      name="mass"
+                      type="number"
+                      value={currentTemplate.mass}
+                      onChange={handleInputChange}
+                      min="10"
+                      max="10000"
+                      step="10"
+                    />
                   </div>
                   
-                  <Separator />
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="maxSpeed">Max Speed (m/s)</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {currentTemplate.maxSpeed}
+                      </span>
+                    </div>
+                    <Input 
+                      id="maxSpeed"
+                      name="maxSpeed"
+                      type="number"
+                      value={currentTemplate.maxSpeed}
+                      onChange={handleInputChange}
+                      min="10"
+                      max="200"
+                      step="1"
+                    />
+                  </div>
                   
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium flex items-center">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Navigation
-                    </h3>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="waypointArrivalDistance">Waypoint Arrival (m)</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {form.watch("waypointArrivalDistance")}
-                        </span>
-                      </div>
-                      <Input 
-                        id="waypointArrivalDistance"
-                        type="number"
-                        {...form.register("waypointArrivalDistance", { valueAsNumber: true })}
-                      />
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="turnRate">Turn Rate (rad/s)</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {currentTemplate.turnRate.toFixed(2)}
+                      </span>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="obstacleAvoidanceDistance">Obstacle Avoidance (m)</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {form.watch("obstacleAvoidanceDistance")}
-                        </span>
-                      </div>
-                      <Input 
-                        id="obstacleAvoidanceDistance"
-                        type="number"
-                        {...form.register("obstacleAvoidanceDistance", { valueAsNumber: true })}
-                      />
-                    </div>
+                    <Input 
+                      id="turnRate"
+                      name="turnRate"
+                      type="number"
+                      value={currentTemplate.turnRate}
+                      onChange={handleInputChange}
+                      min="0.01"
+                      max="0.5"
+                      step="0.01"
+                    />
                   </div>
                 </div>
               </div>
               
-              <DialogFooter className="mt-6">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={saveTemplateMutation.isPending}
-                >
-                  {saveTemplateMutation.isPending && (
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  )}
-                  {editMode ? "Save Changes" : "Create Template"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </FormProvider>
+              {/* Right Column */}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium flex items-center">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Sensors & Combat
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="detectionRange">Detection Range (m)</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {currentTemplate.detectionRange}
+                      </span>
+                    </div>
+                    <Input 
+                      id="detectionRange"
+                      name="detectionRange"
+                      type="number"
+                      value={currentTemplate.detectionRange}
+                      onChange={handleInputChange}
+                      min="100"
+                      max="5000"
+                      step="100"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="attackRange">Attack Range (m)</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {currentTemplate.attackRange}
+                      </span>
+                    </div>
+                    <Input 
+                      id="attackRange"
+                      name="attackRange"
+                      type="number"
+                      value={currentTemplate.attackRange}
+                      onChange={handleInputChange}
+                      min="0"
+                      max="1000"
+                      step="50"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="fleeThreshold">Flee Threshold</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {(currentTemplate.fleeThreshold * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                    <Input 
+                      id="fleeThreshold"
+                      name="fleeThreshold"
+                      type="number"
+                      value={currentTemplate.fleeThreshold}
+                      onChange={handleInputChange}
+                      min="0"
+                      max="1"
+                      step="0.05"
+                    />
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium flex items-center">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Navigation
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="waypointArrivalDistance">Waypoint Arrival (m)</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {currentTemplate.waypointArrivalDistance}
+                      </span>
+                    </div>
+                    <Input 
+                      id="waypointArrivalDistance"
+                      name="waypointArrivalDistance"
+                      type="number"
+                      value={currentTemplate.waypointArrivalDistance}
+                      onChange={handleInputChange}
+                      min="10"
+                      max="500"
+                      step="10"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="obstacleAvoidanceDistance">Obstacle Avoidance (m)</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {currentTemplate.obstacleAvoidanceDistance}
+                      </span>
+                    </div>
+                    <Input 
+                      id="obstacleAvoidanceDistance"
+                      name="obstacleAvoidanceDistance"
+                      type="number"
+                      value={currentTemplate.obstacleAvoidanceDistance}
+                      onChange={handleInputChange}
+                      min="50"
+                      max="500"
+                      step="10"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={saveTemplate}
+              >
+                {editMode ? "Save Changes" : "Create Template"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
       
@@ -676,19 +751,9 @@ export default function ShipEditor() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (templateToDelete) {
-                  deleteTemplateMutation.mutate(templateToDelete);
-                }
-              }}
+              onClick={deleteTemplate}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              {deleteTemplateMutation.isPending ? (
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : null}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
