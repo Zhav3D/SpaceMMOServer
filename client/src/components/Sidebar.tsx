@@ -16,7 +16,6 @@ export default function Sidebar() {
     { name: "Players", path: "/players", icon: "person" },
     { name: "NPCs", path: "/npcs", icon: "smart_toy" },
     { name: "Ship Editor", path: "/ship-editor", icon: "precision_manufacturing" },
-    { name: "Simple Ship Editor", path: "/simple-ship-editor", icon: "rocket_launch" },
     { name: "Missions", path: "/missions", icon: "assignment" },
     { name: "Client Simulator", path: "/client-simulator", icon: "gamepad" },
     { name: "State Replication", path: "/state-replication", icon: "sync" },
