@@ -192,24 +192,7 @@ export default function ShipEditor() {
   // Fetch ship templates
   const { data: templatesData, isLoading, refetch } = useQuery({
     queryKey: ['/api/ship-templates'],
-    // The API endpoint doesn't exist yet, so we'll mock the response for now
-    queryFn: async () => {
-      // TODO: Replace with actual API call when endpoint is implemented
-      // For now, try to load from localStorage as a temporary solution
-      const storedTemplates = localStorage.getItem('shipTemplates');
-      if (storedTemplates) {
-        return { success: true, data: JSON.parse(storedTemplates) };
-      }
-      
-      // If no templates exist, use defaults
-      const initialTemplates = Object.values(defaultShipTemplates).map((template, index) => ({
-        ...template,
-        id: `template-${index + 1}`
-      }));
-      
-      localStorage.setItem('shipTemplates', JSON.stringify(initialTemplates));
-      return { success: true, data: initialTemplates };
-    },
+    // We now use the actual API endpoint
     staleTime: 30000,
   });
   

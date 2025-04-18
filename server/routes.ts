@@ -1905,11 +1905,199 @@ export async function registerRoutes(app: Express): Promise<Server> {
       { path: '/api/missions', method: 'GET', description: 'Get all missions', group: 'Missions' },
       { path: '/api/missions/:missionId', method: 'GET', description: 'Get a specific mission by ID', group: 'Missions' },
       { path: '/api/missions/:missionId', method: 'DELETE', description: 'Delete a mission', group: 'Missions' },
-      { path: '/api/missions/:missionId/assign', method: 'PUT', description: 'Assign a mission to a fleet', group: 'Missions' }
+      { path: '/api/missions/:missionId/assign', method: 'PUT', description: 'Assign a mission to a fleet', group: 'Missions' },
+      
+      // Ship Templates
+      { path: '/api/ship-templates', method: 'GET', description: 'Get all ship templates', group: 'Ship Templates' },
+      { path: '/api/ship-templates/:id', method: 'GET', description: 'Get a specific ship template by ID', group: 'Ship Templates' },
+      { path: '/api/ship-templates', method: 'POST', description: 'Create a new ship template', group: 'Ship Templates' },
+      { path: '/api/ship-templates/:id', method: 'PUT', description: 'Update a ship template', group: 'Ship Templates' },
+      { path: '/api/ship-templates/:id', method: 'DELETE', description: 'Delete a ship template', group: 'Ship Templates' }
     ];
     
     res.json({ success: true, data: endpoints });
   });
   
+  // Ship Templates API
+  // Get all ship templates
+  app.get('/api/ship-templates', async (req: Request, res: Response) => {
+    try {
+      const templates = await storage.getAllShipTemplates();
+      
+      const response: ApiResponse<typeof templates> = {
+        success: true,
+        data: templates,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to fetch ship templates: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+
+  // Get ship template by ID
+  app.get('/api/ship-templates/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid ship template ID',
+        });
+      }
+      
+      const template = await storage.getShipTemplate(id);
+      if (!template) {
+        return res.status(404).json({
+          success: false,
+          error: 'Ship template not found',
+        });
+      }
+      
+      const response: ApiResponse<typeof template> = {
+        success: true,
+        data: template,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to fetch ship template: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+
+  // Create new ship template
+  app.post('/api/ship-templates', async (req: Request, res: Response) => {
+    try {
+      const newTemplate = req.body;
+      
+      // Generate a unique templateId if not provided
+      if (!newTemplate.templateId) {
+        newTemplate.templateId = `template-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      }
+      
+      // Basic validation
+      if (!newTemplate.name || !newTemplate.type || newTemplate.mass === undefined) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: name, type, mass',
+        });
+      }
+
+      // Create the template in storage
+      const createdTemplate = await storage.createShipTemplate(newTemplate);
+      
+      const response: ApiResponse<typeof createdTemplate> = {
+        success: true,
+        data: createdTemplate,
+      };
+      
+      res.status(201).json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to create ship template: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+
+  // Update ship template
+  app.put('/api/ship-templates/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid ship template ID',
+        });
+      }
+      
+      // Check if template exists
+      const existingTemplate = await storage.getShipTemplate(id);
+      if (!existingTemplate) {
+        return res.status(404).json({
+          success: false,
+          error: 'Ship template not found',
+        });
+      }
+      
+      // Update the template
+      const updatedData = req.body;
+      
+      // Ensure ID and templateId remain the same
+      updatedData.id = id;
+      updatedData.templateId = existingTemplate.templateId;
+      
+      const updatedTemplate = await storage.updateShipTemplate(id, updatedData);
+      
+      const response: ApiResponse<typeof updatedTemplate> = {
+        success: true,
+        data: updatedTemplate,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to update ship template: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+
+  // Delete ship template
+  app.delete('/api/ship-templates/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid ship template ID',
+        });
+      }
+      
+      // Check if template exists
+      const existingTemplate = await storage.getShipTemplate(id);
+      if (!existingTemplate) {
+        return res.status(404).json({
+          success: false,
+          error: 'Ship template not found',
+        });
+      }
+      
+      // Delete the template
+      await storage.deleteShipTemplate(id);
+      
+      const response: ApiResponse<{ id: number, message: string }> = {
+        success: true,
+        data: {
+          id,
+          message: 'Ship template deleted successfully',
+        },
+      };
+      
+      res.json(response);
+    } catch (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: `Failed to delete ship template: ${error}`,
+      };
+      
+      res.status(500).json(response);
+    }
+  });
+
   return httpServer;
 }
