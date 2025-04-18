@@ -44,17 +44,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -68,9 +61,7 @@ import {
   RefreshCw, 
   Box, 
   Zap, 
-  Shield, 
-  Radar, 
-  FileCode2
+  Radar
 } from "lucide-react";
 
 const ShipTemplateSchema = z.object({
@@ -259,193 +250,6 @@ export default function ShipEditor() {
         return 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300';
     }
   };
-  
-  // Basic settings form content
-  const BasicSettingsForm = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium flex items-center">
-            <Settings className="h-4 w-4 mr-2" />
-            Basic Information
-          </h3>
-        
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ship Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter ship name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ship Type</FormLabel>
-                <Select 
-                  onValueChange={handleShipTypeChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select ship type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="enemy">Combat</SelectItem>
-                    <SelectItem value="transport">Transport</SelectItem>
-                    <SelectItem value="civilian">Civilian</SelectItem>
-                    <SelectItem value="mining">Mining</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ship description" {...field} value={field.value || ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <Separator />
-        
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium flex items-center">
-            <Zap className="h-4 w-4 mr-2" />
-            Performance
-          </h3>
-          
-          <FormField
-            control={form.control}
-            name="mass"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex justify-between">
-                  <FormLabel>Mass (tons)</FormLabel>
-                  <span className="text-sm text-muted-foreground">
-                    {field.value}
-                  </span>
-                </div>
-                <FormControl>
-                  <Slider
-                    min={10}
-                    max={10000}
-                    step={10}
-                    value={[field.value]}
-                    onValueChange={(values) => field.onChange(values[0])}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="maxSpeed"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex justify-between">
-                  <FormLabel>Max Speed (m/s)</FormLabel>
-                  <span className="text-sm text-muted-foreground">
-                    {field.value}
-                  </span>
-                </div>
-                <FormControl>
-                  <Slider
-                    min={10}
-                    max={200}
-                    step={1}
-                    value={[field.value]}
-                    onValueChange={(values) => field.onChange(values[0])}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium flex items-center">
-            <Radar className="h-4 w-4 mr-2" />
-            Sensors
-          </h3>
-          
-          <FormField
-            control={form.control}
-            name="detectionRange"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex justify-between">
-                  <FormLabel>Detection Range (m)</FormLabel>
-                  <span className="text-sm text-muted-foreground">
-                    {field.value}
-                  </span>
-                </div>
-                <FormControl>
-                  <Slider
-                    min={100}
-                    max={5000}
-                    step={100}
-                    value={[field.value]}
-                    onValueChange={(values) => field.onChange(values[0])}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="signatureRadius"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex justify-between">
-                  <FormLabel>Signature Radius (m)</FormLabel>
-                  <span className="text-sm text-muted-foreground">
-                    {field.value}
-                  </span>
-                </div>
-                <FormControl>
-                  <Slider
-                    min={10}
-                    max={500}
-                    step={10}
-                    value={[field.value]}
-                    onValueChange={(values) => field.onChange(values[0])}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      </div>
-    </div>
-  );
   
   return (
     <div className="container py-6 space-y-6 max-w-7xl">
@@ -647,44 +451,348 @@ export default function ShipEditor() {
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Tabs defaultValue="basic" className="mt-4">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="basic">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Basic Settings
-                  </TabsTrigger>
-                  <TabsTrigger value="advanced">
-                    <Radar className="h-4 w-4 mr-2" />
-                    Advanced Properties
-                  </TabsTrigger>
-                  <TabsTrigger value="specialized">
-                    <FileCode2 className="h-4 w-4 mr-2" />
-                    Type Specialization
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="basic" className="space-y-4 pt-4">
-                  <BasicSettingsForm />
-                </TabsContent>
-                
-                <TabsContent value="advanced" className="space-y-4 pt-4">
-                  <div className="text-center py-8">
-                    <h3 className="text-lg font-medium mb-2">Advanced Properties</h3>
-                    <p className="text-muted-foreground">
-                      These settings will be available in a future update.
-                    </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium flex items-center">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Basic Information
+                    </h3>
+                  
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ship Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter ship name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ship Type</FormLabel>
+                          <Select 
+                            onValueChange={handleShipTypeChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select ship type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="enemy">Combat</SelectItem>
+                              <SelectItem value="transport">Transport</SelectItem>
+                              <SelectItem value="civilian">Civilian</SelectItem>
+                              <SelectItem value="mining">Mining</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ship description" {...field} value={field.value || ''} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </TabsContent>
-                
-                <TabsContent value="specialized" className="space-y-4 pt-4">
-                  <div className="text-center py-8">
-                    <h3 className="text-lg font-medium mb-2">Type Specialization</h3>
-                    <p className="text-muted-foreground">
-                      Specialized settings for {form.watch("type")} ships will be available in a future update.
-                    </p>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium flex items-center">
+                      <Zap className="h-4 w-4 mr-2" />
+                      Performance
+                    </h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="mass"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Mass (tons)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={10}
+                              max={10000}
+                              step={10}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="maxSpeed"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Max Speed (m/s)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={10}
+                              max={200}
+                              step={1}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="maxAcceleration"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Acceleration (m/s²)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={1}
+                              max={50}
+                              step={0.5}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="turnRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Turn Rate (rad/s)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value.toFixed(2)}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={0.01}
+                              max={0.5}
+                              step={0.01}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </TabsContent>
-              </Tabs>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium flex items-center">
+                      <Radar className="h-4 w-4 mr-2" />
+                      Sensors
+                    </h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="detectionRange"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Detection Range (m)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={100}
+                              max={5000}
+                              step={100}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="signatureRadius"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Signature Radius (m)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={10}
+                              max={500}
+                              step={10}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="attackRange"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Attack Range (m)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={0}
+                              max={1000}
+                              step={50}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="fleeThreshold"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Flee Threshold</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {(field.value * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium flex items-center">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Navigation
+                    </h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="waypointArrivalDistance"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Waypoint Arrival (m)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={10}
+                              max={500}
+                              step={10}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="obstacleAvoidanceDistance"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between">
+                            <FormLabel>Obstacle Avoidance (m)</FormLabel>
+                            <span className="text-sm text-muted-foreground">
+                              {field.value}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              min={50}
+                              max={500}
+                              step={10}
+                              value={[field.value]}
+                              onValueChange={(values) => field.onChange(values[0])}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
               
               <DialogFooter className="mt-6">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
