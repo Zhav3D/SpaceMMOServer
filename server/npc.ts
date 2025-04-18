@@ -1,8 +1,8 @@
 import { Vector3, Quaternion } from '@shared/math';
-import { CelestialBody, NpcShip, NpcFleet } from '@shared/schema';
+import { CelestialBody, NpcShip, NpcFleet, ShipTemplate } from '@shared/schema';
 import { NPCState } from '@shared/types';
 import { updateCelestialBodyPosition } from '@shared/physics';
-import { log } from './index';
+import { storage } from './storage';
 
 // NPC AI states
 export enum NPCAIState {
@@ -129,6 +129,7 @@ export function createNPC(
   position: Vector3,
   nearestCelestialBodyId: number,
   fleetId: string,
+  templateId?: string
 ): NpcShip {
   // Generate a random velocity
   const velocityDirection = new Vector3(
@@ -190,6 +191,7 @@ export function createNPC(
     fleetId,
     aiState,
     targetId: null,
+    templateId: templateId || null,
     waypointsJson: null,
     formationPosition: null,
     navigationState: NavigationState.NONE,
@@ -273,6 +275,7 @@ export class NPCManager {
   private npcs: Map<string, NpcShip> = new Map();
   private fleets: Map<string, NpcFleet> = new Map();
   private celestialBodies: Map<number, CelestialBody> = new Map();
+  private shipTemplates: Map<string, ShipTemplate> = new Map();
   private lastUpdate: number = Date.now();
   
   constructor() {}
@@ -322,6 +325,44 @@ export class NPCManager {
     for (const fleet of fleets) {
       this.registerFleet(fleet);
     }
+  }
+  
+  // Register a ship template
+  registerShipTemplate(template: ShipTemplate): void {
+    this.shipTemplates.set(template.templateId, template);
+  }
+  
+  // Register multiple ship templates
+  registerShipTemplates(templates: ShipTemplate[]): void {
+    for (const template of templates) {
+      this.registerShipTemplate(template);
+    }
+  }
+  
+  // Get a template by ID
+  getShipTemplate(templateId: string): ShipTemplate | undefined {
+    return this.shipTemplates.get(templateId);
+  }
+  
+  // Get all templates
+  getAllShipTemplates(): ShipTemplate[] {
+    return Array.from(this.shipTemplates.values());
+  }
+  
+  // Get the best matching template for a ship type
+  getBestTemplateForType(type: NPCShipType): ShipTemplate | undefined {
+    // Find all templates matching this ship type
+    const matchingTemplates = this.getAllShipTemplates().filter(template => 
+      template.type === type
+    );
+    
+    if (matchingTemplates.length === 0) {
+      return undefined;
+    }
+    
+    // For now, just return the first matching template
+    // In the future, we could implement more sophisticated selection logic
+    return matchingTemplates[0];
   }
   
   // Get a specific fleet by ID
