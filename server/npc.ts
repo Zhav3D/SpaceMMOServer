@@ -492,7 +492,7 @@ export class NPCManager {
     const entityId = `npc-${npcId}`;
     const npc = this.npcs.get(entityId);
     
-    if (npc && npc.waypointsJson) {
+    if (npc && npc.waypointsJson && typeof npc.waypointsJson === 'string') {
       try {
         return JSON.parse(npc.waypointsJson);
       } catch (e) {
@@ -700,7 +700,7 @@ export class NPCManager {
         
       case NPCAIState.WAYPOINT_FOLLOWING:
         // Follow waypoints if available
-        if (npc.waypointsJson) {
+        if (npc.waypointsJson && typeof npc.waypointsJson === 'string') {
           try {
             const parsedWaypoints = JSON.parse(npc.waypointsJson);
             

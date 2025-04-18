@@ -593,12 +593,14 @@ export class GameServer {
         celestialBodyId: number
       ) => {
         // Create the fleet with NPC Manager (in-memory) - now uses ship templates
-        const { fleet, ships } = await this.npcManager.createNPCFleet(
+        const result = await this.npcManager.createNPCFleet(
           type as any, 
           count, 
           location, 
           celestialBodyId
         );
+        
+        const { fleet, ships } = result;
         
         // Save fleet to database
         const savedFleet = await storage.createNpcFleet(fleet);
