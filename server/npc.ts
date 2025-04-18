@@ -280,14 +280,77 @@ export class NPCManager {
   
   constructor() {}
   
-  // Create a fleet of NPCs
-  createNPCFleet(
+  // Create a fleet of NPCs with ship templates
+  async createNPCFleet(
     type: NPCShipType,
     count: number,
     location: string,
     nearestCelestialBodyId: number,
-  ): { fleet: NpcFleet, ships: NpcShip[] } {
-    return createNPCFleet(type, count, location, nearestCelestialBodyId);
+  ): Promise<{ fleet: NpcFleet, ships: NpcShip[] }> {
+    // Try to find a template for this ship type
+    const template = this.getBestTemplateForType(type);
+    const templateId = template?.templateId;
+    
+    const fleetId = `fleet-${type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
+    // Determine status based on type
+    let status: NPCShipStatus = 'passive';
+    switch (type) {
+      case 'enemy':
+        status = 'hostile';
+        break;
+      case 'transport':
+        status = 'en-route';
+        break;
+      case 'mining':
+        status = 'working';
+        break;
+      case 'civilian':
+      default:
+        status = 'passive';
+        break;
+    }
+    
+    const fleet: NpcFleet = {
+      id: 0, // Will be set by database
+      fleetId,
+      type,
+      status,
+      count,
+      location,
+      nearestCelestialBodyId,
+    };
+    
+    // Create ships
+    const ships: NpcShip[] = [];
+    
+    // Get celestial body position to use as reference
+    const centerPosition = new Vector3(0, 0, 0); // Default if no body info
+    
+    // Create ships in a formation around the center
+    const formationRadius = 300.0; // Adjust based on fleet size
+    const formationHeight = 100.0;
+    
+    for (let i = 0; i < count; i++) {
+      // Position ships in a circular formation with some randomness
+      const angle = (i / count) * Math.PI * 2;
+      const distanceFromCenter = formationRadius * (0.8 + Math.random() * 0.4);
+      const offsetX = Math.cos(angle) * distanceFromCenter;
+      const offsetY = Math.sin(angle) * distanceFromCenter;
+      const offsetZ = (Math.random() - 0.5) * formationHeight;
+      
+      const position = new Vector3(
+        centerPosition.x + offsetX,
+        centerPosition.y + offsetY,
+        centerPosition.z + offsetZ
+      );
+      
+      // Create NPC ship with template ID if available
+      const ship = createNPC(type, position, nearestCelestialBodyId, fleetId, templateId);
+      ships.push(ship);
+    }
+    
+    return { fleet, ships };
   }
   
   // Register a celestial body for reference
@@ -528,8 +591,34 @@ export class NPCManager {
     const velocity = new Vector3(npc.velocityX, npc.velocityY, npc.velocityZ);
     const rotation = new Quaternion(npc.rotationX, npc.rotationY, npc.rotationZ, npc.rotationW);
     
-    // Parameters for this NPC type
-    const params = NPC_PARAMETERS[npc.type as NPCShipType];
+    // Get parameters either from template or default
+    let params: NPCParameters;
+    
+    // First try to get parameters from template if this NPC has one
+    if (npc.templateId) {
+      const template = this.getShipTemplate(npc.templateId);
+      if (template) {
+        // Use parameters from the template
+        params = {
+          maxSpeed: template.maxSpeed,
+          turnRate: template.turnRate,
+          maxAcceleration: template.maxAcceleration,
+          detectionRange: template.detectionRange,
+          attackRange: template.attackRange,
+          fleeThreshold: template.fleeThreshold,
+          waypointArrivalDistance: template.waypointArrivalDistance,
+          pathfindingUpdateInterval: template.pathfindingUpdateInterval,
+          obstacleAvoidanceDistance: template.obstacleAvoidanceDistance,
+          formationKeepingTolerance: template.formationKeepingTolerance
+        };
+      } else {
+        // Fallback to defaults if template not found
+        params = NPC_PARAMETERS[npc.type as NPCShipType];
+      }
+    } else {
+      // Use default parameters if no template is assigned
+      params = NPC_PARAMETERS[npc.type as NPCShipType];
+    }
     
     // Calculate celestial body influence if available
     let gravityAccel = new Vector3(0, 0, 0);

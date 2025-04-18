@@ -538,6 +538,10 @@ export class GameServer {
       const celestialBodies = await storage.getAllCelestialBodies();
       this.npcManager.registerCelestialBodies(celestialBodies);
       
+      // Load ship templates (new step for template-based NPCs)
+      const shipTemplates = await storage.getAllShipTemplates();
+      this.npcManager.registerShipTemplates(shipTemplates);
+      
       // Load existing NPC ships
       const npcShips = await storage.getAllNpcShips();
       this.npcManager.registerNPCs(npcShips);
@@ -588,8 +592,8 @@ export class GameServer {
         location: string, 
         celestialBodyId: number
       ) => {
-        // Create the fleet with NPC Manager (in-memory)
-        const { fleet, ships } = this.npcManager.createNPCFleet(
+        // Create the fleet with NPC Manager (in-memory) - now uses ship templates
+        const { fleet, ships } = await this.npcManager.createNPCFleet(
           type as any, 
           count, 
           location, 
