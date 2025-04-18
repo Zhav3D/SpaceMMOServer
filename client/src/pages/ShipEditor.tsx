@@ -113,12 +113,16 @@ export default function ShipEditor() {
   
   // Function to save template
   const saveTemplate = async () => {
+    console.log("saveTemplate called, currentTemplate:", currentTemplate);
+    
     try {
       const url = editMode && currentTemplate.id 
         ? `/api/ship-templates/${currentTemplate.id}`
         : '/api/ship-templates';
         
       const method = editMode ? 'PUT' : 'POST';
+      
+      console.log("Making request to:", url, "with method:", method);
       
       const response = await fetch(url, {
         method,
@@ -128,9 +132,14 @@ export default function ShipEditor() {
         body: JSON.stringify(currentTemplate),
       });
       
+      console.log("Response status:", response.status);
+      
       if (!response.ok) {
         throw new Error('Failed to save template');
       }
+      
+      const data = await response.json();
+      console.log("Save successful, response data:", data);
       
       await fetchTemplates();
       setDialogOpen(false);
@@ -155,6 +164,7 @@ export default function ShipEditor() {
       });
     } catch (error) {
       console.error("Error saving template:", error);
+      alert("Failed to save template: " + error);
     }
   };
   
@@ -726,11 +736,17 @@ export default function ShipEditor() {
             </div>
             
             <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => {
+                console.log("Cancel button clicked");
+                setDialogOpen(false);
+              }}>
                 Cancel
               </Button>
               <Button 
-                onClick={saveTemplate}
+                onClick={() => {
+                  console.log("Create/Save button clicked");
+                  saveTemplate();
+                }}
               >
                 {editMode ? "Save Changes" : "Create Template"}
               </Button>
