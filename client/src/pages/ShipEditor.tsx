@@ -205,27 +205,22 @@ export default function ShipEditor() {
   // Save template mutation
   const saveTemplateMutation = useMutation({
     mutationFn: async (template: ShipTemplate) => {
-      // TODO: Replace with actual API call when endpoint is implemented
-      // For now, save to localStorage as a temporary solution
-      const storedTemplates = localStorage.getItem('shipTemplates');
-      let templates = storedTemplates ? JSON.parse(storedTemplates) : [];
+      const templateId = template.id ? parseInt(String(template.id), 10) : undefined;
       
-      // Check if template already exists (update) or is new (create)
-      if (template.id) {
-        const index = templates.findIndex((t: ShipTemplate) => t.id === template.id);
-        if (index >= 0) {
-          templates[index] = template;
-        } else {
-          templates.push(template);
-        }
+      // Check if we're creating a new template or updating an existing one
+      if (templateId && !isNaN(templateId)) {
+        // Update existing template
+        return apiRequest(`/api/ship-templates/${templateId}`, {
+          method: 'PUT',
+          data: template
+        });
       } else {
-        // Generate a new ID
-        template.id = `template-${Date.now()}`;
-        templates.push(template);
+        // Create new template
+        return apiRequest('/api/ship-templates', {
+          method: 'POST',
+          data: template
+        });
       }
-      
-      localStorage.setItem('shipTemplates', JSON.stringify(templates));
-      return { success: true, data: template };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ship-templates'] });
@@ -247,16 +242,14 @@ export default function ShipEditor() {
   // Delete template mutation
   const deleteTemplateMutation = useMutation({
     mutationFn: async (templateId: string) => {
-      // TODO: Replace with actual API call when endpoint is implemented
-      // For now, delete from localStorage as a temporary solution
-      const storedTemplates = localStorage.getItem('shipTemplates');
-      if (!storedTemplates) return { success: true };
+      const id = parseInt(templateId, 10);
+      if (isNaN(id)) {
+        throw new Error("Invalid template ID");
+      }
       
-      let templates = JSON.parse(storedTemplates);
-      templates = templates.filter((t: ShipTemplate) => t.id !== templateId);
-      
-      localStorage.setItem('shipTemplates', JSON.stringify(templates));
-      return { success: true };
+      return apiRequest(`/api/ship-templates/${id}`, {
+        method: 'DELETE'
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ship-templates'] });
@@ -358,7 +351,12 @@ export default function ShipEditor() {
   };
   
   // Format templates for display
-  const templates = templatesData?.success ? templatesData.data : [];
+  interface ApiResponse {
+    success: boolean;
+    data: ShipTemplate[];
+  }
+  
+  const templates = templatesData ? (templatesData as ApiResponse).data || [] : [];
 
   return (
     <div className="p-6 space-y-6">

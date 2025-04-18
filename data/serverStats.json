@@ -4606,5 +4606,101 @@
     "networkTraffic": 0,
     "playerCount": 0,
     "id": 576
+  },
+  {
+    "timestamp": 1744983880.31,
+    "cpuLoad": 11.53163875,
+    "memoryUsage": 238,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 577
+  },
+  {
+    "timestamp": 1744983890.311,
+    "cpuLoad": 12.036993800619939,
+    "memoryUsage": 243,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 578
+  },
+  {
+    "timestamp": 1744983900.311,
+    "cpuLoad": 12.429170000000001,
+    "memoryUsage": 233,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 579
+  },
+  {
+    "timestamp": 1744983910.311,
+    "cpuLoad": 12.79865875,
+    "memoryUsage": 244,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 580
+  },
+  {
+    "timestamp": 1744983920.312,
+    "cpuLoad": 13.186101250000002,
+    "memoryUsage": 232,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 581
+  },
+  {
+    "timestamp": 1744983930.311,
+    "cpuLoad": 13.5354775,
+    "memoryUsage": 234,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 582
+  },
+  {
+    "timestamp": 1744983940.311,
+    "cpuLoad": 13.91978125,
+    "memoryUsage": 244,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 583
+  },
+  {
+    "timestamp": 1744983950.312,
+    "cpuLoad": 14.27054,
+    "memoryUsage": 244,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 584
+  },
+  {
+    "timestamp": 1744983960.312,
+    "cpuLoad": 14.616248749999999,
+    "memoryUsage": 244,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 585
+  },
+  {
+    "timestamp": 1744983970.311,
+    "cpuLoad": 14.96192375,
+    "memoryUsage": 234,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 586
+  },
+  {
+    "timestamp": 1744983980.311,
+    "cpuLoad": 15.60918625,
+    "memoryUsage": 109,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 587
+  },
+  {
+    "timestamp": 1744983990.312,
+    "cpuLoad": 17.631495,
+    "memoryUsage": 129,
+    "networkTraffic": 0,
+    "playerCount": 0,
+    "id": 588
   }
 ]
