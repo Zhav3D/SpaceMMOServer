@@ -562,7 +562,7 @@ export default function ShipEditor() {
               <Ship className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
               <h3 className="text-lg font-medium mb-1">No Template Selected</h3>
               <p className="text-muted-foreground mb-4">
-                Select a template from the list or create a new one to edit its details
+                Select a template from the list or create a new one to edit its advanced parameters
               </p>
               <Button onClick={() => setActiveTab("templates")}>
                 <ChevronRight className="h-4 w-4 mr-2" />
@@ -575,7 +575,7 @@ export default function ShipEditor() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Settings className="h-5 w-5 mr-2" />
-                    Basic Properties
+                    Advanced Configuration
                   </CardTitle>
                   <CardDescription>
                     Core configuration of the ship template
