@@ -570,7 +570,377 @@ export default function ShipEditor() {
               </Button>
             </div>
           ) : (
-            <p>Detailed editor for selected template would go here</p>
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Settings className="h-5 w-5 mr-2" />
+                    Basic Properties
+                  </CardTitle>
+                  <CardDescription>
+                    Core configuration of the ship template
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium">Template ID</h4>
+                      <p className="text-sm text-muted-foreground">{selectedTemplate.templateId || "Not assigned"}</p>
+                    </div>
+                    <Badge variant="outline" className={getShipTypeBadgeColor(selectedTemplate.type)}>
+                      {selectedTemplate.type.charAt(0).toUpperCase() + selectedTemplate.type.slice(1)}
+                    </Badge>
+                  </div>
+                  
+                  <Separator />
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="detail-name">Name</Label>
+                      <Input 
+                        id="detail-name" 
+                        value={selectedTemplate.name} 
+                        onChange={e => {
+                          setSelectedTemplate({...selectedTemplate, name: e.target.value});
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="detail-description">Description</Label>
+                      <Input 
+                        id="detail-description" 
+                        value={selectedTemplate.description || ""} 
+                        onChange={e => {
+                          setSelectedTemplate({...selectedTemplate, description: e.target.value});
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="detail-type">Ship Type</Label>
+                      <Select 
+                        value={selectedTemplate.type} 
+                        onValueChange={value => {
+                          setSelectedTemplate({...selectedTemplate, type: value as any});
+                        }}
+                      >
+                        <SelectTrigger id="detail-type">
+                          <SelectValue placeholder="Select ship type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="enemy">Combat</SelectItem>
+                          <SelectItem value="transport">Transport</SelectItem>
+                          <SelectItem value="civilian">Civilian</SelectItem>
+                          <SelectItem value="mining">Mining</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    onClick={() => {
+                      handleEditTemplate(selectedTemplate);
+                      setDialogOpen(true);
+                    }}
+                    className="w-full"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Ship className="h-5 w-5 mr-2" />
+                    Performance Characteristics
+                  </CardTitle>
+                  <CardDescription>
+                    Physical properties and movement capabilities
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-mass">Mass (tons)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.mass}</span>
+                      </div>
+                      <Slider
+                        id="detail-mass"
+                        value={[selectedTemplate.mass]}
+                        min={100}
+                        max={10000}
+                        step={100}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, mass: value});
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-speed">Max Speed (m/s)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.maxSpeed}</span>
+                      </div>
+                      <Slider
+                        id="detail-speed"
+                        value={[selectedTemplate.maxSpeed]}
+                        min={10}
+                        max={200}
+                        step={5}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, maxSpeed: value});
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-acceleration">Max Acceleration (m/s²)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.maxAcceleration}</span>
+                      </div>
+                      <Slider
+                        id="detail-acceleration"
+                        value={[selectedTemplate.maxAcceleration]}
+                        min={1}
+                        max={30}
+                        step={1}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, maxAcceleration: value});
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-turn">Turn Rate (rad/s)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.turnRate.toFixed(2)}</span>
+                      </div>
+                      <Slider
+                        id="detail-turn"
+                        value={[selectedTemplate.turnRate]}
+                        min={0.01}
+                        max={0.5}
+                        step={0.01}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, turnRate: value});
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Radar className="h-5 w-5 mr-2" />
+                    Sensor & Detection
+                  </CardTitle>
+                  <CardDescription>
+                    Scanning and signature capabilities
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-detection">Detection Range (m)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.detectionRange}</span>
+                      </div>
+                      <Slider
+                        id="detail-detection"
+                        value={[selectedTemplate.detectionRange]}
+                        min={100}
+                        max={5000}
+                        step={100}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, detectionRange: value});
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-signature">Signature Radius (m)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.signatureRadius}</span>
+                      </div>
+                      <Slider
+                        id="detail-signature"
+                        value={[selectedTemplate.signatureRadius]}
+                        min={10}
+                        max={500}
+                        step={10}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, signatureRadius: value});
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Shield className="h-5 w-5 mr-2" />
+                    Combat Parameters
+                  </CardTitle>
+                  <CardDescription>
+                    Attack and defensive capabilities
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-attack">Attack Range (m)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.attackRange}</span>
+                      </div>
+                      <Slider
+                        id="detail-attack"
+                        value={[selectedTemplate.attackRange]}
+                        min={0}
+                        max={1000}
+                        step={50}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, attackRange: value});
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-flee">Flee Threshold</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.fleeThreshold.toFixed(1)}</span>
+                      </div>
+                      <Slider
+                        id="detail-flee"
+                        value={[selectedTemplate.fleeThreshold]}
+                        min={0}
+                        max={1}
+                        step={0.1}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, fleeThreshold: value});
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Health percentage at which the ship will attempt to flee from combat
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <CornerDownRight className="h-5 w-5 mr-2" />
+                    Navigation Parameters
+                  </CardTitle>
+                  <CardDescription>
+                    Pathfinding and obstacle avoidance settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-waypoint">Waypoint Arrival Distance (m)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.waypointArrivalDistance}</span>
+                      </div>
+                      <Slider
+                        id="detail-waypoint"
+                        value={[selectedTemplate.waypointArrivalDistance]}
+                        min={10}
+                        max={300}
+                        step={10}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, waypointArrivalDistance: value});
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Distance at which a waypoint is considered reached
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-pathfinding">Pathfinding Update Interval (ms)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.pathfindingUpdateInterval}</span>
+                      </div>
+                      <Slider
+                        id="detail-pathfinding"
+                        value={[selectedTemplate.pathfindingUpdateInterval]}
+                        min={1000}
+                        max={10000}
+                        step={1000}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, pathfindingUpdateInterval: value});
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-obstacle">Obstacle Avoidance Distance (m)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.obstacleAvoidanceDistance}</span>
+                      </div>
+                      <Slider
+                        id="detail-obstacle"
+                        value={[selectedTemplate.obstacleAvoidanceDistance]}
+                        min={50}
+                        max={500}
+                        step={50}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, obstacleAvoidanceDistance: value});
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="detail-formation">Formation Keeping Tolerance (m)</Label>
+                        <span className="text-sm font-mono">{selectedTemplate.formationKeepingTolerance}</span>
+                      </div>
+                      <Slider
+                        id="detail-formation"
+                        value={[selectedTemplate.formationKeepingTolerance]}
+                        min={10}
+                        max={200}
+                        step={10}
+                        onValueChange={([value]) => {
+                          setSelectedTemplate({...selectedTemplate, formationKeepingTolerance: value});
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        How precisely the ship maintains its position in formation
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <div className="lg:col-span-2 flex justify-end mt-4">
+                <div className="space-x-4">
+                  <Button variant="outline" onClick={() => setActiveTab("templates")}>
+                    <ChevronRight className="h-4 w-4 mr-2" />
+                    Back to Templates
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      handleEditTemplate(selectedTemplate);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </TabsContent>
       </Tabs>

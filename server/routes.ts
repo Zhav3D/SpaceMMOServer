@@ -1920,6 +1920,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Ship Templates API
   // Get all ship templates
+  // Create default ship templates if none exist
+  async function ensureDefaultShipTemplates() {
+    const templates = await storage.getAllShipTemplates();
+    
+    // If there are no templates, create default ones
+    if (templates.length === 0) {
+      console.log("Creating default ship templates...");
+      
+      // Default templates for different ship types
+      const defaultTemplates = [
+        {
+          name: "Standard Combat Vessel",
+          type: "enemy",
+          description: "A well-balanced combat ship with good maneuverability and firepower",
+          mass: 2500,
+          maxSpeed: 50.0,
+          turnRate: 0.1,
+          maxAcceleration: 10.0,
+          detectionRange: 1000.0,
+          signatureRadius: 100,
+          attackRange: 300.0,
+          fleeThreshold: 0.3,
+          waypointArrivalDistance: 100.0,
+          pathfindingUpdateInterval: 5000,
+          obstacleAvoidanceDistance: 200.0,
+          formationKeepingTolerance: 50.0,
+          templateId: "template-standard-combat"
+        },
+        {
+          name: "Heavy Transport Freighter",
+          type: "transport",
+          description: "A large cargo vessel designed for bulk transportation",
+          mass: 5000,
+          maxSpeed: 30.0,
+          turnRate: 0.05,
+          maxAcceleration: 5.0,
+          detectionRange: 800.0,
+          signatureRadius: 200,
+          attackRange: 0.0,
+          fleeThreshold: 0.5,
+          waypointArrivalDistance: 150.0,
+          pathfindingUpdateInterval: 7000,
+          obstacleAvoidanceDistance: 300.0,
+          formationKeepingTolerance: 100.0,
+          templateId: "template-heavy-transport"
+        },
+        {
+          name: "Civilian Shuttle",
+          type: "civilian",
+          description: "A standard civilian vessel for passenger transport",
+          mass: 1500,
+          maxSpeed: 40.0,
+          turnRate: 0.08,
+          maxAcceleration: 7.0,
+          detectionRange: 600.0,
+          signatureRadius: 80,
+          attackRange: 0.0,
+          fleeThreshold: 0.7,
+          waypointArrivalDistance: 120.0,
+          pathfindingUpdateInterval: 6000,
+          obstacleAvoidanceDistance: 250.0,
+          formationKeepingTolerance: 75.0,
+          templateId: "template-civilian-shuttle"
+        },
+        {
+          name: "Resource Extractor",
+          type: "mining",
+          description: "A specialized mining vessel with advanced resource extraction capabilities",
+          mass: 3000,
+          maxSpeed: 20.0,
+          turnRate: 0.04,
+          maxAcceleration: 4.0,
+          detectionRange: 700.0,
+          signatureRadius: 150,
+          attackRange: 0.0,
+          fleeThreshold: 0.8,
+          waypointArrivalDistance: 80.0,
+          pathfindingUpdateInterval: 10000,
+          obstacleAvoidanceDistance: 350.0,
+          formationKeepingTolerance: 60.0,
+          templateId: "template-resource-extractor"
+        }
+      ];
+      
+      // Create each default template
+      for (const template of defaultTemplates) {
+        await storage.createShipTemplate(template);
+      }
+      
+      console.log(`Created ${defaultTemplates.length} default ship templates`);
+    }
+  }
+
+  // Initialize default templates when the server starts
+  ensureDefaultShipTemplates().catch(err => {
+    console.error(`Failed to create default ship templates: ${err}`);
+  });
+
   app.get('/api/ship-templates', async (req: Request, res: Response) => {
     try {
       const templates = await storage.getAllShipTemplates();
