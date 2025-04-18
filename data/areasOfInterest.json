@@ -12,7 +12,7 @@
     "latency": 0,
     "load": 0,
     "capacityLimit": 400,
-    "id": 33
+    "id": 37
   },
   {
     "name": "Mars Colony (Beta Sector)",
@@ -27,7 +27,7 @@
     "latency": 0,
     "load": 0,
     "capacityLimit": 400,
-    "id": 34
+    "id": 38
   },
   {
     "name": "Jupiter Mining Belt (Gamma Sector)",
@@ -42,7 +42,7 @@
     "latency": 0,
     "load": 0,
     "capacityLimit": 400,
-    "id": 35
+    "id": 39
   },
   {
     "name": "Saturn Rings (Delta Sector)",
@@ -57,6 +57,6 @@
     "latency": 0,
     "load": 0,
     "capacityLimit": 400,
-    "id": 36
+    "id": 40
   }
 ]

@@ -385,7 +385,7 @@ export default function ShipEditor() {
       </div>
 
       <Tabs defaultValue="templates" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="templates">
             <Clipboard className="h-4 w-4 mr-2" />
             Ship Templates
@@ -393,6 +393,10 @@ export default function ShipEditor() {
           <TabsTrigger value="editor">
             <Settings className="h-4 w-4 mr-2" />
             Detailed Editor
+          </TabsTrigger>
+          <TabsTrigger value="specialized" disabled={!selectedTemplate}>
+            <FileCode2 className="h-4 w-4 mr-2" />
+            Advanced Tuning
           </TabsTrigger>
         </TabsList>
         
@@ -838,13 +842,13 @@ export default function ShipEditor() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <CornerDownRight className="h-5 w-5 mr-2" />
-                    Navigation Parameters
+                    Advanced Navigation Parameters
                   </CardTitle>
                   <CardDescription>
-                    Pathfinding and obstacle avoidance settings
+                    Specialized pathfinding and obstacle avoidance settings
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent>
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between items-center mb-2">
@@ -918,6 +922,148 @@ export default function ShipEditor() {
                       <p className="text-xs text-muted-foreground mt-1">
                         How precisely the ship maintains its position in formation
                       </p>
+                    </div>
+                    
+                    <Separator className="my-4" />
+                    
+                    <div className="pt-2">
+                      <h4 className="text-sm font-medium mb-3">Type-Specific Navigation Controls</h4>
+                      
+                      {selectedTemplate.type === 'transport' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="auto-routing">Auto Routing</Label>
+                              <p className="text-xs text-muted-foreground">Calculate efficient trade routes</p>
+                            </div>
+                            <Switch id="auto-routing" defaultChecked />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="convoy-capability">Convoy Capability</Label>
+                              <p className="text-xs text-muted-foreground">Can lead transport convoys</p>
+                            </div>
+                            <Switch id="convoy-capability" />
+                          </div>
+                          
+                          <div className="space-y-1 mt-3">
+                            <Label>Cargo Priority</Label>
+                            <Select defaultValue="balanced">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select priority" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="speed">Speed Priority</SelectItem>
+                                <SelectItem value="balanced">Balanced</SelectItem>
+                                <SelectItem value="capacity">Capacity Priority</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedTemplate.type === 'enemy' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="intercept-capability">Interception</Label>
+                              <p className="text-xs text-muted-foreground">Advanced target interception</p>
+                            </div>
+                            <Switch id="intercept-capability" defaultChecked />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="tactical-movement">Tactical Movement</Label>
+                              <p className="text-xs text-muted-foreground">Use tactical movement patterns</p>
+                            </div>
+                            <Switch id="tactical-movement" defaultChecked />
+                          </div>
+                          
+                          <div className="space-y-1 mt-3">
+                            <Label>Combat Stance</Label>
+                            <Select defaultValue="balanced">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select stance" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="aggressive">Aggressive</SelectItem>
+                                <SelectItem value="balanced">Balanced</SelectItem>
+                                <SelectItem value="defensive">Defensive</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedTemplate.type === 'mining' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="resource-scanning">Resource Scanning</Label>
+                              <p className="text-xs text-muted-foreground">Scan for optimal mining locations</p>
+                            </div>
+                            <Switch id="resource-scanning" defaultChecked />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="precision-approach">Precision Approach</Label>
+                              <p className="text-xs text-muted-foreground">Precise positioning near asteroids</p>
+                            </div>
+                            <Switch id="precision-approach" defaultChecked />
+                          </div>
+                          
+                          <div className="space-y-1 mt-3">
+                            <Label>Mining Method</Label>
+                            <Select defaultValue="laser">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select method" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="laser">Laser Mining</SelectItem>
+                                <SelectItem value="fracture">Fracture Mining</SelectItem>
+                                <SelectItem value="collector">Collector Mining</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedTemplate.type === 'civilian' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="civilian-routes">Civilian Routes</Label>
+                              <p className="text-xs text-muted-foreground">Follow established civilian routes</p>
+                            </div>
+                            <Switch id="civilian-routes" defaultChecked />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="safe-pathing">Safe Pathing</Label>
+                              <p className="text-xs text-muted-foreground">Prioritize safety over efficiency</p>
+                            </div>
+                            <Switch id="safe-pathing" defaultChecked />
+                          </div>
+                          
+                          <div className="space-y-1 mt-3">
+                            <Label>Traffic Pattern</Label>
+                            <Select defaultValue="standard">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select pattern" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="standard">Standard</SelectItem>
+                                <SelectItem value="touring">Touring</SelectItem>
+                                <SelectItem value="commuter">Commuter</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
