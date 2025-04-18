@@ -67,6 +67,7 @@ export const npcShips = pgTable("npc_ships", {
   fleetId: text("fleet_id").notNull(),
   aiState: text("ai_state").notNull(), // patrolling, attacking, fleeing, mining, etc.
   targetId: text("target_id"), // ID of the target (if any)
+  templateId: text("template_id"), // ID of the ship template used, if any
   // Advanced navigation properties
   waypointsJson: jsonb("waypoints_json"), // Array of navigation waypoints
   formationPosition: integer("formation_position"), // Position in fleet formation
