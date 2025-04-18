@@ -767,6 +767,7 @@ export class JsonStorage implements IStorage {
       this.saveDataToDisk('serverLogs', this.serverLogs);
       this.saveDataToDisk('serverStats', this.serverStats);
       this.saveDataToDisk('settings', Array.from(this.settings.values()));
+      this.saveDataToDisk('shipTemplates', Array.from(this.shipTemplates.values()));
       
       log('World state saved successfully', 'info');
       return true;
@@ -1144,6 +1145,45 @@ export class JsonStorage implements IStorage {
   
   async getAllSettings(): Promise<ServerSetting[]> {
     return Array.from(this.settings.values());
+  }
+  
+  // Ship Template methods
+  async getShipTemplate(id: number): Promise<ShipTemplate | undefined> {
+    return this.shipTemplates.get(id);
+  }
+  
+  async getShipTemplateByTemplateId(templateId: string): Promise<ShipTemplate | undefined> {
+    return Array.from(this.shipTemplates.values()).find(
+      (template) => template.templateId === templateId
+    );
+  }
+  
+  async getAllShipTemplates(): Promise<ShipTemplate[]> {
+    return Array.from(this.shipTemplates.values());
+  }
+  
+  async createShipTemplate(template: InsertShipTemplate): Promise<ShipTemplate> {
+    const id = this.shipTemplateId++;
+    const shipTemplate: ShipTemplate = { ...template, id };
+    this.shipTemplates.set(id, shipTemplate);
+    this.saveDataToDisk('shipTemplates', Array.from(this.shipTemplates.values()));
+    return shipTemplate;
+  }
+  
+  async updateShipTemplate(id: number, template: Partial<ShipTemplate>): Promise<ShipTemplate | undefined> {
+    const existing = this.shipTemplates.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...template };
+    this.shipTemplates.set(id, updated);
+    this.saveDataToDisk('shipTemplates', Array.from(this.shipTemplates.values()));
+    return updated;
+  }
+  
+  async deleteShipTemplate(id: number): Promise<boolean> {
+    const result = this.shipTemplates.delete(id);
+    this.saveDataToDisk('shipTemplates', Array.from(this.shipTemplates.values()));
+    return result;
   }
 }
 

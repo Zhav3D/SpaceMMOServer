@@ -13,7 +13,8 @@ import {
   areasOfInterest, 
   serverLogs, 
   serverStats, 
-  missions 
+  missions,
+  shipTemplates
 } from "@shared/schema";
 
 // API response interfaces
