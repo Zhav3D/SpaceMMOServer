@@ -17,22 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -44,13 +28,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { z } from "zod";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { queryClient } from "@/lib/queryClient";
 import { 
   Ship, 
@@ -60,10 +51,10 @@ import {
   Trash2, 
   RefreshCw, 
   Box, 
-  Zap, 
-  Radar
+  Zap
 } from "lucide-react";
 
+// Define the schema for ship templates
 const ShipTemplateSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -449,7 +440,7 @@ export default function ShipEditor() {
             </DialogDescription>
           </DialogHeader>
           
-          <Form {...form}>
+          <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-6">
@@ -459,60 +450,51 @@ export default function ShipEditor() {
                       Basic Information
                     </h3>
                   
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ship Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter ship name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Ship Name</Label>
+                      <Input 
+                        id="name"
+                        placeholder="Enter ship name" 
+                        {...form.register("name")}
+                      />
+                      {form.formState.errors.name && (
+                        <p className="text-sm font-medium text-destructive">
+                          {form.formState.errors.name.message}
+                        </p>
                       )}
-                    />
+                    </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ship Type</FormLabel>
-                          <Select 
-                            onValueChange={handleShipTypeChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select ship type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="enemy">Combat</SelectItem>
-                              <SelectItem value="transport">Transport</SelectItem>
-                              <SelectItem value="civilian">Civilian</SelectItem>
-                              <SelectItem value="mining">Mining</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
+                    <div className="space-y-2">
+                      <Label htmlFor="type">Ship Type</Label>
+                      <Select
+                        onValueChange={handleShipTypeChange}
+                        defaultValue={form.getValues("type")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select ship type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="enemy">Combat</SelectItem>
+                          <SelectItem value="transport">Transport</SelectItem>
+                          <SelectItem value="civilian">Civilian</SelectItem>
+                          <SelectItem value="mining">Mining</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors.type && (
+                        <p className="text-sm font-medium text-destructive">
+                          {form.formState.errors.type.message}
+                        </p>
                       )}
-                    />
+                    </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ship description" {...field} value={field.value || ''} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Input 
+                        id="description"
+                        placeholder="Ship description" 
+                        {...form.register("description")}
+                      />
+                    </div>
                   </div>
                   
                   <Separator />
@@ -523,214 +505,102 @@ export default function ShipEditor() {
                       Performance
                     </h3>
                     
-                    <FormField
-                      control={form.control}
-                      name="mass"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Mass (tons)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={10}
-                              max={10000}
-                              step={10}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="mass">Mass (tons)</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {form.watch("mass")}
+                        </span>
+                      </div>
+                      <Input 
+                        id="mass"
+                        type="number"
+                        {...form.register("mass", { valueAsNumber: true })}
+                      />
+                    </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="maxSpeed"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Max Speed (m/s)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={10}
-                              max={200}
-                              step={1}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="maxSpeed">Max Speed (m/s)</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {form.watch("maxSpeed")}
+                        </span>
+                      </div>
+                      <Input 
+                        id="maxSpeed"
+                        type="number"
+                        {...form.register("maxSpeed", { valueAsNumber: true })}
+                      />
+                    </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="maxAcceleration"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Acceleration (m/s²)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={1}
-                              max={50}
-                              step={0.5}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="turnRate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Turn Rate (rad/s)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value.toFixed(2)}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={0.01}
-                              max={0.5}
-                              step={0.01}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="turnRate">Turn Rate (rad/s)</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {form.watch("turnRate")}
+                        </span>
+                      </div>
+                      <Input 
+                        id="turnRate"
+                        type="number"
+                        step="0.01"
+                        {...form.register("turnRate", { valueAsNumber: true })}
+                      />
+                    </div>
                   </div>
                 </div>
                 
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium flex items-center">
-                      <Radar className="h-4 w-4 mr-2" />
-                      Sensors
+                      <Settings className="h-4 w-4 mr-2" />
+                      Sensors & Combat
                     </h3>
                     
-                    <FormField
-                      control={form.control}
-                      name="detectionRange"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Detection Range (m)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={100}
-                              max={5000}
-                              step={100}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="detectionRange">Detection Range (m)</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {form.watch("detectionRange")}
+                        </span>
+                      </div>
+                      <Input 
+                        id="detectionRange"
+                        type="number"
+                        {...form.register("detectionRange", { valueAsNumber: true })}
+                      />
+                    </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="signatureRadius"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Signature Radius (m)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={10}
-                              max={500}
-                              step={10}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="attackRange">Attack Range (m)</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {form.watch("attackRange")}
+                        </span>
+                      </div>
+                      <Input 
+                        id="attackRange"
+                        type="number"
+                        {...form.register("attackRange", { valueAsNumber: true })}
+                      />
+                    </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="attackRange"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Attack Range (m)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={0}
-                              max={1000}
-                              step={50}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="fleeThreshold"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Flee Threshold</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {(field.value * 100).toFixed(0)}%
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={0}
-                              max={1}
-                              step={0.05}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="fleeThreshold">Flee Threshold</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {form.watch("fleeThreshold") * 100}%
+                        </span>
+                      </div>
+                      <Input 
+                        id="fleeThreshold"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="1"
+                        {...form.register("fleeThreshold", { valueAsNumber: true })}
+                      />
+                    </div>
                   </div>
                   
                   <Separator />
@@ -741,55 +611,33 @@ export default function ShipEditor() {
                       Navigation
                     </h3>
                     
-                    <FormField
-                      control={form.control}
-                      name="waypointArrivalDistance"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Waypoint Arrival (m)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={10}
-                              max={500}
-                              step={10}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="waypointArrivalDistance">Waypoint Arrival (m)</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {form.watch("waypointArrivalDistance")}
+                        </span>
+                      </div>
+                      <Input 
+                        id="waypointArrivalDistance"
+                        type="number"
+                        {...form.register("waypointArrivalDistance", { valueAsNumber: true })}
+                      />
+                    </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="obstacleAvoidanceDistance"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between">
-                            <FormLabel>Obstacle Avoidance (m)</FormLabel>
-                            <span className="text-sm text-muted-foreground">
-                              {field.value}
-                            </span>
-                          </div>
-                          <FormControl>
-                            <Slider
-                              min={50}
-                              max={500}
-                              step={10}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="obstacleAvoidanceDistance">Obstacle Avoidance (m)</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {form.watch("obstacleAvoidanceDistance")}
+                        </span>
+                      </div>
+                      <Input 
+                        id="obstacleAvoidanceDistance"
+                        type="number"
+                        {...form.register("obstacleAvoidanceDistance", { valueAsNumber: true })}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -812,7 +660,7 @@ export default function ShipEditor() {
                 </Button>
               </DialogFooter>
             </form>
-          </Form>
+          </FormProvider>
         </DialogContent>
       </Dialog>
       
