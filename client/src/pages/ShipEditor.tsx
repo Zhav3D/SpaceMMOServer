@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
   Card, 
   CardContent, 
   CardDescription, 
@@ -53,10 +47,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -73,9 +71,6 @@ import {
   Shield, 
   Radar, 
   CornerDownRight, 
-  Save, 
-  LineChart,
-  ChevronRight,
   FileCode2
 } from "lucide-react";
 
@@ -454,7 +449,7 @@ export default function ShipEditor() {
       
       {/* Edit/Create Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {editMode ? "Edit Ship Template" : "Create New Ship Template"}
@@ -464,25 +459,25 @@ export default function ShipEditor() {
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs defaultValue="basic" className="mt-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basic">
-                <Settings className="h-4 w-4 mr-2" />
-                Basic Settings
-              </TabsTrigger>
-              <TabsTrigger value="advanced">
-                <Radar className="h-4 w-4 mr-2" />
-                Advanced Properties
-              </TabsTrigger>
-              <TabsTrigger value="specialized">
-                <FileCode2 className="h-4 w-4 mr-2" />
-                Type Specialization
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="basic" className="space-y-4 pt-4">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <Tabs defaultValue="basic" className="mt-4">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="basic">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Basic Settings
+                  </TabsTrigger>
+                  <TabsTrigger value="advanced">
+                    <Radar className="h-4 w-4 mr-2" />
+                    Advanced Properties
+                  </TabsTrigger>
+                  <TabsTrigger value="specialized">
+                    <FileCode2 className="h-4 w-4 mr-2" />
+                    Type Specialization
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="basic" className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-6">
                       <div className="space-y-4">
@@ -604,56 +599,6 @@ export default function ShipEditor() {
                             </FormItem>
                           )}
                         />
-                        
-                        <FormField
-                          control={form.control}
-                          name="maxAcceleration"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Acceleration (m/s²)</FormLabel>
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={1}
-                                  max={50}
-                                  step={0.5}
-                                  value={[field.value]}
-                                  onValueChange={(values) => field.onChange(values[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="turnRate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Turn Rate (rad/s)</FormLabel>
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value.toFixed(2)}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={0.01}
-                                  max={0.5}
-                                  step={0.01}
-                                  value={[field.value]}
-                                  onValueChange={(values) => field.onChange(values[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
                       </div>
                     </div>
                     
@@ -714,791 +659,48 @@ export default function ShipEditor() {
                           )}
                         />
                       </div>
-                      
-                      <Separator />
-                      
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium flex items-center">
-                          <Shield className="h-4 w-4 mr-2" />
-                          Combat Parameters
-                        </h3>
-                        
-                        <FormField
-                          control={form.control}
-                          name="attackRange"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Attack Range (m)</FormLabel>
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={0}
-                                  max={1000}
-                                  step={50}
-                                  value={[field.value]}
-                                  onValueChange={(values) => field.onChange(values[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="fleeThreshold"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Flee Threshold</FormLabel>
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value.toFixed(1)}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={0}
-                                  max={1}
-                                  step={0.1}
-                                  value={[field.value]}
-                                  onValueChange={(values) => field.onChange(values[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              <FormDescription>
-                                Percentage of health at which ship will attempt to flee
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium flex items-center">
-                          <CornerDownRight className="h-4 w-4 mr-2" />
-                          Navigation
-                        </h3>
-                        
-                        <FormField
-                          control={form.control}
-                          name="waypointArrivalDistance"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Waypoint Arrival (m)</FormLabel>
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={10}
-                                  max={500}
-                                  step={10}
-                                  value={[field.value]}
-                                  onValueChange={(values) => field.onChange(values[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="obstacleAvoidanceDistance"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Obstacle Avoidance (m)</FormLabel>
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={50}
-                                  max={500}
-                                  step={25}
-                                  value={[field.value]}
-                                  onValueChange={(values) => field.onChange(values[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
                     </div>
                   </div>
+                </TabsContent>
                 
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={saveTemplateMutation.isPending}
-                    >
-                      {saveTemplateMutation.isPending && (
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      )}
-                      {editMode ? "Save Changes" : "Create Template"}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </TabsContent>
-            
-            <TabsContent value="advanced" className="space-y-4 pt-4">
-              {form.watch("type") && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <CornerDownRight className="h-5 w-5 mr-2" />
-                        Advanced Navigation Parameters
-                      </CardTitle>
-                      <CardDescription>
-                        Specialized pathfinding and obstacle avoidance settings
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="formationKeepingTolerance"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Formation Tolerance (m)</FormLabel>
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={10}
-                                  max={200}
-                                  step={10}
-                                  value={[field.value]}
-                                  onValueChange={(values) => field.onChange(values[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              <FormDescription>
-                                How precisely the ship maintains its position in formation
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="pathfindingUpdateInterval"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Pathfinding Interval (ms)</FormLabel>
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={1000}
-                                  max={10000}
-                                  step={1000}
-                                  value={[field.value]}
-                                  onValueChange={(values) => field.onChange(values[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              <FormDescription>
-                                How often the ship recalculates its pathfinding
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="pt-2">
-                          <h4 className="text-sm font-medium mb-3">Type-Specific Navigation Controls</h4>
-                          
-                          {form.watch("type") === 'transport' && (
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <Label htmlFor="auto-routing">Auto Routing</Label>
-                                  <p className="text-xs text-muted-foreground">Calculate efficient trade routes</p>
-                                </div>
-                                <Switch id="auto-routing" defaultChecked />
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <Label htmlFor="convoy-capability">Convoy Capability</Label>
-                                  <p className="text-xs text-muted-foreground">Can lead transport convoys</p>
-                                </div>
-                                <Switch id="convoy-capability" />
-                              </div>
-                              
-                              <div className="space-y-1 mt-3">
-                                <Label>Cargo Priority</Label>
-                                <Select defaultValue="balanced">
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select priority" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="speed">Speed Priority</SelectItem>
-                                    <SelectItem value="balanced">Balanced</SelectItem>
-                                    <SelectItem value="capacity">Capacity Priority</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {form.watch("type") === 'enemy' && (
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <Label htmlFor="intercept-capability">Interception</Label>
-                                  <p className="text-xs text-muted-foreground">Advanced target interception</p>
-                                </div>
-                                <Switch id="intercept-capability" defaultChecked />
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <Label htmlFor="tactical-movement">Tactical Movement</Label>
-                                  <p className="text-xs text-muted-foreground">Use tactical movement patterns</p>
-                                </div>
-                                <Switch id="tactical-movement" defaultChecked />
-                              </div>
-                              
-                              <div className="space-y-1 mt-3">
-                                <Label>Combat Stance</Label>
-                                <Select defaultValue="balanced">
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select stance" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="aggressive">Aggressive</SelectItem>
-                                    <SelectItem value="balanced">Balanced</SelectItem>
-                                    <SelectItem value="defensive">Defensive</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {form.watch("type") === 'mining' && (
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <Label htmlFor="resource-scanning">Resource Scanning</Label>
-                                  <p className="text-xs text-muted-foreground">Scan for optimal mining locations</p>
-                                </div>
-                                <Switch id="resource-scanning" defaultChecked />
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <Label htmlFor="precision-approach">Precision Approach</Label>
-                                  <p className="text-xs text-muted-foreground">Precise positioning near asteroids</p>
-                                </div>
-                                <Switch id="precision-approach" defaultChecked />
-                              </div>
-                              
-                              <div className="space-y-1 mt-3">
-                                <Label>Mining Method</Label>
-                                <Select defaultValue="laser">
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select method" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="laser">Laser Mining</SelectItem>
-                                    <SelectItem value="fracture">Fracture Mining</SelectItem>
-                                    <SelectItem value="collector">Collector Mining</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {form.watch("type") === 'civilian' && (
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <Label htmlFor="civilian-routes">Civilian Routes</Label>
-                                  <p className="text-xs text-muted-foreground">Follow established civilian routes</p>
-                                </div>
-                                <Switch id="civilian-routes" defaultChecked />
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <Label htmlFor="safe-pathing">Safe Pathing</Label>
-                                  <p className="text-xs text-muted-foreground">Prioritize safety over efficiency</p>
-                                </div>
-                                <Switch id="safe-pathing" defaultChecked />
-                              </div>
-                              
-                              <div className="space-y-1 mt-3">
-                                <Label>Traffic Pattern</Label>
-                                <Select defaultValue="standard">
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select pattern" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="standard">Standard</SelectItem>
-                                    <SelectItem value="touring">Touring</SelectItem>
-                                    <SelectItem value="commuter">Commuter</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="specialized" className="space-y-4 pt-4">
-              {form.watch("type") === 'enemy' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Combat Ship Fine-Tuning</CardTitle>
-                    <CardDescription>
-                      Advanced combat parameters that affect this ship's performance in battle
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="weapon-type">Primary Weapon System</Label>
-                          <Select defaultValue="laser">
-                            <SelectTrigger id="weapon-type" className="mt-2">
-                              <SelectValue placeholder="Select weapon type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="laser">Laser Cannons</SelectItem>
-                              <SelectItem value="missile">Missile Launchers</SelectItem>
-                              <SelectItem value="railgun">Railgun</SelectItem>
-                              <SelectItem value="plasma">Plasma Projector</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="target-priority">Target Priority</Label>
-                          <Select defaultValue="threat">
-                            <SelectTrigger id="target-priority" className="mt-2">
-                              <SelectValue placeholder="Select priority" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="threat">Threat Level</SelectItem>
-                              <SelectItem value="distance">Proximity</SelectItem>
-                              <SelectItem value="damage">Damage Potential</SelectItem>
-                              <SelectItem value="health">Weakest Target</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Combat Specializations</Label>
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="special-hunter" />
-                              <Label htmlFor="special-hunter" className="text-sm">Transport Hunter</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="special-swarm" defaultChecked />
-                              <Label htmlFor="special-swarm" className="text-sm">Swarm Tactics</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="special-flanker" />
-                              <Label htmlFor="special-flanker" className="text-sm">Flanker</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="special-ambush" />
-                              <Label htmlFor="special-ambush" className="text-sm">Ambush Specialist</Label>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="evasion">Evasion Capability</Label>
-                          <div className="flex items-center space-x-3 mt-2">
-                            <span className="text-sm">Low</span>
-                            <Slider
-                              id="evasion"
-                              defaultValue={[65]}
-                              max={100}
-                              step={5}
-                              className="flex-1"
-                            />
-                            <span className="text-sm">High</span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="armor-config">Armor Configuration</Label>
-                          <Select defaultValue="balanced">
-                            <SelectTrigger id="armor-config" className="mt-2">
-                              <SelectValue placeholder="Select configuration" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="heavy">Heavy Plating</SelectItem>
-                              <SelectItem value="balanced">Balanced</SelectItem>
-                              <SelectItem value="light">Light & Agile</SelectItem>
-                              <SelectItem value="reactive">Reactive Armor</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-4">
-                          <div className="space-y-0.5">
-                            <Label htmlFor="advanced-targeting">Advanced Targeting</Label>
-                            <p className="text-xs text-muted-foreground">Enhanced weapon tracking and prediction</p>
-                          </div>
-                          <Switch id="advanced-targeting" defaultChecked />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {form.watch("type") === 'transport' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Transport Ship Fine-Tuning</CardTitle>
-                    <CardDescription>
-                      Advanced cargo and route optimization parameters
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="cargo-type">Specialized Cargo Type</Label>
-                          <Select defaultValue="general">
-                            <SelectTrigger id="cargo-type" className="mt-2">
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="general">General Cargo</SelectItem>
-                              <SelectItem value="liquid">Liquid Transport</SelectItem>
-                              <SelectItem value="container">Container Shipping</SelectItem>
-                              <SelectItem value="hazardous">Hazardous Materials</SelectItem>
-                              <SelectItem value="refrigerated">Refrigerated Cargo</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="route-profile">Route Optimization Profile</Label>
-                          <Select defaultValue="balanced">
-                            <SelectTrigger id="route-profile" className="mt-2">
-                              <SelectValue placeholder="Select profile" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="speed">Speed Priority</SelectItem>
-                              <SelectItem value="balanced">Balanced</SelectItem>
-                              <SelectItem value="efficiency">Fuel Efficiency</SelectItem>
-                              <SelectItem value="safety">Safety Priority</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
-                          <div className="space-y-0.5">
-                            <Label htmlFor="auto-scheduling">Automated Scheduling</Label>
-                            <p className="text-xs text-muted-foreground">AI-based delivery scheduling system</p>
-                          </div>
-                          <Switch id="auto-scheduling" defaultChecked />
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="load-balancing">Load Balancing System</Label>
-                          <Select defaultValue="automatic">
-                            <SelectTrigger id="load-balancing" className="mt-2">
-                              <SelectValue placeholder="Select system" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="basic">Basic Balancing</SelectItem>
-                              <SelectItem value="automatic">Automatic Stabilization</SelectItem>
-                              <SelectItem value="advanced">Advanced Dynamic Balancing</SelectItem>
-                              <SelectItem value="adaptive">Adaptive Response System</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="cargo-security">Cargo Security Level</Label>
-                          <div className="flex items-center space-x-3 mt-2">
-                            <span className="text-sm">Basic</span>
-                            <Slider
-                              id="cargo-security"
-                              defaultValue={[70]}
-                              max={100}
-                              step={10}
-                              className="flex-1"
-                            />
-                            <span className="text-sm">Maximum</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
-                          <div className="space-y-0.5">
-                            <Label htmlFor="emergency-jettison">Emergency Jettison</Label>
-                            <p className="text-xs text-muted-foreground">Eject cargo in emergency situations</p>
-                          </div>
-                          <Switch id="emergency-jettison" />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {form.watch("type") === 'mining' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Mining Ship Fine-Tuning</CardTitle>
-                    <CardDescription>
-                      Advanced extraction and resource processing parameters
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="extraction-method">Primary Extraction Method</Label>
-                          <Select defaultValue="laser">
-                            <SelectTrigger id="extraction-method" className="mt-2">
-                              <SelectValue placeholder="Select method" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="laser">Precision Laser Cutting</SelectItem>
-                              <SelectItem value="drill">Deep-Core Drilling</SelectItem>
-                              <SelectItem value="fracture">Fracture Mining</SelectItem>
-                              <SelectItem value="scoop">Surface Collection</SelectItem>
-                              <SelectItem value="tractor">Tractor Collection</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="material-focus">Material Focus</Label>
-                          <Select defaultValue="balanced">
-                            <SelectTrigger id="material-focus" className="mt-2">
-                              <SelectValue placeholder="Select focus" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="metals">Metallic Ores</SelectItem>
-                              <SelectItem value="rare">Rare Materials</SelectItem>
-                              <SelectItem value="balanced">Balanced Extraction</SelectItem>
-                              <SelectItem value="gas">Gas Collection</SelectItem>
-                              <SelectItem value="ice">Ice Mining</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="scan-precision">Scanning Precision</Label>
-                          <div className="flex items-center space-x-3 mt-2">
-                            <span className="text-sm">Low</span>
-                            <Slider
-                              id="scan-precision"
-                              defaultValue={[80]}
-                              max={100}
-                              step={5}
-                              className="flex-1"
-                            />
-                            <span className="text-sm">High</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="refinement-level">Onboard Refinement Level</Label>
-                          <Select defaultValue="basic">
-                            <SelectTrigger id="refinement-level" className="mt-2">
-                              <SelectValue placeholder="Select level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">Raw Transport Only</SelectItem>
-                              <SelectItem value="basic">Basic Processing</SelectItem>
-                              <SelectItem value="advanced">Advanced Refinement</SelectItem>
-                              <SelectItem value="complete">Complete Processing</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Mining Specializations</Label>
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="special-deep" defaultChecked />
-                              <Label htmlFor="special-deep" className="text-sm">Deep Extraction</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="special-efficient" />
-                              <Label htmlFor="special-efficient" className="text-sm">Resource Efficiency</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="special-analysis" />
-                              <Label htmlFor="special-analysis" className="text-sm">Material Analysis</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="special-fragment" />
-                              <Label htmlFor="special-fragment" className="text-sm">Fragment Recovery</Label>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
-                          <div className="space-y-0.5">
-                            <Label htmlFor="auto-drone">Automated Mining Drones</Label>
-                            <p className="text-xs text-muted-foreground">Deploy drones for auxiliary mining</p>
-                          </div>
-                          <Switch id="auto-drone" />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {form.watch("type") === 'civilian' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Civilian Ship Fine-Tuning</CardTitle>
-                    <CardDescription>
-                      Advanced passenger comfort and safety parameters
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="vessel-purpose">Primary Purpose</Label>
-                          <Select defaultValue="transport">
-                            <SelectTrigger id="vessel-purpose" className="mt-2">
-                              <SelectValue placeholder="Select purpose" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="transport">Passenger Transport</SelectItem>
-                              <SelectItem value="tourism">Tourism & Sightseeing</SelectItem>
-                              <SelectItem value="research">Research & Exploration</SelectItem>
-                              <SelectItem value="medical">Medical Services</SelectItem>
-                              <SelectItem value="diplomatic">Diplomatic Missions</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="comfort-class">Comfort Classification</Label>
-                          <Select defaultValue="standard">
-                            <SelectTrigger id="comfort-class" className="mt-2">
-                              <SelectValue placeholder="Select class" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="economy">Economy Class</SelectItem>
-                              <SelectItem value="standard">Standard Comfort</SelectItem>
-                              <SelectItem value="business">Business Class</SelectItem>
-                              <SelectItem value="luxury">Luxury Accommodations</SelectItem>
-                              <SelectItem value="vip">VIP Suites</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="passenger-capacity">Passenger Capacity</Label>
-                          <Input
-                            id="passenger-capacity"
-                            type="number"
-                            defaultValue="200"
-                            className="mt-2"
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Maximum number of passengers
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="emergency-protocol">Emergency Protocol</Label>
-                          <Select defaultValue="evacuate">
-                            <SelectTrigger id="emergency-protocol" className="mt-2">
-                              <SelectValue placeholder="Select protocol" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="evacuate">Immediate Evacuation</SelectItem>
-                              <SelectItem value="shelter">Shelter in Place</SelectItem>
-                              <SelectItem value="distress">Distress Signal</SelectItem>
-                              <SelectItem value="escape">Escape Trajectory</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Amenities & Features</Label>
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="feature-medical" defaultChecked />
-                              <Label htmlFor="feature-medical" className="text-sm">Medical Bay</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="feature-recreation" defaultChecked />
-                              <Label htmlFor="feature-recreation" className="text-sm">Recreation Areas</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="feature-viewing" />
-                              <Label htmlFor="feature-viewing" className="text-sm">Observation Deck</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox id="feature-dining" />
-                              <Label htmlFor="feature-dining" className="text-sm">Dining Services</Label>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
-                          <div className="space-y-0.5">
-                            <Label htmlFor="auto-navigation">Enhanced Navigation AI</Label>
-                            <p className="text-xs text-muted-foreground">Improved route planning and safety</p>
-                          </div>
-                          <Switch id="auto-navigation" defaultChecked />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
+                <TabsContent value="advanced" className="space-y-4 pt-4">
+                  <div className="text-center py-8">
+                    <h3 className="text-lg font-medium mb-2">Advanced Properties</h3>
+                    <p className="text-muted-foreground">
+                      These settings will be available in a future update.
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="specialized" className="space-y-4 pt-4">
+                  <div className="text-center py-8">
+                    <h3 className="text-lg font-medium mb-2">Type Specialization</h3>
+                    <p className="text-muted-foreground">
+                      Specialized settings for {form.watch("type")} ships will be available in a future update.
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+              
+              <DialogFooter className="mt-6">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={saveTemplateMutation.isPending}
+                >
+                  {saveTemplateMutation.isPending && (
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  {editMode ? "Save Changes" : "Create Template"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
       
