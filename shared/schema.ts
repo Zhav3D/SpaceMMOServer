@@ -232,6 +232,42 @@ export const insertServerSettingSchema = createInsertSchema(serverSettings).omit
 export type InsertServerSetting = z.infer<typeof insertServerSettingSchema>;
 export type ServerSetting = typeof serverSettings.$inferSelect;
 
+// Ship Template for editing NPC ship characteristics
+export const shipTemplates = pgTable("ship_templates", {
+  id: serial("id").primaryKey(),
+  templateId: text("template_id").notNull().unique(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // enemy, transport, civilian, mining
+  description: text("description"),
+  
+  // Performance characteristics
+  mass: real("mass").notNull(),
+  maxSpeed: real("max_speed").notNull(),
+  maxAcceleration: real("max_acceleration").notNull(),
+  turnRate: real("turn_rate").notNull(),
+  
+  // Sensors and detection
+  detectionRange: real("detection_range").notNull(),
+  signatureRadius: real("signature_radius").notNull(),
+  
+  // Combat characteristics
+  attackRange: real("attack_range").notNull(),
+  fleeThreshold: real("flee_threshold").notNull(),
+  
+  // Navigation characteristics
+  waypointArrivalDistance: real("waypoint_arrival_distance").notNull(),
+  pathfindingUpdateInterval: real("pathfinding_update_interval").notNull(),
+  obstacleAvoidanceDistance: real("obstacle_avoidance_distance").notNull(),
+  formationKeepingTolerance: real("formation_keeping_tolerance").notNull(),
+});
+
+export const insertShipTemplateSchema = createInsertSchema(shipTemplates).omit({
+  id: true,
+});
+
+export type InsertShipTemplate = z.infer<typeof insertShipTemplateSchema>;
+export type ShipTemplate = typeof shipTemplates.$inferSelect;
+
 // Known setting names (for type safety)
 export const SERVER_SETTINGS = {
   FROZEN_SOLAR_SYSTEM: "frozen_solar_system", // boolean

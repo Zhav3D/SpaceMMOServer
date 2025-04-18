@@ -8,6 +8,7 @@ import {
   ServerLog, InsertServerLog,
   ServerStat, InsertServerStat,
   ServerSetting, InsertServerSetting,
+  ShipTemplate, InsertShipTemplate,
   SERVER_SETTINGS
 } from '@shared/schema';
 import { Vector3 } from '@shared/math';
@@ -81,6 +82,14 @@ export interface IStorage {
   // Server Stats
   createServerStat(stat: InsertServerStat): Promise<ServerStat>;
   getRecentStats(limit: number): Promise<ServerStat[]>;
+  
+  // Ship Templates
+  getShipTemplate(id: number): Promise<ShipTemplate | undefined>;
+  getShipTemplateByTemplateId(templateId: string): Promise<ShipTemplate | undefined>;
+  getAllShipTemplates(): Promise<ShipTemplate[]>;
+  createShipTemplate(template: InsertShipTemplate): Promise<ShipTemplate>;
+  updateShipTemplate(id: number, template: Partial<ShipTemplate>): Promise<ShipTemplate | undefined>;
+  deleteShipTemplate(id: number): Promise<boolean>;
 }
 
 // In-memory storage implementation
@@ -94,6 +103,7 @@ export class MemStorage implements IStorage {
   private serverLogs: ServerLog[];
   private serverStats: ServerStat[];
   private settings: Map<string, ServerSetting>;
+  private shipTemplates: Map<number, ShipTemplate>;
   
   // ID counters
   private userId: number;
@@ -105,6 +115,7 @@ export class MemStorage implements IStorage {
   private serverLogId: number;
   private serverStatId: number;
   private settingId: number;
+  private shipTemplateId: number;
 
   constructor() {
     this.users = new Map();
@@ -116,6 +127,7 @@ export class MemStorage implements IStorage {
     this.serverLogs = [];
     this.serverStats = [];
     this.settings = new Map();
+    this.shipTemplates = new Map();
     
     this.userId = 1;
     this.celestialBodyId = 1;
@@ -126,6 +138,7 @@ export class MemStorage implements IStorage {
     this.serverLogId = 1;
     this.serverStatId = 1;
     this.settingId = 1;
+    this.shipTemplateId = 1;
   }
   
   // World persistence methods
@@ -167,6 +180,7 @@ export class MemStorage implements IStorage {
     this.settingId = 1;
     this.userId = 1;
     this.playerId = 1;
+    this.shipTemplateId = 1;
     return true;
   }
   
@@ -480,6 +494,41 @@ export class MemStorage implements IStorage {
     // Return limited number
     return stats.slice(0, limit);
   }
+
+  // Ship Template methods
+  async getShipTemplate(id: number): Promise<ShipTemplate | undefined> {
+    return this.shipTemplates.get(id);
+  }
+  
+  async getShipTemplateByTemplateId(templateId: string): Promise<ShipTemplate | undefined> {
+    return Array.from(this.shipTemplates.values()).find(
+      (template) => template.templateId === templateId
+    );
+  }
+  
+  async getAllShipTemplates(): Promise<ShipTemplate[]> {
+    return Array.from(this.shipTemplates.values());
+  }
+  
+  async createShipTemplate(template: InsertShipTemplate): Promise<ShipTemplate> {
+    const id = this.shipTemplateId++;
+    const shipTemplate: ShipTemplate = { ...template, id };
+    this.shipTemplates.set(id, shipTemplate);
+    return shipTemplate;
+  }
+  
+  async updateShipTemplate(id: number, template: Partial<ShipTemplate>): Promise<ShipTemplate | undefined> {
+    const existing = this.shipTemplates.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...template };
+    this.shipTemplates.set(id, updated);
+    return updated;
+  }
+  
+  async deleteShipTemplate(id: number): Promise<boolean> {
+    return this.shipTemplates.delete(id);
+  }
 }
 
 
@@ -496,6 +545,7 @@ export class JsonStorage implements IStorage {
   private serverLogs: ServerLog[];
   private serverStats: ServerStat[];
   private settings: Map<string, ServerSetting>;
+  private shipTemplates: Map<number, ShipTemplate>;
   
   // ID counters
   private userId: number;
@@ -507,6 +557,7 @@ export class JsonStorage implements IStorage {
   private serverLogId: number;
   private serverStatId: number;
   private settingId: number;
+  private shipTemplateId: number;
   
   constructor() {
     this.dataDir = path.resolve('./data');
@@ -527,6 +578,7 @@ export class JsonStorage implements IStorage {
     this.serverLogs = [];
     this.serverStats = [];
     this.settings = new Map();
+    this.shipTemplates = new Map();
     
     // Initialize ID counters
     this.userId = 1;
@@ -538,6 +590,7 @@ export class JsonStorage implements IStorage {
     this.serverLogId = 1;
     this.serverStatId = 1;
     this.settingId = 1;
+    this.shipTemplateId = 1;
     
     // Load data from disk if it exists
     this.loadDataFromDisk();
@@ -658,6 +711,16 @@ export class JsonStorage implements IStorage {
         this.settingId = Math.max(this.settingId, setting.id + 1);
       });
       log(`Loaded ${settings.length} server settings from disk`, 'info');
+    }
+    
+    // Load ship templates
+    const shipTemplates = this.loadDataFromFile<ShipTemplate[]>('shipTemplates');
+    if (shipTemplates) {
+      shipTemplates.forEach(template => {
+        this.shipTemplates.set(template.id, template);
+        this.shipTemplateId = Math.max(this.shipTemplateId, template.id + 1);
+      });
+      log(`Loaded ${shipTemplates.length} ship templates from disk`, 'info');
     }
   }
   
