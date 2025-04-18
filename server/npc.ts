@@ -347,6 +347,12 @@ export class NPCManager {
       
       // Create NPC ship with template ID if available
       const ship = createNPC(type, position, nearestCelestialBodyId, fleetId, templateId);
+      
+      // If we have a template, ensure the ship uses it
+      if (templateId && ship.templateId !== templateId) {
+        ship.templateId = templateId;
+      }
+      
       ships.push(ship);
     }
     
