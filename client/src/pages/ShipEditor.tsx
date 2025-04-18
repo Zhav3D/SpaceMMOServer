@@ -55,6 +55,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -75,7 +76,8 @@ import {
   RotateCw, 
   Clipboard, 
   ChevronRight,
-  Info
+  Info,
+  FileCode2
 } from "lucide-react";
 
 // Ship template schema - this defines the structure of ship templates
@@ -1083,6 +1085,579 @@ export default function ShipEditor() {
                   >
                     <Save className="h-4 w-4 mr-2" />
                     Save Changes
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="specialized" className="space-y-4 mt-6">
+          {!selectedTemplate ? (
+            <div className="text-center p-12">
+              <FileCode2 className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
+              <h3 className="text-lg font-medium mb-1">No Template Selected</h3>
+              <p className="text-muted-foreground mb-4">
+                Select a template from the list to access advanced fine-tuning options
+              </p>
+              <Button onClick={() => setActiveTab("templates")}>
+                <ChevronRight className="h-4 w-4 mr-2" />
+                Go to Templates
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+              {/* Type-specific cards based on the ship type */}
+              {selectedTemplate.type === 'enemy' && (
+                <>
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Shield className="h-5 w-5 mr-2" />
+                        Combat Fine-Tuning
+                      </CardTitle>
+                      <CardDescription>
+                        Specialized combat parameters for engagement tactics
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="accuracy">Weapon Accuracy (%)</Label>
+                          <div className="flex items-center space-x-3 mt-2">
+                            <span className="text-sm">Low</span>
+                            <Slider
+                              id="accuracy"
+                              defaultValue={[75]}
+                              max={100}
+                              step={5}
+                              className="flex-1"
+                            />
+                            <span className="text-sm">High</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Higher accuracy increases chance of hitting targets
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="range-priority">Range Priority</Label>
+                          <Select defaultValue="medium">
+                            <SelectTrigger id="range-priority" className="mt-2">
+                              <SelectValue placeholder="Select range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="close">Close Combat</SelectItem>
+                              <SelectItem value="medium">Medium Range</SelectItem>
+                              <SelectItem value="long">Long Range</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Preferred engagement distance from targets
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="weapon-cycle">Weapon Cycling</Label>
+                          <Select defaultValue="efficiency">
+                            <SelectTrigger id="weapon-cycle" className="mt-2">
+                              <SelectValue placeholder="Select style" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="burst">Burst Fire</SelectItem>
+                              <SelectItem value="efficiency">Efficiency Mode</SelectItem>
+                              <SelectItem value="continuous">Continuous Fire</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Controls weapon firing patterns
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="critical-hits">Critical Hit System</Label>
+                            <p className="text-xs text-muted-foreground">Target subsystems for critical hits</p>
+                          </div>
+                          <Switch id="critical-hits" defaultChecked />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Zap className="h-5 w-5 mr-2" />
+                        Power Distribution
+                      </CardTitle>
+                      <CardDescription>
+                        Allocate ship power to different systems
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <Label>Weapons Systems</Label>
+                            <span className="text-sm font-mono">40%</span>
+                          </div>
+                          <Slider
+                            defaultValue={[40]}
+                            max={100}
+                            step={5}
+                          />
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <Label>Shield Systems</Label>
+                            <span className="text-sm font-mono">30%</span>
+                          </div>
+                          <Slider
+                            defaultValue={[30]}
+                            max={100}
+                            step={5}
+                          />
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <Label>Engine Systems</Label>
+                            <span className="text-sm font-mono">30%</span>
+                          </div>
+                          <Slider
+                            defaultValue={[30]}
+                            max={100}
+                            step={5}
+                          />
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground">
+                          Note: Total power allocation must equal 100%
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+              
+              {selectedTemplate.type === 'transport' && (
+                <>
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Box className="h-5 w-5 mr-2" />
+                        Cargo Configuration
+                      </CardTitle>
+                      <CardDescription>
+                        Specialized cargo and load management
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="cargo-capacity">Cargo Capacity (tons)</Label>
+                          <Input
+                            id="cargo-capacity"
+                            type="number"
+                            defaultValue="1000"
+                            className="mt-2"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Maximum cargo weight that can be carried
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="load-balancing">Load Balancing System</Label>
+                          <Select defaultValue="automatic">
+                            <SelectTrigger id="load-balancing" className="mt-2">
+                              <SelectValue placeholder="Select system" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="manual">Manual</SelectItem>
+                              <SelectItem value="automatic">Automatic</SelectItem>
+                              <SelectItem value="advanced">Advanced</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Controls how cargo is distributed for stability
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="secure-cargo">Secure Cargo System</Label>
+                            <p className="text-xs text-muted-foreground">Enhanced protection against cargo loss</p>
+                          </div>
+                          <Switch id="secure-cargo" defaultChecked />
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="hazardous-cargo">Hazardous Cargo Handling</Label>
+                            <p className="text-xs text-muted-foreground">Special containment for sensitive materials</p>
+                          </div>
+                          <Switch id="hazardous-cargo" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Ship className="h-5 w-5 mr-2" />
+                        Transport Specialization
+                      </CardTitle>
+                      <CardDescription>
+                        Specific transport role and features
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="transport-class">Transport Class</Label>
+                          <Select defaultValue="medium">
+                            <SelectTrigger id="transport-class" className="mt-2">
+                              <SelectValue placeholder="Select class" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="light">Light Courier</SelectItem>
+                              <SelectItem value="medium">Medium Freighter</SelectItem>
+                              <SelectItem value="heavy">Heavy Hauler</SelectItem>
+                              <SelectItem value="bulk">Bulk Transport</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="cargo-type">Specialized Cargo Type</Label>
+                          <Select defaultValue="general">
+                            <SelectTrigger id="cargo-type" className="mt-2">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="general">General Cargo</SelectItem>
+                              <SelectItem value="liquid">Liquid Transport</SelectItem>
+                              <SelectItem value="container">Container Shipping</SelectItem>
+                              <SelectItem value="ore">Ore Transport</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="pt-2 space-y-3">
+                          <Label>Auxiliary Systems</Label>
+                          <div className="grid grid-cols-2 gap-3 pt-1">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="quick-load" />
+                              <Label htmlFor="quick-load" className="text-sm">Quick Loading</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="auto-dock" />
+                              <Label htmlFor="auto-dock" className="text-sm">Auto-Docking</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="extended-range" defaultChecked />
+                              <Label htmlFor="extended-range" className="text-sm">Extended Range</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="defensive-systems" />
+                              <Label htmlFor="defensive-systems" className="text-sm">Defensive Systems</Label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+              
+              {selectedTemplate.type === 'mining' && (
+                <>
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Zap className="h-5 w-5 mr-2" />
+                        Mining Equipment
+                      </CardTitle>
+                      <CardDescription>
+                        Specialized resource extraction tools
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="mining-laser">Mining Laser Power (kW)</Label>
+                          <div className="flex items-center space-x-3 mt-2">
+                            <span className="text-sm">Low</span>
+                            <Slider
+                              id="mining-laser"
+                              defaultValue={[60]}
+                              max={100}
+                              step={5}
+                              className="flex-1"
+                            />
+                            <span className="text-sm">High</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Higher power increases extraction rate but consumes more energy
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="extraction-method">Primary Extraction Method</Label>
+                          <Select defaultValue="laser">
+                            <SelectTrigger id="extraction-method" className="mt-2">
+                              <SelectValue placeholder="Select method" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="laser">Laser Mining</SelectItem>
+                              <SelectItem value="drill">Drill Extraction</SelectItem>
+                              <SelectItem value="scoop">Scoop Collection</SelectItem>
+                              <SelectItem value="fracture">Fracture Mining</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="mineral-scanner">Advanced Mineral Scanner</Label>
+                            <p className="text-xs text-muted-foreground">Detect valuable resources at greater range</p>
+                          </div>
+                          <Switch id="mineral-scanner" defaultChecked />
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="auto-refinery">Onboard Auto-Refinery</Label>
+                            <p className="text-xs text-muted-foreground">Process raw materials during extraction</p>
+                          </div>
+                          <Switch id="auto-refinery" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Shield className="h-5 w-5 mr-2" />
+                        Mining Operations
+                      </CardTitle>
+                      <CardDescription>
+                        Specialized mining behavior settings
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="target-material">Target Material Priority</Label>
+                          <Select defaultValue="balanced">
+                            <SelectTrigger id="target-material" className="mt-2">
+                              <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="common">Common Materials</SelectItem>
+                              <SelectItem value="balanced">Balanced Approach</SelectItem>
+                              <SelectItem value="rare">Rare Materials</SelectItem>
+                              <SelectItem value="valuable">High Value Only</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="operation-mode">Operation Mode</Label>
+                          <Select defaultValue="efficiency">
+                            <SelectTrigger id="operation-mode" className="mt-2">
+                              <SelectValue placeholder="Select mode" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="speed">Speed Priority</SelectItem>
+                              <SelectItem value="efficiency">Efficiency Priority</SelectItem>
+                              <SelectItem value="precision">Precision Priority</SelectItem>
+                              <SelectItem value="volume">Volume Priority</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label>Area Coverage</Label>
+                          <div className="grid grid-cols-2 gap-3 pt-3">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="wide-scan" defaultChecked />
+                              <Label htmlFor="wide-scan" className="text-sm">Wide Area Scan</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="deep-scan" />
+                              <Label htmlFor="deep-scan" className="text-sm">Deep Core Scan</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="multi-point" defaultChecked />
+                              <Label htmlFor="multi-point" className="text-sm">Multi-point Collection</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="fragment-tracking" />
+                              <Label htmlFor="fragment-tracking" className="text-sm">Fragment Tracking</Label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+              
+              {selectedTemplate.type === 'civilian' && (
+                <>
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Ship className="h-5 w-5 mr-2" />
+                        Civilian Specialization
+                      </CardTitle>
+                      <CardDescription>
+                        Civilian vessel purpose and capabilities
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="vessel-type">Vessel Type</Label>
+                          <Select defaultValue="passenger">
+                            <SelectTrigger id="vessel-type" className="mt-2">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="passenger">Passenger Transport</SelectItem>
+                              <SelectItem value="research">Research Vessel</SelectItem>
+                              <SelectItem value="medical">Medical Ship</SelectItem>
+                              <SelectItem value="survey">Survey Vessel</SelectItem>
+                              <SelectItem value="luxury">Luxury Liner</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="capacity">Passenger Capacity</Label>
+                          <Input
+                            id="capacity"
+                            type="number"
+                            defaultValue="200"
+                            className="mt-2"
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="auto-navigation">Enhanced Navigation AI</Label>
+                            <p className="text-xs text-muted-foreground">Improved route planning and hazard avoidance</p>
+                          </div>
+                          <Switch id="auto-navigation" defaultChecked />
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="distress-beacon">Advanced Distress Beacon</Label>
+                            <p className="text-xs text-muted-foreground">Increased signal range during emergencies</p>
+                          </div>
+                          <Switch id="distress-beacon" defaultChecked />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Shield className="h-5 w-5 mr-2" />
+                        Safety Systems
+                      </CardTitle>
+                      <CardDescription>
+                        Specialized civilian safety features
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="emergency-protocol">Emergency Protocol</Label>
+                          <Select defaultValue="evacuate">
+                            <SelectTrigger id="emergency-protocol" className="mt-2">
+                              <SelectValue placeholder="Select protocol" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="fight">Defensive Stance</SelectItem>
+                              <SelectItem value="evacuate">Immediate Evacuation</SelectItem>
+                              <SelectItem value="hide">Stealth Protocol</SelectItem>
+                              <SelectItem value="distract">Distraction Protocol</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label>Safety Features</Label>
+                          <div className="grid grid-cols-2 gap-3 pt-3">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="escape-pods" defaultChecked />
+                              <Label htmlFor="escape-pods" className="text-sm">Escape Pods</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="emergency-shields" />
+                              <Label htmlFor="emergency-shields" className="text-sm">Emergency Shields</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="redundant-systems" defaultChecked />
+                              <Label htmlFor="redundant-systems" className="text-sm">Redundant Systems</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="anti-boarding" />
+                              <Label htmlFor="anti-boarding" className="text-sm">Anti-Boarding</Label>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="comfort-level">Comfort Level</Label>
+                          <div className="flex items-center space-x-3 mt-2">
+                            <span className="text-sm">Basic</span>
+                            <Slider
+                              id="comfort-level"
+                              defaultValue={[70]}
+                              max={100}
+                              step={10}
+                              className="flex-1"
+                            />
+                            <span className="text-sm">Luxury</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Higher comfort increases passenger satisfaction
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+              
+              <div className="lg:col-span-2 flex justify-end mt-4">
+                <div className="space-x-4">
+                  <Button variant="outline" onClick={() => setActiveTab("templates")}>
+                    <ChevronRight className="h-4 w-4 mr-2" />
+                    Back to Templates
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      handleEditTemplate(selectedTemplate);
+                      setDialogOpen(true);
+                      toast({
+                        title: "Advanced Settings Saved",
+                        description: "Specialized parameters have been applied to the template",
+                      });
+                    }}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Apply Advanced Settings
                   </Button>
                 </div>
               </div>
