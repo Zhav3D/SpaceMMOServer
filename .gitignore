@@ -1,6 +1,33 @@
+# Node.js dependencies
 node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build output
 dist
+build
+coverage
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
 .DS_Store
+Thumbs.db
+
+# Project specific
 server/public
+data/*.json
 vite.config.ts.*
 *.tar.gz
+logs/
+*.log

@@ -74,5 +74,43 @@
     "formationKeepingTolerance": 60,
     "templateId": "template-resource-extractor",
     "id": 4
+  },
+  {
+    "name": "New Transport Ship",
+    "type": "transport",
+    "description": "A cargo vessel designed for trade and transportation",
+    "mass": 5000,
+    "maxSpeed": 30,
+    "maxAcceleration": 5,
+    "turnRate": 0.05,
+    "detectionRange": 800,
+    "signatureRadius": 200,
+    "attackRange": 0,
+    "fleeThreshold": 0.5,
+    "waypointArrivalDistance": 150,
+    "pathfindingUpdateInterval": 7000,
+    "obstacleAvoidanceDistance": 300,
+    "formationKeepingTolerance": 100,
+    "templateId": "template-1745008408901-728",
+    "id": 5
+  },
+  {
+    "name": "New Civilian Ship",
+    "type": "civilian",
+    "description": "A standard civilian vessel for transport and basic operations",
+    "mass": 1500,
+    "maxSpeed": 40,
+    "maxAcceleration": 7,
+    "turnRate": 0.08,
+    "detectionRange": 600,
+    "signatureRadius": 80,
+    "attackRange": 0,
+    "fleeThreshold": 0.7,
+    "waypointArrivalDistance": 120,
+    "pathfindingUpdateInterval": 6000,
+    "obstacleAvoidanceDistance": 250,
+    "formationKeepingTolerance": 75,
+    "templateId": "template-1745008413815-22",
+    "id": 6
   }
 ]
